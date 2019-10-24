@@ -18,6 +18,7 @@ namespace ofxFFmpeg {
 		void close();
 
 		void write(const ofPixels & pixels);
+        void flush();
 
 	protected:
 		AVIOContext *output_io_context = NULL;
@@ -26,5 +27,6 @@ namespace ofxFFmpeg {
 		AVStream *stream = NULL;
 		AVCodecContext *avctx = NULL;
 		AVFrame *frame = NULL;
+        uint64_t pts;
 	};
 }

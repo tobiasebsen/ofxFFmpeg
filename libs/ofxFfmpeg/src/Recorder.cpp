@@ -97,7 +97,7 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 	frame->width = width;
 	frame->height = height;
 	frame->format = avctx->pix_fmt;
-	frame->pts = 0;
+	frame->pts = pts = 0;
 
 
 	/**
@@ -116,26 +116,69 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 void Recorder::write(const ofPixels & pixels) {
 	int error;
 	AVPacket packet;
+    
+    frame->pts = ++pts;
+    memcpy(frame->data[0], pixels.getChannel(0).getData(), frame->linesize[0] * frame->height);
+    memcpy(frame->data[1], pixels.getChannel(1).getData(), frame->linesize[1] * frame->height);
+    memcpy(frame->data[2], pixels.getChannel(2).getData(), frame->linesize[2] * frame->height);
 
-	av_init_packet(&packet);
+    error = av_frame_make_writable(frame);
+    if (error < 0) {
+        ofLogError() << "Cound not make frame writable";
+        return;
+    }
 
-	error = av_write_frame(output_format_context, &packet);
+    error = avcodec_send_frame(avctx, frame);
+    if (error < 0) {
+        ofLogError() << "Cound not send frame";
+        return;
+    }
 
-	av_packet_unref(&packet);
+    av_init_packet(&packet);
+    packet.pts = pts;
+    packet.stream_index = stream->index;
+
+    while (error >= 0) {
+        error = avcodec_receive_packet(avctx, &packet);
+        if (error >= 0) {
+            error = av_write_frame(output_format_context, &packet);
+
+            av_packet_unref(&packet);
+        }
+    }
+}
+
+void Recorder::flush() {
+    int error;
+    AVPacket packet;
+    
+    av_init_packet(&packet);
+    packet.pts = 0;
+    packet.stream_index = stream->index;
+    
+    error = avcodec_send_frame(avctx, NULL);
+    
+    while (error >= 0) {
+        error = avcodec_receive_packet(avctx, &packet);
+        if (error >= 0) {
+            av_write_frame(output_format_context, &packet);
+            av_packet_unref(&packet);
+        }
+    }
 }
 
 void Recorder::close() {
 	if (output_format_context) {
 		av_write_trailer(output_format_context);
 	}
-	if (frame) {
+	/*if (frame) {
 		av_frame_free(&frame);
 		frame = NULL;
 	}
 	if (stream) {
 		av_free(stream);
 		stream = NULL;
-	}
+	}*/
 	if (output_format_context) {
 		avformat_free_context(output_format_context);
 		output_format_context = NULL;
