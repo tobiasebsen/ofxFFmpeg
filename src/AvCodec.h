@@ -27,6 +27,7 @@ namespace ofxFFmpeg {
 
         AvFramePtr allocFrame();
         bool encode(AvFramePtr frame);
+        bool encode();
         bool receivePacket(AvPacket & pkt);
 
     private:

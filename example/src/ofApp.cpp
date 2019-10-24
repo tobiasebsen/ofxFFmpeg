@@ -24,18 +24,15 @@ void ofApp::setup(){
             frame->getBuffer(32);
             
             ofFile file;
-            file.open("test.mov");
-            file.setWriteable();
+            file.open("test.mov", ofFile::Mode::WriteOnly);
 
             ofxFFmpeg::AvPacket pkt;
+            ofBuffer buffer;
 
             for (int i=0; i<5; i++) {
                 frame->makeWritable();
                 frame->setPts(i);
                 codec->encode(frame);
-                
-                ofBuffer buffer;
-                
                 
                 while (codec->receivePacket(pkt)) {
                     
@@ -45,6 +42,11 @@ void ofApp::setup(){
                     
                     pkt.unref();
                 }
+            }
+            codec->encode();
+            if (codec->receivePacket(pkt)) {
+                buffer.append((char*)pkt.getData(), pkt.getSize());
+                file.writeFromBuffer(buffer);
             }
 
             file.close();

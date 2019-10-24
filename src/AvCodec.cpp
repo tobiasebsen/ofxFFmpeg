@@ -71,7 +71,15 @@ bool AvCodec::encode(AvFramePtr frame) {
     ret = avcodec_send_frame(context, frame->getFrame());
     if (ret < 0)
         return false;
+    return true;
+}
 
+bool AvCodec::encode() {
+    
+    int ret;
+    ret = avcodec_send_frame(context, NULL);
+    if (ret < 0)
+        return false;
     return true;
 }
 
