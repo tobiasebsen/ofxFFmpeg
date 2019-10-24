@@ -1,57 +1,14 @@
 #include "ofApp.h"
 
-#include "pixfmt.h"
-
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-    auto codecs = ofxFFmpeg::getOutputFormats(true, false);
-    for (auto codec : codecs) {
-        cout << ofxFFmpeg::getCodecLongName(codec) << endl;
-    }
+	ofxFFmpeg::Recorder recorder;
+	ofPixels pixels;
 
-    int codecId = 27;//ofxFfmpeg::getVideoEncoder("h264rgb");
-    ofxFFmpeg::AvCodecPtr codec = ofxFFmpeg::getEncoder(codecId);
-    if (codec) {
-        codec->setWidth(640);
-        codec->setHeight(480);
-        codec->setFrameRate(30);
-        codec->setPixelFormat(AV_PIX_FMT_YUV420P);
-        codec->open();
-
-        ofxFFmpeg::AvFramePtr frame = codec->allocFrame();
-        if (frame) {
-            frame->getBuffer(32);
-            
-            ofFile file;
-            file.open("test.mov", ofFile::Mode::WriteOnly);
-
-            ofxFFmpeg::AvPacket pkt;
-            ofBuffer buffer;
-
-            for (int i=0; i<5; i++) {
-                frame->makeWritable();
-                frame->setPts(i);
-                codec->encode(frame);
-                
-                while (codec->receivePacket(pkt)) {
-                    
-                    buffer.append((char*)pkt.getData(), pkt.getSize());
-                    file.writeFromBuffer(buffer);
-                    buffer.clear();
-                    
-                    pkt.unref();
-                }
-            }
-            codec->encode();
-            if (codec->receivePacket(pkt)) {
-                buffer.append((char*)pkt.getData(), pkt.getSize());
-                file.writeFromBuffer(buffer);
-            }
-
-            file.close();
-        }
-    }
+	recorder.open(ofFilePath::getAbsolutePath("test.mov"), 1920, 1080, 30);
+	recorder.write(pixels);
+	recorder.close();
 }
 
 //--------------------------------------------------------------

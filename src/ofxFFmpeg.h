@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Recorder.h"
+
 #include <string>
 #include <list>
 #include "AvCodec.h"

@@ -28,8 +28,10 @@ void AvCodec::setHeight(size_t height) {
 }
 
 void AvCodec::setFrameRate(int frameRate) {
-    context->time_base = (AVRational){1, frameRate};
-    context->framerate = (AVRational){frameRate, 1};
+	context->time_base.num = 1;
+	context->time_base.den = frameRate;
+	context->framerate.num = frameRate;
+	context->framerate.den = 1;
 }
 
 void AvCodec::setPixelFormat(int pixelFormat) {
