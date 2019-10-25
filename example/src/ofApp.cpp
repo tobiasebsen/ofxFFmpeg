@@ -3,15 +3,19 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
     
-    grabber.setup(640, 480);
-    
-	recorder.open(ofFilePath::getAbsolutePath("test.mov"), 640, 480, 30);
+    //grabber.setup(640, 480);
+    ofPixels pixels;
+    ofLoadImage(tex, "test.jpg");
+    tex.readToPixels(pixels);
+
+	recorder.open(ofFilePath::getAbsolutePath("test.mov"), 1024, 768, 30);
+    recorder.write(pixels);
+    recorder.flush();
+    recorder.close();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-    recorder.flush();
-    recorder.close();
 }
 
 //--------------------------------------------------------------
@@ -19,14 +23,12 @@ void ofApp::update(){
     
     grabber.update();
     if (grabber.isFrameNew()) {
-        ofPixels & pixels = grabber.getPixels();
-        recorder.write(pixels);
     }
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    grabber.draw(0, 0);
+    //grabber.draw(0, 0);
 }
 
 //--------------------------------------------------------------

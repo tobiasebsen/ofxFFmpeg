@@ -4,6 +4,7 @@ extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
 #include "libavutil/avstring.h"
+#include "libavutil/opt.h"
 }
 
 using namespace ofxFFmpeg;
@@ -67,6 +68,16 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 	avctx->time_base.den = frameRate;
 	avctx->framerate.num = frameRate;
 	avctx->framerate.den = 1;
+    avctx->bit_rate = width * height * 3;
+    avctx->gop_size = 12;
+    avctx->pix_fmt = AV_PIX_FMT_YUV420P;
+    if (stream->codecpar->codec_id == AV_CODEC_ID_H264) {
+        av_opt_set(avctx->priv_data, "preset", "ultrafast", 0);
+    }
+    if (output_format_context->flags & AVFMT_GLOBALHEADER)
+        avctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    
+    av_dump_format(output_format_context, 0, filename.c_str(), 1);
 
 	/* Third parameter can be used to pass settings to encoder */
 	error = avcodec_open2(avctx, output_codec, NULL);
@@ -81,6 +92,7 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 		close();
 		return false;
 	}
+    stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
 
 	/* init muxer, write output file header */
 	error = avformat_write_header(output_format_context, NULL);
@@ -117,10 +129,13 @@ void Recorder::write(const ofPixels & pixels) {
 	int error;
 	AVPacket packet;
     
-    frame->pts = ++pts;
-    memcpy(frame->data[0], pixels.getChannel(0).getData(), frame->linesize[0] * frame->height);
-    memcpy(frame->data[1], pixels.getChannel(1).getData(), frame->linesize[1] * frame->height);
-    memcpy(frame->data[2], pixels.getChannel(2).getData(), frame->linesize[2] * frame->height);
+    frame->pts = pts;
+    memset(frame->data[0], 255, frame->linesize[0] * (frame->height));
+    memset(frame->data[1], 255, frame->linesize[1] * (frame->height/2));
+    memset(frame->data[2], 255, frame->linesize[2] * (frame->height/2));
+    //memcpy(frame->data[0], pixels.getChannel(0).getData(), frame->linesize[0] * frame->height);
+    //memcpy(frame->data[1], pixels.getChannel(1).getData(), frame->linesize[1] * frame->height);
+    //memcpy(frame->data[2], pixels.getChannel(2).getData(), frame->linesize[2] * frame->height);
 
     error = av_frame_make_writable(frame);
     if (error < 0) {
@@ -133,15 +148,17 @@ void Recorder::write(const ofPixels & pixels) {
         ofLogError() << "Cound not send frame";
         return;
     }
+    av_frame_unref(frame);
 
     av_init_packet(&packet);
     packet.pts = pts;
     packet.stream_index = stream->index;
+    packet.flags |= AV_PKT_FLAG_KEY;
 
     while (error >= 0) {
         error = avcodec_receive_packet(avctx, &packet);
         if (error >= 0) {
-            error = av_write_frame(output_format_context, &packet);
+            error = av_interleaved_write_frame(output_format_context, &packet);
 
             av_packet_unref(&packet);
         }
@@ -161,7 +178,7 @@ void Recorder::flush() {
     while (error >= 0) {
         error = avcodec_receive_packet(avctx, &packet);
         if (error >= 0) {
-            av_write_frame(output_format_context, &packet);
+            av_interleaved_write_frame(output_format_context, &packet);
             av_packet_unref(&packet);
         }
     }
@@ -171,11 +188,11 @@ void Recorder::close() {
 	if (output_format_context) {
 		av_write_trailer(output_format_context);
 	}
-	/*if (frame) {
+	if (frame) {
 		av_frame_free(&frame);
 		frame = NULL;
 	}
-	if (stream) {
+	/*if (stream) {
 		av_free(stream);
 		stream = NULL;
 	}*/
