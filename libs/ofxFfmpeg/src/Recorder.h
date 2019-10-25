@@ -9,6 +9,7 @@ struct AVStream;
 struct AVCodecContext;
 struct AVFrame;
 struct AVPacket;
+struct SwsContext;
 
 namespace ofxFFmpeg {
 
@@ -18,9 +19,13 @@ namespace ofxFFmpeg {
 		void close();
 
 		void write(const ofPixels & pixels);
-        void flush();
+		void write(AVFrame * frame);
+		void flush();
 
 	protected:
+		bool init();
+		bool openCodec(int width, int height, int frameRate);
+
 		AVIOContext *output_io_context = NULL;
 		AVFormatContext *output_format_context = NULL;
 		AVCodec *output_codec = NULL;
@@ -28,5 +33,7 @@ namespace ofxFFmpeg {
 		AVCodecContext *avctx = NULL;
 		AVFrame *frame = NULL;
         uint64_t pts;
+
+		SwsContext * sws_ctx;
 	};
 }

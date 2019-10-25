@@ -5,49 +5,31 @@ extern "C" {
 #include "libavcodec/avcodec.h"
 #include "libavutil/avstring.h"
 #include "libavutil/opt.h"
+#include "libswscale/swscale.h"
 }
 
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool Recorder::open(const string filename, int width, int height, int frameRate) {
-
+bool Recorder::init() {
 	int error;
-
-	/** Open the output file to write to it. */
-	if ((error = avio_open(&output_io_context, filename.c_str(), AVIO_FLAG_WRITE)) < 0) {
-		ofLogError() << "Could not open output file";
-		return false;
-	}
 
 	/** Create a new format context for the output container format. */
 	if (!(output_format_context = avformat_alloc_context())) {
 		ofLogError() << "Could not allocate output format context";
 		return false;
 	}
+	return true;
+}
 
-	/** Associate the output file (pointer) with the container format context. */
-	output_format_context->pb = output_io_context;
+//--------------------------------------------------------------
+bool Recorder::openCodec(int width, int height, int frameRate) {
 
-	/** Guess the desired container format based on the file extension. */
-	if (!(output_format_context->oformat = av_guess_format(NULL, filename.c_str(), NULL))) {
-		ofLogError() << "Could not find output file format";
-		close();
-		return false;
-	}
-
-	av_strlcpy(output_format_context->filename, filename.c_str(), sizeof(output_format_context->filename));
+	int error;
 
 	/** Find the encoder to be used by its name. */
 	if (!(output_codec = avcodec_find_encoder(AV_CODEC_ID_H264))) {
 		ofLogError() << "Could not find the encoder";
-		close();
-		return false;
-	}
-
-	/** Create a new video stream in the output file container. */
-	if (!(stream = avformat_new_stream(output_format_context, NULL))) {
-		ofLog() << "Could not create new stream\n";
 		close();
 		return false;
 	}
@@ -64,20 +46,19 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 	if (output_codec->pix_fmts)
 		avctx->pix_fmt = output_codec->pix_fmts[0];
 
+	avctx->color_range = AVCOL_RANGE_MPEG;
 	avctx->time_base.num = 1;
 	avctx->time_base.den = frameRate;
-	avctx->framerate.num = frameRate;
-	avctx->framerate.den = 1;
-    avctx->bit_rate = width * height * 3;
-    avctx->gop_size = 12;
-    avctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    if (stream->codecpar->codec_id == AV_CODEC_ID_H264) {
-        av_opt_set(avctx->priv_data, "preset", "ultrafast", 0);
-    }
-    if (output_format_context->flags & AVFMT_GLOBALHEADER)
-        avctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    
-    av_dump_format(output_format_context, 0, filename.c_str(), 1);
+	//avctx->framerate.num = frameRate;
+	//avctx->framerate.den = 1;
+	avctx->bit_rate = 800000;
+	avctx->gop_size = 12;
+	//avctx->pix_fmt = AV_PIX_FMT_YUV420P;
+	//if (output_format_context->flags & AVFMT_GLOBALHEADER)
+	avctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+	avctx->profile = FF_PROFILE_H264_HIGH;
+	avctx->level = 41;
 
 	/* Third parameter can be used to pass settings to encoder */
 	error = avcodec_open2(avctx, output_codec, NULL);
@@ -86,13 +67,51 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 		close();
 		return false;
 	}
+}
+
+//--------------------------------------------------------------
+bool Recorder::open(const string filename, int width, int height, int frameRate) {
+
+	int error;
+
+	init();
+
+	/** Open the output file to write to it. */
+	if ((error = avio_open(&output_io_context, filename.c_str(), AVIO_FLAG_WRITE)) < 0) {
+		ofLogError() << "Could not open output file";
+		return false;
+	}
+
+	/** Associate the output file (pointer) with the container format context. */
+	output_format_context->pb = output_io_context;
+
+	/** Guess the desired container format based on the file extension. */
+	if (!(output_format_context->oformat = av_guess_format(NULL, filename.c_str(), NULL))) {
+		ofLogError() << "Could not find output file format";
+		close();
+		return false;
+	}
+
+	av_strlcpy(output_format_context->filename, filename.c_str(), sizeof(output_format_context->filename));
+
+	openCodec(width, height, frameRate);
+
+	/** Create a new video stream in the output file container. */
+	if (!(stream = avformat_new_stream(output_format_context, NULL))) {
+		ofLog() << "Could not create new stream\n";
+		close();
+		return false;
+	}
+	stream->id = output_format_context->nb_streams - 1;
+
 	error = avcodec_parameters_from_context(stream->codecpar, avctx);
 	if (error < 0) {
 		ofLogError() << "Failed to copy encoder parameters to output stream";
 		close();
 		return false;
 	}
-    stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
+
+	av_dump_format(output_format_context, 0, filename.c_str(), 1);
 
 	/* init muxer, write output file header */
 	error = avformat_write_header(output_format_context, NULL);
@@ -122,66 +141,52 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 		return false;
 	}
 
+	sws_ctx = sws_getContext(width, height, AV_PIX_FMT_RGB24, width, height, AV_PIX_FMT_YUV420P, 0, 0, 0, 0);
+
 	return true;
 }
 
 void Recorder::write(const ofPixels & pixels) {
+    
+	frame->pts = (1.0 / 30)* 90000 * pts;
+	pts++;
+
+	const int in_linesize[1] = { 3 * avctx->width };
+	const uint8_t * rgb = pixels.getPixels();
+	sws_scale(sws_ctx, (const uint8_t * const *)&rgb, in_linesize, 0, avctx->height, frame->data, frame->linesize);
+
+	write(frame);
+}
+
+void ofxFFmpeg::Recorder::write(AVFrame * f) {
+
 	int error;
 	AVPacket packet;
-    
-    frame->pts = pts;
-    memset(frame->data[0], 255, frame->linesize[0] * (frame->height));
-    memset(frame->data[1], 255, frame->linesize[1] * (frame->height/2));
-    memset(frame->data[2], 255, frame->linesize[2] * (frame->height/2));
-    //memcpy(frame->data[0], pixels.getChannel(0).getData(), frame->linesize[0] * frame->height);
-    //memcpy(frame->data[1], pixels.getChannel(1).getData(), frame->linesize[1] * frame->height);
-    //memcpy(frame->data[2], pixels.getChannel(2).getData(), frame->linesize[2] * frame->height);
 
-    error = av_frame_make_writable(frame);
-    if (error < 0) {
-        ofLogError() << "Cound not make frame writable";
-        return;
-    }
 
-    error = avcodec_send_frame(avctx, frame);
-    if (error < 0) {
-        ofLogError() << "Cound not send frame";
-        return;
-    }
-    av_frame_unref(frame);
+	error = avcodec_send_frame(avctx, f);
+	if (error < 0) {
+		ofLogError() << "Cound not send frame";
+		return;
+	}
 
-    av_init_packet(&packet);
-    packet.pts = pts;
-    packet.stream_index = stream->index;
-    packet.flags |= AV_PKT_FLAG_KEY;
+	av_init_packet(&packet);
+	packet.stream_index = stream->index;
+	packet.flags |= AV_PKT_FLAG_KEY;
+	packet.pos = -1;
 
-    while (error >= 0) {
-        error = avcodec_receive_packet(avctx, &packet);
-        if (error >= 0) {
-            error = av_interleaved_write_frame(output_format_context, &packet);
+	while (error >= 0) {
+		error = avcodec_receive_packet(avctx, &packet);
+		if (error >= 0) {
+			int ret = av_write_frame(output_format_context, &packet);
 
-            av_packet_unref(&packet);
-        }
-    }
+			av_packet_unref(&packet);
+		}
+	}
 }
 
 void Recorder::flush() {
-    int error;
-    AVPacket packet;
-    
-    av_init_packet(&packet);
-    packet.pts = 0;
-    packet.stream_index = stream->index;
-    
-    error = avcodec_send_frame(avctx, NULL);
-    
-    while (error >= 0) {
-        error = avcodec_receive_packet(avctx, &packet);
-        if (error >= 0) {
-            av_interleaved_write_frame(output_format_context, &packet);
-            av_packet_unref(&packet);
-        }
-    }
+	write(NULL);
 }
 
 void Recorder::close() {
@@ -192,10 +197,6 @@ void Recorder::close() {
 		av_frame_free(&frame);
 		frame = NULL;
 	}
-	/*if (stream) {
-		av_free(stream);
-		stream = NULL;
-	}*/
 	if (output_format_context) {
 		avformat_free_context(output_format_context);
 		output_format_context = NULL;

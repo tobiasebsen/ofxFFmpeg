@@ -2,20 +2,19 @@
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    
-    //grabber.setup(640, 480);
-    ofPixels pixels;
-    ofLoadImage(tex, "test.jpg");
-    tex.readToPixels(pixels);
+	ofLogToConsole();
+	ofSetFrameRate(30);
 
-	recorder.open(ofFilePath::getAbsolutePath("test.mov"), 1024, 768, 30);
-    recorder.write(pixels);
-    recorder.flush();
-    recorder.close();
+    grabber.setup(1920/2, 1080/2);
+	grabber.setDesiredFrameRate(30);
+
+	recorder.open(ofFilePath::getAbsolutePath("test.mov"), grabber.getWidth(), grabber.getHeight(), 30);
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+	recorder.flush();
+	recorder.close();
 }
 
 //--------------------------------------------------------------
@@ -23,12 +22,14 @@ void ofApp::update(){
     
     grabber.update();
     if (grabber.isFrameNew()) {
-    }
+		ofPixels & pixels = grabber.getPixels();
+		recorder.write(pixels);
+	}
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    //grabber.draw(0, 0);
+    grabber.draw(0, 0);
 }
 
 //--------------------------------------------------------------
