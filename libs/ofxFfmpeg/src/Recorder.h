@@ -26,14 +26,14 @@ namespace ofxFFmpeg {
 		bool init();
 		bool openCodec(int width, int height, int frameRate);
 
-		AVIOContext *output_io_context = NULL;
-		AVFormatContext *output_format_context = NULL;
-		AVCodec *output_codec = NULL;
-		AVStream *stream = NULL;
-		AVCodecContext *avctx = NULL;
+		AVIOContext *io_context = NULL;
+		AVFormatContext *format_context = NULL;
+		AVCodec *video_codec = NULL;
+		AVStream *video_stream = NULL;
+		AVCodecContext *video_context = NULL;
 		AVFrame *frame = NULL;
         uint64_t pts;
 
-		SwsContext * sws_ctx;
+		SwsContext * sws_context;
 	};
 }

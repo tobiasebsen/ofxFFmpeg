@@ -42,13 +42,3 @@ string ofxFFmpeg::getCodecName(int codecId) {
 string ofxFFmpeg::getCodecLongName(int codecId) {
     return avcodec_descriptor_get((AVCodecID)codecId)->long_name;
 }
-
-AvCodecPtr ofxFFmpeg::getEncoder(int codecId) {
-    AVCodec * codec = avcodec_find_encoder((AVCodecID)codecId);
-    //AVCodec * codec = avcodec_find_encoder_by_name("libx264rgb");
-    if (codec == NULL)
-        return NULL;
-    AVCodecContext * context = avcodec_alloc_context3(codec);
-    return AvCodecPtr(new AvCodec(context, codec));
-}
-
