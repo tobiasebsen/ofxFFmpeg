@@ -184,19 +184,15 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvCodec.cpp" />
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvFrame.cpp" />
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvPacket.cpp" />
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp" />
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h" />
     <ClInclude Include="src\ofApp.h" />
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvCodec.h" />
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvFrame.h" />
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvPacket.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\adts_parser.h" />

@@ -1,456 +1,444 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-	<ItemGroup>
-		<ClCompile Include="src\ofApp.cpp">
-			<Filter>src</Filter>
-		</ClCompile>
-		<ClCompile Include="src\main.cpp">
-			<Filter>src</Filter>
-		</ClCompile>
-		<ClCompile Include="src\main.cpp">
-			<Filter>src</Filter>
-		</ClCompile>
-		<ClCompile Include="src\ofApp.cpp">
-			<Filter>src</Filter>
-		</ClCompile>
-		<ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvCodec.cpp">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClCompile>
-		<ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvFrame.cpp">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClCompile>
-		<ClCompile Include="..\..\..\addons\ofxFFmpeg\src\AvPacket.cpp">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClCompile>
-		<ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClCompile>
-		<ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp">
-			<Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-		</ClCompile>
-	</ItemGroup>
-	<ItemGroup>
-		<Filter Include="src">
-			<UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons">
-			<UniqueIdentifier>{71834F65-F3A9-211E-73B8-DC85}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg">
-			<UniqueIdentifier>{B5525A43-9710-27B1-A58D-596E}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\src">
-			<UniqueIdentifier>{AB107FEE-85BF-2C6D-139C-8C2A}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs">
-			<UniqueIdentifier>{E008DBEF-8100-4264-2263-7F31}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg">
-			<UniqueIdentifier>{75A42AC7-F3D7-EFA1-E70A-8134}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include">
-			<UniqueIdentifier>{DEFB1985-EC9E-F170-FBDA-44FF}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec">
-			<UniqueIdentifier>{FFEAE916-B892-AC11-1F4A-1FFD}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice">
-			<UniqueIdentifier>{60DE80DF-1450-21A9-BE4E-417C}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter">
-			<UniqueIdentifier>{F8159923-CAD2-7556-A588-E54F}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavformat">
-			<UniqueIdentifier>{1C962E35-83AC-598B-3CFA-6358}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavutil">
-			<UniqueIdentifier>{C5988E7F-6DC6-3841-9484-C19D}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc">
-			<UniqueIdentifier>{FD84D9FD-8BA9-DB3F-3866-C164}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libswresample">
-			<UniqueIdentifier>{56ACC5BC-AB10-A04B-7FAF-13E1}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libswscale">
-			<UniqueIdentifier>{4A73CB65-1AD2-685A-F5D8-85E2}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg">
-			<UniqueIdentifier>{D8E78D7B-F09F-41AA-34B3-F493}</UniqueIdentifier>
-		</Filter>
-		<Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg\src">
-			<UniqueIdentifier>{3AEC9899-FF4D-76C2-06EA-42C7}</UniqueIdentifier>
-		</Filter>
-	</ItemGroup>
-	<ItemGroup>
-		<ClInclude Include="src\ofApp.h">
-			<Filter>src</Filter>
-		</ClInclude>
-		<ClInclude Include="src\ofApp.h">
-			<Filter>src</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvCodec.h">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvFrame.h">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\src\AvPacket.h">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h">
-			<Filter>addons\ofxFFmpeg\src</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\adts_parser.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avcodec.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avdct.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avfft.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\d3d11va.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dirac.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dv_profile.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dxva2.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\jni.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\mediacodec.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\qsv.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vaapi.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vdpau.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\videotoolbox.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vorbis_parser.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\xvmc.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice\avdevice.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\avfilter.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\buffersink.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\buffersrc.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\avformat.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\avio.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\adler32.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\aes.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\aes_ctr.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\attributes.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\audio_fifo.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avassert.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avconfig.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avstring.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avutil.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\base64.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\blowfish.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\bprint.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\bswap.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\buffer.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\camellia.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\cast5.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\channel_layout.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\common.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\cpu.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\crc.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\des.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\dict.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\display.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\downmix_info.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\encryption_info.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\error.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\eval.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\ffversion.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\fifo.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\file.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\frame.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hash.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hdr_dynamic_metadata.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hmac.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_cuda.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_d3d11va.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_drm.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_dxva2.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_mediacodec.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_qsv.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_vaapi.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_vdpau.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_videotoolbox.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\imgutils.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\intfloat.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\intreadwrite.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\lfg.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\log.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\lzo.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\macros.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mastering_display_metadata.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mathematics.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\md5.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mem.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\motion_vector.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\murmur3.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\opt.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\parseutils.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixdesc.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixelutils.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixfmt.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\random_seed.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\rational.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\rc4.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\replaygain.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\ripemd.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\samplefmt.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\sha.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\sha512.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\spherical.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\stereo3d.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tea.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\threadmessage.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\timecode.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\timestamp.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tree.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\twofish.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tx.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\xtea.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\_time.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc\postprocess.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample\swresample.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswresample</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswresample</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\swscale.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswscale</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\version.h">
-			<Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswscale</Filter>
-		</ClInclude>
-		<ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.h">
-			<Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-		</ClInclude>
-	</ItemGroup>
-	<ItemGroup>
-		<ResourceCompile Include="icon.rc" />
-	</ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\ofApp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ofApp.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp">
+      <Filter>addons\ofxFFmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons">
+      <UniqueIdentifier>{71834F65-F3A9-211E-73B8-DC85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg">
+      <UniqueIdentifier>{B5525A43-9710-27B1-A58D-596E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\src">
+      <UniqueIdentifier>{AB107FEE-85BF-2C6D-139C-8C2A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs">
+      <UniqueIdentifier>{E008DBEF-8100-4264-2263-7F31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg">
+      <UniqueIdentifier>{75A42AC7-F3D7-EFA1-E70A-8134}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include">
+      <UniqueIdentifier>{DEFB1985-EC9E-F170-FBDA-44FF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec">
+      <UniqueIdentifier>{FFEAE916-B892-AC11-1F4A-1FFD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice">
+      <UniqueIdentifier>{60DE80DF-1450-21A9-BE4E-417C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter">
+      <UniqueIdentifier>{F8159923-CAD2-7556-A588-E54F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavformat">
+      <UniqueIdentifier>{1C962E35-83AC-598B-3CFA-6358}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libavutil">
+      <UniqueIdentifier>{C5988E7F-6DC6-3841-9484-C19D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc">
+      <UniqueIdentifier>{FD84D9FD-8BA9-DB3F-3866-C164}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libswresample">
+      <UniqueIdentifier>{56ACC5BC-AB10-A04B-7FAF-13E1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ffmpeg\include\libswscale">
+      <UniqueIdentifier>{4A73CB65-1AD2-685A-F5D8-85E2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg">
+      <UniqueIdentifier>{D8E78D7B-F09F-41AA-34B3-F493}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg\src">
+      <UniqueIdentifier>{3AEC9899-FF4D-76C2-06EA-42C7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ofApp.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ofApp.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h">
+      <Filter>addons\ofxFFmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\adts_parser.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avcodec.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avdct.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\avfft.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\d3d11va.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dirac.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dv_profile.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\dxva2.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\jni.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\mediacodec.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\qsv.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vaapi.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vdpau.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\videotoolbox.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\vorbis_parser.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\xvmc.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice\avdevice.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\avfilter.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\buffersink.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\buffersrc.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\avformat.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\avio.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavformat</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\adler32.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\aes.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\aes_ctr.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\attributes.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\audio_fifo.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avassert.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avconfig.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avstring.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\avutil.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\base64.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\blowfish.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\bprint.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\bswap.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\buffer.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\camellia.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\cast5.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\channel_layout.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\common.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\cpu.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\crc.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\des.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\dict.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\display.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\downmix_info.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\encryption_info.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\error.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\eval.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\ffversion.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\fifo.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\file.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\frame.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hash.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hdr_dynamic_metadata.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hmac.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_cuda.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_d3d11va.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_drm.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_dxva2.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_mediacodec.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_qsv.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_vaapi.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_vdpau.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\hwcontext_videotoolbox.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\imgutils.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\intfloat.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\intreadwrite.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\lfg.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\log.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\lzo.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\macros.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mastering_display_metadata.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mathematics.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\md5.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\mem.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\motion_vector.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\murmur3.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\opt.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\parseutils.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixdesc.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixelutils.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\pixfmt.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\random_seed.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\rational.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\rc4.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\replaygain.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\ripemd.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\samplefmt.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\sha.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\sha512.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\spherical.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\stereo3d.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tea.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\threadmessage.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\timecode.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\timestamp.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tree.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\twofish.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\tx.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\xtea.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil\_time.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavutil</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc\postprocess.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample\swresample.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswresample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswresample</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\swscale.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswscale</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\version.h">
+      <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswscale</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="icon.rc" />
+  </ItemGroup>
 </Project>
