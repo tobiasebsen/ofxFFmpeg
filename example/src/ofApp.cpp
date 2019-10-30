@@ -3,9 +3,9 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofLogToConsole();
-	ofSetFrameRate(60);
+	ofSetFrameRate(0);
     
-    player.load(ofFilePath::getAbsolutePath("fingers.mov"));
+    player.load("fingers.mov");
 
     //grabber.setup(1920/2, 1080/2);
 	//grabber.setDesiredFrameRate(30);
@@ -23,7 +23,7 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    player.readFrame();
+	player.update();
     //tex.loadData(pix);
     
     /*grabber.update();

@@ -74,6 +74,7 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 
 	int error;
 
+	close();
 	init();
 
 	/** Open the output file to write to it. */
@@ -148,7 +149,7 @@ bool Recorder::open(const string filename, int width, int height, int frameRate)
 
 void Recorder::write(const ofPixels & pixels) {
     
-	frame->pts = (1.0 / 30)* 90000 * pts;
+	frame->pts = (1.0 / 30) * 90000 * pts;
 	pts++;
 
 	const int in_linesize[1] = { 3 * video_context->width };
