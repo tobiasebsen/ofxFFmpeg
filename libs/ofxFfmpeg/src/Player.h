@@ -46,6 +46,8 @@ namespace ofxFFmpeg {
 		int getCurrentFrame() const;
         float getDuration() const;
         int getTotalNumFrames() const;
+        
+        void setLoopState(ofLoopType state);
 
 		void setFrame(int frame);
 		void setPosition(float pct);
@@ -66,6 +68,8 @@ namespace ofxFFmpeg {
 		bool frameNew;
 		uint64_t frameTime;
 		uint64_t startTime;
+        
+        ofLoopType loopState = OF_LOOP_NORMAL;
 
         ofPixels pixels;
         ofTexture texture;

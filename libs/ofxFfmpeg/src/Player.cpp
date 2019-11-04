@@ -102,9 +102,14 @@ void Player::readFrame() {
 
     ret = av_read_frame(format_context, &packet);
 	if (ret == AVERROR_EOF) {
-		return;
+        if (loopState == OF_LOOP_NORMAL) {
+            av_seek_frame(format_context, -1, 0, 0);
+            ret = av_read_frame(format_context, &packet);
+        }
+        else
+            return;
 	}
-	else if (ret < 0) {
+	if (ret < 0) {
 		return;
 	}
     
@@ -130,7 +135,7 @@ void Player::readFrame() {
     }
 }
 
-void ofxFFmpeg::Player::draw(float x, float y, float w, float h) const {
+void Player::draw(float x, float y, float w, float h) const {
 	if (texture.isAllocated())
 		texture.draw(x, y, w, h);
 }
@@ -148,19 +153,19 @@ float Player::getHeight() const {
     return video_context ? video_context->height : 0;
 }
 
-bool ofxFFmpeg::Player::setPixelFormat(ofPixelFormat pixelFormat) {
+bool Player::setPixelFormat(ofPixelFormat pixelFormat) {
 	return false;
 }
 
-ofPixelFormat ofxFFmpeg::Player::getPixelFormat() const {
+ofPixelFormat Player::getPixelFormat() const {
 	return OF_PIXELS_RGB;
 }
 
-float ofxFFmpeg::Player::getPosition() const {
+float Player::getPosition() const {
 	return (float)getCurrentFrame() / (float)getTotalNumFrames();
 }
 
-int ofxFFmpeg::Player::getCurrentFrame() const {
+int Player::getCurrentFrame() const {
 	if (frame && video_stream) {
 		uint64_t n = frame->pts * av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate);
 		return n;
@@ -176,7 +181,7 @@ int Player::getTotalNumFrames() const {
     return video_stream ? video_stream->nb_frames : 0;
 }
 
-void ofxFFmpeg::Player::setFrame(int f) {
+void Player::setFrame(int f) {
 	uint64_t ts = ((uint64_t)f) / (av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate));
 	//ts += video_stream->start_time;
 	//ts *= 0.3;
@@ -187,7 +192,7 @@ void ofxFFmpeg::Player::setFrame(int f) {
 	readFrame();
 }
 
-void ofxFFmpeg::Player::setPosition(float pct) {
+void Player::setPosition(float pct) {
 	setFrame(pct * getTotalNumFrames());
 }
 
@@ -206,15 +211,15 @@ void Player::close() {
     }
 }
 
-bool ofxFFmpeg::Player::isLoaded() const {
+bool Player::isLoaded() const {
 	return format_context && video_context && video_stream;
 }
 
-bool ofxFFmpeg::Player::isInitialized() const {
+bool Player::isInitialized() const {
 	return format_context;
 }
 
-void ofxFFmpeg::Player::update() {
+void Player::update() {
 
 	frameNew = false;
 
@@ -230,28 +235,32 @@ void ofxFFmpeg::Player::update() {
 		readFrame();
 }
 
-bool ofxFFmpeg::Player::isFrameNew() const {
+bool Player::isFrameNew() const {
 	return frameNew;
 }
 
-void ofxFFmpeg::Player::play() {
+void Player::play() {
 }
 
-void ofxFFmpeg::Player::stop() {
+void Player::stop() {
 }
 
-bool ofxFFmpeg::Player::isPaused() const {
+bool Player::isPaused() const {
 	return false;
 }
 
-bool ofxFFmpeg::Player::isPlaying() const {
+bool Player::isPlaying() const {
 	return true;
 }
 
-ofPixels & ofxFFmpeg::Player::getPixels() {
+void Player::setLoopState(ofLoopType state) {
+    loopState = state;
+}
+
+ofPixels & Player::getPixels() {
 	return pixels;
 }
 
-const ofPixels & ofxFFmpeg::Player::getPixels() const {
+const ofPixels & Player::getPixels() const {
 	return pixels;
 }
