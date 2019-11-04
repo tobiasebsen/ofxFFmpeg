@@ -43,6 +43,7 @@ bool Player::load(string filename) {
     for (int i = 0; i < format_context->nb_streams; i++) {
         AVStream *stream = format_context->streams[i];
         if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+			video_stream_index = i;
             video_stream = stream;
             video_codec = avcodec_find_decoder(stream->codecpar->codec_id);
         }
@@ -116,6 +117,8 @@ void Player::readFrame() {
     ret = avcodec_receive_frame(video_context, frame);
     if (ret >= 0) {
 
+		//ofLog() << "Read: " << (frame->pts * av_q2d(video_stream->time_base));
+
         pixels.allocate(frame->width, frame->height, 3);
 
 		const uint8_t * rgb = pixels.getData();
@@ -158,19 +161,34 @@ float ofxFFmpeg::Player::getPosition() const {
 }
 
 int ofxFFmpeg::Player::getCurrentFrame() const {
-	return frame ? frame->display_picture_number : -1;
+	if (frame && video_stream) {
+		uint64_t n = frame->pts * av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate);
+		return n;
+	}
+	return -1;
 }
 
 float Player::getDuration() const {
-    return video_stream ? (video_stream->duration * video_stream->time_base.num) / video_stream->time_base.den : 0;
+	return format_context ? (format_context->duration * av_q2d({ 1,AV_TIME_BASE })) : 0;
 }
 
 int Player::getTotalNumFrames() const {
     return video_stream ? video_stream->nb_frames : 0;
 }
 
+void ofxFFmpeg::Player::setFrame(int f) {
+	uint64_t ts = ((uint64_t)f) / (av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate));
+	//ts += video_stream->start_time;
+	//ts *= 0.3;
+	ofLog() << "Seek: " << f << " > " << ts;
+	av_seek_frame(format_context, video_stream_index, ts, AVSEEK_FLAG_BACKWARD);
+	//avformat_seek_file(format_context, video_stream_index, INT64_MIN, ts, INT64_MAX, 0);
+	//avcodec_flush_buffers(video_context);
+	readFrame();
+}
+
 void ofxFFmpeg::Player::setPosition(float pct) {
-	av_seek_frame(format_context, video_stream_index, 0, 0);
+	setFrame(pct * getTotalNumFrames());
 }
 
 void Player::close() {
@@ -208,7 +226,7 @@ void ofxFFmpeg::Player::update() {
 	uint64_t ptsNow = frameTime - startTime;
 	uint64_t ptsFrame = av_rescale_q(frame->pts, video_stream->time_base, { 1, AV_TIME_BASE });
 
-	if (frame->pts == AV_NOPTS_VALUE || ptsNow > ptsFrame)
+	//if (frame->pts == AV_NOPTS_VALUE || ptsNow > ptsFrame)
 		readFrame();
 }
 

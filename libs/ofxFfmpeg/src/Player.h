@@ -47,6 +47,7 @@ namespace ofxFFmpeg {
         float getDuration() const;
         int getTotalNumFrames() const;
 
+		void setFrame(int frame);
 		void setPosition(float pct);
 
         void readFrame();
