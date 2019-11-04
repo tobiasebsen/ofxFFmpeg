@@ -6,24 +6,35 @@ void ofApp::setup(){
 	ofSetFrameRate(0);
     
     player.load("fingers.mov");
+    player.setLoopState(OF_LOOP_NONE);
 
     //grabber.setup(1920/2, 1080/2);
 	//grabber.setDesiredFrameRate(30);
 
-	//recorder.open(ofFilePath::getAbsolutePath("test.mov"), grabber.getWidth(), grabber.getHeight(), 30);
+	recorder.open("test.mov");
+    recorder.setCodec("libx264");
+    recorder.setWidth(player.getWidth());
+    recorder.setHeight(player.getHeight());
+    recorder.setFrameRate(30);
+    recorder.setBitRate(1000);
+    recorder.start();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
+    recorder.flush();
+    recorder.close();
     player.close();
-	//recorder.flush();
-	//recorder.close();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     
 	player.update();
+    if (player.isFrameNew()) {
+        recorder.write(player.getPixels());
+    }
+    
     //tex.loadData(pix);
     
     /*grabber.update();
