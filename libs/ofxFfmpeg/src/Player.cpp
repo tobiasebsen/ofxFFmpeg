@@ -69,7 +69,7 @@ bool Player::load(string filename) {
         return false;
     }
     
-	if ((frame = av_frame_alloc()) == NULL) {
+	/*if ((frame = av_frame_alloc()) == NULL) {
 		ofLogError() << "Cannot allocate frame";
 		close();
 		return false;
@@ -83,7 +83,7 @@ bool Player::load(string filename) {
 		ofLogError() << "Could not get frame buffer";
 		close();
 		return false;
-	}
+	}*/
 	
 	int width = video_context->width;
     int height = video_context->height;
@@ -93,7 +93,40 @@ bool Player::load(string filename) {
 	timeLastFrame = av_gettime_relative();
 	pts = 0;
 
+    fillQueue();
+
     return true;
+}
+
+void Player::fillQueue() {
+    
+    int ret;
+    AVPacket packet;
+
+    while(frameQueueDuration < 0.25 / av_q2d(video_stream->time_base)) {
+
+        ret = av_read_frame(format_context, &packet);
+        if (ret == AVERROR_EOF) {
+            av_seek_frame(format_context, -1, 0, 0);
+        }
+        if (ret >= 0) {
+
+            ret = avcodec_send_packet(video_context, &packet);
+            av_packet_unref(&packet);
+
+            while (ret >= 0) {
+                AVFrame * frame = av_frame_alloc();
+                ret = avcodec_receive_frame(video_context, frame);
+                if (ret < 0) {
+                    av_frame_free(&frame);
+                    break;
+                }
+                //ofLog() << frame->pts;
+                frameQueue.emplace(frame->pts, frame);
+                frameQueueDuration += frame->pkt_duration;
+            }
+        }
+    }
 }
 
 void Player::readFrame() {
@@ -120,19 +153,19 @@ void Player::readFrame() {
         return;
     }
 
-    ret = avcodec_receive_frame(video_context, frame);
+    //ret = avcodec_receive_frame(video_context, frame);
     if (ret >= 0) {
 
 		//ofLog() << "Read: " << (frame->pts * av_q2d(video_stream->time_base));
 
-        pixels.allocate(frame->width, frame->height, 3);
+        /*pixels.allocate(frame->width, frame->height, 3);
 
 		const uint8_t * rgb = pixels.getData();
         const int out_linesize[1] = { 3 * frame->width };
         sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&rgb, out_linesize);
 
         texture.loadData(pixels);
-		frameNew = true;
+		frameNew = true;*/
     }
 }
 
@@ -167,8 +200,8 @@ float Player::getPosition() const {
 }
 
 int Player::getCurrentFrame() const {
-	if (frame && video_stream) {
-		uint64_t n = frame->pts * av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate);
+	if (video_stream) {
+		uint64_t n = pts * av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate);
 		return n;
 	}
 	return -1;
@@ -194,10 +227,10 @@ void Player::setPosition(float pct) {
 }
 
 void Player::close() {
-	if (frame) {
+	/*if (frame) {
 		av_frame_free(&frame);
 		frame = NULL;
-	}
+	}*/
     if (video_context) {
         avcodec_close(video_context);
         video_context = NULL;
@@ -219,17 +252,61 @@ bool Player::isInitialized() const {
 void Player::update() {
 
 	frameNew = false;
+    
+    fillQueue();
 
 	uint64_t timeNow = av_gettime_relative();
 
 	if (playing && video_stream != NULL) {
 
 		uint64_t timeDelta = timeNow - timeLastFrame;
-		pts += timeDelta * av_q2d(video_stream->time_base);
-		//if (pts > video_stream->duration)
-		
-		ofLog() << pts;
+        pts += (timeDelta / av_q2d(video_stream->time_base)) / AV_TIME_BASE;
+        ofLog() << pts;
+        if (pts > video_stream->duration) {
+            if (loopState == OF_LOOP_NORMAL)
+                pts %= video_stream->duration;
+            else {
+                pts = video_stream->duration;
+                playing = false;
+            }
+        }
+        
+        AVFrame * frame = NULL;
 
+        for (auto it=frameQueue.begin(); it!=frameQueue.end(); ) {
+            int64_t ptsStart = it->second->pts;
+            int64_t ptsEnd = it->second->pts + it->second->pkt_duration;
+            if (pts > ptsStart && pts > ptsEnd) {
+                ofLog() << "Erase: " << it->first;
+                frameQueueDuration -= it->second->pkt_duration;
+                av_frame_free(&it->second);
+                it = frameQueue.erase(it);
+            }
+            else if (pts >= ptsStart && pts <= ptsEnd) {
+                frame = it->second;
+                frameQueueDuration -= frame->pkt_duration;
+                it = frameQueue.erase(it);
+            }
+            else {
+                ++it;
+            }
+        }
+        
+        if (frame != NULL) {
+            pixels.allocate(frame->width, frame->height, 3);
+            
+            const uint8_t * rgb = pixels.getData();
+            const int out_linesize[1] = { 3 * frame->width };
+            sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&rgb, out_linesize);
+            
+            av_frame_free(&frame);
+            
+            //ofLog() << pts;
+
+            texture.loadData(pixels);
+            frameNew = true;
+        }
+        
 		//if (frame->pts == AV_NOPTS_VALUE || ptsNow > ptsFrame)
 		//readFrame();
 	}
@@ -242,6 +319,9 @@ bool Player::isFrameNew() const {
 }
 
 void Player::play() {
+    if (!playing) {
+        timeLastFrame = av_gettime_relative();
+    }
 	playing = true;
 }
 

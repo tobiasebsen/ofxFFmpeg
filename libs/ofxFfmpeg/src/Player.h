@@ -53,6 +53,8 @@ namespace ofxFFmpeg {
 		void setFrame(int frame);
 		void setPosition(float pct);
 
+        void fillQueue();
+        AVFrame * fetchQueue(uint64_t pts);
         void readFrame();
 
     protected:
@@ -61,10 +63,14 @@ namespace ofxFFmpeg {
         AVStream *video_stream = NULL;
         AVCodec *video_codec = NULL;
         AVCodecContext *video_context = NULL;
-		AVFrame * frame = NULL;
+		//AVFrame * frame = NULL;
         SwsContext * sws_context = NULL;
 
 		int video_stream_index = -1;
+
+        std::map<uint64_t, AVFrame*> frameQueue;
+        uint64_t frameQueuePts;
+        uint64_t frameQueueDuration;
 
 		bool playing = false;
 		bool frameNew;

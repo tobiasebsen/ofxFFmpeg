@@ -3,10 +3,11 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofLogToConsole();
-	ofSetFrameRate(0);
+	ofSetFrameRate(30);
     
     player.load("fingers.mov");
-    player.setLoopState(OF_LOOP_NONE);
+    //player.load("/Users/tobias/Downloads/Left_2019_0614_150843.mov");
+    //player.setLoopState(OF_LOOP_NONE);
 
     //grabber.setup(1920/2, 1080/2);
 	//grabber.setDesiredFrameRate(30);
@@ -17,12 +18,12 @@ void ofApp::setup(){
     recorder.setHeight(player.getHeight());
     recorder.setFrameRate(30);
     recorder.setBitRate(1000);
-    recorder.start();
+    //recorder.start();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
-    recorder.flush();
+    //recorder.flush();
     recorder.close();
     player.close();
 }
@@ -30,9 +31,11 @@ void ofApp::exit(){
 //--------------------------------------------------------------
 void ofApp::update(){
     
-	player.update();
+    player.play();
+
+    player.update();
     if (player.isFrameNew()) {
-        recorder.write(player.getPixels());
+        //recorder.write(player.getPixels());
     }
     
     //tex.loadData(pix);
@@ -48,11 +51,12 @@ void ofApp::update(){
 void ofApp::draw(){
     //grabber.draw(0, 0);
     player.draw(0, 0);
+    
+    ofDrawBitmapString(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
-
 }
 
 //--------------------------------------------------------------
