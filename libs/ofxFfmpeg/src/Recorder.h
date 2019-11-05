@@ -25,7 +25,8 @@ namespace ofxFFmpeg {
         void setHeight(int height);
         void setFrameRate(float frameRate);
         void setBitRate(int bitRate);
-        void setLevel(int level);
+		void setProfile(int profile);
+		void setLevel(int level);
         void setKeyFrame(int keyFrameRate);
         
         bool start();

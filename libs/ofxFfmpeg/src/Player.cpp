@@ -90,7 +90,8 @@ bool Player::load(string filename) {
     
     sws_context = sws_getContext(width, height, video_context->pix_fmt, width, height, AV_PIX_FMT_RGB24, 0, 0, 0, 0);
 
-	startTime = av_gettime_relative();
+	timeLastFrame = av_gettime_relative();
+	pts = 0;
 
     return true;
 }
@@ -183,12 +184,8 @@ int Player::getTotalNumFrames() const {
 
 void Player::setFrame(int f) {
 	uint64_t ts = ((uint64_t)f) / (av_q2d(video_stream->time_base) * av_q2d(video_stream->r_frame_rate));
-	//ts += video_stream->start_time;
-	//ts *= 0.3;
-	ofLog() << "Seek: " << f << " > " << ts;
 	av_seek_frame(format_context, video_stream_index, ts, AVSEEK_FLAG_BACKWARD);
-	//avformat_seek_file(format_context, video_stream_index, INT64_MIN, ts, INT64_MAX, 0);
-	//avcodec_flush_buffers(video_context);
+
 	readFrame();
 }
 
@@ -223,16 +220,21 @@ void Player::update() {
 
 	frameNew = false;
 
-	frameTime = av_gettime_relative();
+	uint64_t timeNow = av_gettime_relative();
 
-	if (frame == NULL)
-		return;
+	if (playing && video_stream != NULL) {
 
-	uint64_t ptsNow = frameTime - startTime;
-	uint64_t ptsFrame = av_rescale_q(frame->pts, video_stream->time_base, { 1, AV_TIME_BASE });
+		uint64_t timeDelta = timeNow - timeLastFrame;
+		pts += timeDelta * av_q2d(video_stream->time_base);
+		//if (pts > video_stream->duration)
+		
+		ofLog() << pts;
 
-	//if (frame->pts == AV_NOPTS_VALUE || ptsNow > ptsFrame)
-		readFrame();
+		//if (frame->pts == AV_NOPTS_VALUE || ptsNow > ptsFrame)
+		//readFrame();
+	}
+
+	timeLastFrame = timeNow;
 }
 
 bool Player::isFrameNew() const {
@@ -240,17 +242,23 @@ bool Player::isFrameNew() const {
 }
 
 void Player::play() {
+	playing = true;
 }
 
 void Player::stop() {
+	playing = false;
+}
+
+void ofxFFmpeg::Player::setPaused(bool paused) {
+	playing = !paused;
 }
 
 bool Player::isPaused() const {
-	return false;
+	return !playing;
 }
 
 bool Player::isPlaying() const {
-	return true;
+	return playing;
 }
 
 void Player::setLoopState(ofLoopType state) {

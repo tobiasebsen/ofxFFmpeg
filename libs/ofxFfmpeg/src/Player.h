@@ -26,6 +26,7 @@ namespace ofxFFmpeg {
 
 		void play();
 		void stop();
+		void setPaused(bool paused);
 
 		bool isPaused() const;
 		bool isPlaying() const;
@@ -65,10 +66,12 @@ namespace ofxFFmpeg {
 
 		int video_stream_index = -1;
 
+		bool playing = false;
 		bool frameNew;
-		uint64_t frameTime;
-		uint64_t startTime;
-        
+
+		uint64_t timeLastFrame;
+		uint64_t pts;
+
         ofLoopType loopState = OF_LOOP_NORMAL;
 
         ofPixels pixels;

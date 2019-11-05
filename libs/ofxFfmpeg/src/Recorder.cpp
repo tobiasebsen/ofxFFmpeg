@@ -114,6 +114,10 @@ void Recorder::setBitRate(int bitRate) {
     video_context->bit_rate = bitRate;
 }
 //--------------------------------------------------------------
+void ofxFFmpeg::Recorder::setProfile(int profile) {
+	video_context->profile = profile;
+}
+//--------------------------------------------------------------
 void Recorder::setLevel(int level) {
     video_context->level = level;
 }
@@ -184,7 +188,15 @@ bool Recorder::start() {
     return true;
 }
 //--------------------------------------------------------------
-void ofxFFmpeg::Recorder::write(AVFrame * f) {
+void Recorder::stop() {
+	flush();
+	if (format_context) {
+		av_write_trailer(format_context);
+	}
+	close();
+}
+//--------------------------------------------------------------
+void Recorder::write(AVFrame * f) {
 
 	int error;
 	AVPacket packet;
@@ -214,7 +226,12 @@ void ofxFFmpeg::Recorder::write(AVFrame * f) {
 }
 //--------------------------------------------------------------
 void Recorder::write(const ofPixels & pixels) {
-    
+
+	if (frame == NULL) {
+		ofLogError() << "Frame not allocated";
+		return;
+	}
+
     frame->pts = (1.0 / 30) * 90000 * pts;
     pts++;
     
@@ -230,12 +247,13 @@ void Recorder::flush() {
 }
 //--------------------------------------------------------------
 void Recorder::close() {
-	if (format_context) {
-		av_write_trailer(format_context);
-	}
 	if (frame) {
 		av_frame_free(&frame);
 		frame = NULL;
+	}
+	if (video_context) {
+		avcodec_free_context(&video_context);
+		video_context = NULL;
 	}
 	if (format_context) {
 		avformat_free_context(format_context);
