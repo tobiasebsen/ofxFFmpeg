@@ -104,7 +104,7 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxFFmpeg\libs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\Win32;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\x64;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src;..\..\..\addons\ofxFFmpeg\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxFFmpeg\libs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\Win32;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\x64;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src;..\..\..\addons\ofxFFmpeg\src</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <ObjectFileName>$(IntDir)</ObjectFileName>
     </ClCompile>
@@ -146,7 +146,7 @@
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <WarningLevel>Level3</WarningLevel>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxFFmpeg\libs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavdevice;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavfilter;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavformat;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavutil;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libpostproc;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\Win32;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\x64;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src;..\..\..\addons\ofxFFmpeg\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\..\..\addons\ofxFFmpeg\libs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\Win32;..\..\..\addons\ofxFFmpeg\libs\ffmpeg\lib\vs\x64;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg;..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src;..\..\..\addons\ofxFFmpeg\src</AdditionalIncludeDirectories>
       <CompileAs>CompileAsCpp</CompileAs>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ObjectFileName>$(IntDir)</ObjectFileName>
@@ -188,14 +188,20 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoThread.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp" />
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoThread.h" />
     <ClInclude Include="src\ofApp.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h" />

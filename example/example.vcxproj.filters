@@ -22,6 +22,15 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoThread.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -435,6 +444,15 @@
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoThread.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
   </ItemGroup>

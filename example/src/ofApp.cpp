@@ -3,28 +3,29 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofLogToConsole();
-	ofSetFrameRate(30);
+	ofSetFrameRate(60);
     
-    player.load("fingers.mov");
+    //player.load("fingers.mov");
+	player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
     //player.load("/Users/tobias/Downloads/Left_2019_0614_150843.mov");
     //player.setLoopState(OF_LOOP_NONE);
 
     //grabber.setup(1920/2, 1080/2);
 	//grabber.setDesiredFrameRate(30);
 
-	recorder.open("test.mov");
+	/*recorder.open("test.mov");
     recorder.setCodec("libx264");
     recorder.setWidth(player.getWidth());
     recorder.setHeight(player.getHeight());
     recorder.setFrameRate(30);
-    recorder.setBitRate(1000);
+    recorder.setBitRate(1000);*/
     //recorder.start();
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
     //recorder.flush();
-    recorder.close();
+    //recorder.close();
     player.close();
 }
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ofMain.h"
+#include "Reader.h"
+#include "VideoThread.h"
 
 struct AVFormatContext;
 struct AVStream;
@@ -54,12 +56,13 @@ namespace ofxFFmpeg {
 		void setPosition(float pct);
 
         void fillQueue();
-        AVFrame * fetchQueue(uint64_t pts);
         void readFrame();
 
     protected:
 
-        AVFormatContext * format_context = NULL;
+		string filePath;
+
+        /*AVFormatContext * format_context = NULL;
         AVStream *video_stream = NULL;
         AVCodec *video_codec = NULL;
         AVCodecContext *video_context = NULL;
@@ -70,7 +73,11 @@ namespace ofxFFmpeg {
 
         std::map<uint64_t, AVFrame*> frameQueue;
         uint64_t frameQueuePts;
-        uint64_t frameQueueDuration;
+        uint64_t frameQueueDuration;*/
+
+		PacketQueue videoPackets;
+		shared_ptr<Reader> reader;
+		shared_ptr<VideoThread> video;
 
 		bool playing = false;
 		bool frameNew;
