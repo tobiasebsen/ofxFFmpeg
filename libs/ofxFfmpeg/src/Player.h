@@ -77,7 +77,6 @@ namespace ofxFFmpeg {
 
 		PacketQueue videoPackets;
 		shared_ptr<Reader> reader;
-		shared_ptr<VideoThread> video;
 
 		bool playing = false;
 		bool frameNew;

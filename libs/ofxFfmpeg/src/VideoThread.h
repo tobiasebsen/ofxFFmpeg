@@ -6,30 +6,36 @@
 #include "PacketQueue.h"
 
 struct AVCodecContext;
+struct SwsContext;
 
 namespace ofxFFmpeg {
 
 	class VideoThread {
 	public:
-		VideoThread(PacketQueue & videoPackets) : threadObj(&VideoThread::videoThread, this, std::ref(videoPackets)), running(true) {}
+		VideoThread(AVCodecContext * video_context, PacketQueue & vpackets) : threadObj(&VideoThread::videoThread, this, video_context), running(true), videoPackets(vpackets) {}
 		~VideoThread() {
 			stop();
 		}
 		void stop() {
 			running = false;
 			condition.notify_all();
+            videoPackets.notify();
 			threadObj.join();
 		}
 		bool isRunning() {
 			return running;
 		}
 
-		void videoThread(PacketQueue & videoPackets);
+		void videoThread(AVCodecContext * video_context);
 
 	private:
 		std::thread threadObj;
 		std::mutex lock;
 		std::condition_variable condition;
 		bool running = true;
+
+        PacketQueue & videoPackets;
+        
+        SwsContext * sws_context = NULL;
 	};
 }
