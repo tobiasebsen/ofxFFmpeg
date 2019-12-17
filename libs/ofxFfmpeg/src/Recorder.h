@@ -36,8 +36,12 @@ namespace ofxFFmpeg {
 		void write(AVFrame * frame);
 		void flush();
 
+		int getError();
+		string getErrorString();
+
 	protected:
 
+		int error = 0;
 		AVIOContext *io_context = NULL;
 		AVFormatContext *format_context = NULL;
 		AVCodec *video_codec = NULL;

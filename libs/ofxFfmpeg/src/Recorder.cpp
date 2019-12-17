@@ -94,6 +94,7 @@ bool Recorder::setCodec(string codecName) {
     
     if (video_codec->pix_fmts)
         video_context->pix_fmt = video_codec->pix_fmts[0];
+	video_context->gop_size = 15;
     
     return true;
 }
@@ -124,10 +125,11 @@ void Recorder::setLevel(int level) {
 //--------------------------------------------------------------
 void Recorder::setKeyFrame(int key_frame) {
     keyFrameRate = key_frame;
+	video_context->gop_size = key_frame;
 }
 //--------------------------------------------------------------
 bool Recorder::start() {
-    
+
     video_context->time_base.num = video_context->framerate.den;
     video_context->time_base.den = video_context->framerate.num;
     
@@ -135,28 +137,28 @@ bool Recorder::start() {
     video_context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     
     /* Third parameter can be used to pass settings to encoder */
-    if ((avcodec_open2(video_context, video_codec, NULL)) < 0) {
-        ofLogError() << "Cannot open video encoder for stream";
+    if ((error = avcodec_open2(video_context, video_codec, NULL)) < 0) {
+        ofLogError() << "Cannot open video encoder for stream: " << error;
         close();
         return false;
     }
 
     /** Create a new video stream in the output file container. */
     if (!(video_stream = avformat_new_stream(format_context, NULL))) {
-        ofLog() << "Could not create new stream\n";
+        ofLogError() << "Could not create new stream\n";
         close();
         return false;
     }
     video_stream->id = format_context->nb_streams - 1;
     
-    if (avcodec_parameters_from_context(video_stream->codecpar, video_context) < 0) {
+    if ((error = avcodec_parameters_from_context(video_stream->codecpar, video_context)) < 0) {
         ofLogError() << "Failed to copy encoder parameters to output stream";
         close();
         return false;
     }
 
     /* init muxer, write output file header */
-    if ((avformat_write_header(format_context, NULL)) < 0) {
+    if ((error = avformat_write_header(format_context, NULL)) < 0) {
         ofLogError() << "Error occurred when opening output file";
         return false;
     }
@@ -177,7 +179,7 @@ bool Recorder::start() {
      * Allocate the samples of the created frame. This call will make
      * sure that the audio frame can hold as many samples as specified.
      */
-    if ((av_frame_get_buffer(frame, 32)) < 0) {
+    if ((error = av_frame_get_buffer(frame, 32)) < 0) {
         ofLogError() << "Could allocate output frame samples";
         close();
         return false;
@@ -201,7 +203,9 @@ void Recorder::write(AVFrame * f) {
 	int error;
 	AVPacket packet;
 
-    frame->key_frame = (n_frame % keyFrameRate) == 0 ? 1 : 0;
+	if (frame) {
+		frame->key_frame = (n_frame % keyFrameRate) == 0 ? 1 : 0;
+	}
     n_frame++;
 
 	error = avcodec_send_frame(video_context, f);
@@ -245,6 +249,19 @@ void Recorder::write(const ofPixels & pixels) {
 void Recorder::flush() {
 	write(NULL);
 }
+
+//--------------------------------------------------------------
+int ofxFFmpeg::Recorder::getError() {
+	return error;
+}
+
+//--------------------------------------------------------------
+string ofxFFmpeg::Recorder::getErrorString() {
+	char errstr[AV_ERROR_MAX_STRING_SIZE];
+	av_strerror(error, errstr, sizeof(errstr));
+	return string(errstr);
+}
+
 //--------------------------------------------------------------
 void Recorder::close() {
 	if (frame) {
