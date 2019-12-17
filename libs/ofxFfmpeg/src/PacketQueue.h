@@ -12,10 +12,14 @@ namespace ofxFFmpeg {
 	public:
 
 		void push(AVPacket * packet);
-
-		AVPacket * pop(uint64_t pts);
+		AVPacket * pop();
+        
+        size_t size() {
+            return queue.size();
+        }
 
 		void wait();
+        void notify();
 
 	private:
 		std::deque<AVPacket*> queue;

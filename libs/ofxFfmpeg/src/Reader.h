@@ -2,8 +2,10 @@
 
 #include <thread>
 #include <mutex>
+#include <queue>
 
 #include "PacketQueue.h"
+#include "VideoThread.h"
 
 struct AVFormatContext;
 struct AVStream;
@@ -17,6 +19,7 @@ namespace ofxFFmpeg {
 			stop();
 		}
 		void stop() {
+            video.reset();
 			running = false;
 			condition.notify_all();
 			threadObj.join();
@@ -26,6 +29,10 @@ namespace ofxFFmpeg {
 		}
 
 		void readThread(const char * filename, PacketQueue & videoQueue);
+        
+        uint64_t getLastVideoTime() {
+            return lastVideoPts;
+        }
 
 		void read(uint64_t pts);
 
@@ -43,5 +50,21 @@ namespace ofxFFmpeg {
 
 		AVFormatContext * format_context = NULL;
 		AVStream * video_stream = NULL;
+        
+        uint64_t lastVideoPts;
+        
+        class Action {
+        public:
+            enum _type {
+                READ,
+                SEEK
+            } type;
+            uint64_t pts;
+            Action(_type t, uint64_t p) : type(t), pts(p) {}
+        };
+        
+        std::queue<Action> actions;
+        
+        std::shared_ptr<VideoThread> video;
 	};
 }

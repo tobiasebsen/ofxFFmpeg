@@ -5,10 +5,11 @@ void ofApp::setup(){
 	ofLogToConsole();
 	ofSetFrameRate(60);
     
-    //player.load("fingers.mov");
-	player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
+    player.load("fingers.mov");
+	//player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
     //player.load("/Users/tobias/Downloads/Left_2019_0614_150843.mov");
     //player.setLoopState(OF_LOOP_NONE);
+    player.play();
 
     //grabber.setup(1920/2, 1080/2);
 	//grabber.setDesiredFrameRate(30);

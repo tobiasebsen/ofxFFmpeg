@@ -26,7 +26,6 @@ bool Player::load(string filename) {
 	filePath = ofFilePath::getAbsolutePath(filename);
 
 	reader = shared_ptr<Reader>(new Reader(filePath.c_str(), videoPackets));
-	video = shared_ptr<VideoThread>(new VideoThread(videoPackets));
 
 	return true;
 
@@ -237,7 +236,7 @@ void Player::setPosition(float pct) {
 void Player::close() {
 
 	reader.reset();
-	video.reset();
+	//video.reset();
 }
 
 bool Player::isLoaded() const {
@@ -261,8 +260,8 @@ void Player::update() {
 		uint64_t timeDelta = timeNow - timeLastFrame;
 		pts += timeDelta;//(timeDelta / av_q2d(video_stream->time_base)) / AV_TIME_BASE;
 
-		reader->read(pts + 0);
-		
+		reader->read(pts + AV_TIME_BASE * 0.25);
+
         //ofLog() << pts;
         /*if (pts > video_stream->duration) {
             if (loopState == OF_LOOP_NORMAL)

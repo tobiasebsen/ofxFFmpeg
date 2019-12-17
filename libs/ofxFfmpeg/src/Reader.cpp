@@ -20,6 +20,8 @@ void Reader::readThread(const char * filename, PacketQueue & videoPackets) {
 	AVCodec * video_codec = NULL;
 	AVCodecContext * video_context = NULL;
 	int audio_stream_index = -1;
+    
+    lastVideoPts == AV_NOPTS_VALUE;
 
 	if ((ret = avformat_open_input(&format_context, filename, NULL, NULL)) < 0) {
 		av_log(NULL, AV_LOG_ERROR, "Cannot open input file\n");
@@ -60,22 +62,43 @@ void Reader::readThread(const char * filename, PacketQueue & videoPackets) {
 		av_log(NULL, AV_LOG_ERROR, "Cannot open codec context\n");
 		goto cleanup;
 	}
+    
+    video = std::shared_ptr<VideoThread>(new VideoThread(video_context, videoPackets));
 
 	AVPacket packet;
 	av_init_packet(&packet);
-
+    
 	while (running) {
 
-		ret = av_read_frame(format_context, &packet);
-		if (ret >= 0) {
+        if (actions.size() > 0) {
+            Action & action = actions.front();
+            
+            switch (action.type) {
 
-			if (packet.stream_index == video_stream_index) {
-				videoPackets.push(&packet);
-			}
-			if (packet.stream_index == audio_stream_index) {
-			}
-		}
-		av_packet_unref(&packet);
+                case Action::READ: {
+                    
+                    ret = av_read_frame(format_context, &packet);
+                    if (ret >= 0) {
+                        
+                        if (packet.stream_index == video_stream_index) {
+                            videoPackets.push(&packet);
+                            av_log(NULL, AV_LOG_INFO, "%d\n", videoPackets.size());
+                            lastVideoPts = av_rescale_q(packet.pts + packet.duration - 1, video_stream->time_base, { 1, AV_TIME_BASE });
+                        }
+                        if (packet.stream_index == audio_stream_index) {
+                        }
+                    }
+                    av_packet_unref(&packet);
+                }
+                break;
+                    
+                case Action::SEEK:
+                    break;
+
+                default:
+                    break;
+            }
+        }
 
 		// Lock scope
 		{
@@ -94,23 +117,26 @@ cleanup:
 	avformat_close_input(&format_context);
 }
 
-void ofxFFmpeg::Reader::read(uint64_t pts) {
+void Reader::read(uint64_t pts) {
 	std::unique_lock<std::mutex> locker(lock);
-	condition.notify_one();
+    if (pts > lastVideoPts || lastVideoPts == AV_NOPTS_VALUE) {
+        actions.emplace(Action::READ, pts);
+        condition.notify_one();
+    }
 }
 
-int ofxFFmpeg::Reader::getWidth() {
+int Reader::getWidth() {
 	return video_stream ? video_stream->codecpar->width : 0;
 }
 
-int ofxFFmpeg::Reader::getHeight() {
+int Reader::getHeight() {
 	return video_stream ? video_stream->codecpar->height : 0;
 }
 
-int ofxFFmpeg::Reader::getTotalNumFrames() const {
+int Reader::getTotalNumFrames() const {
 	return video_stream ? video_stream->nb_frames : 0;
 }
 
-float ofxFFmpeg::Reader::getDuration() const {
+float Reader::getDuration() const {
 	return format_context ? (format_context->duration * av_q2d({ 1,AV_TIME_BASE })) : 0;
 }
