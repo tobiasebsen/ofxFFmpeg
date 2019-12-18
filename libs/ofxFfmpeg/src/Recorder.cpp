@@ -203,9 +203,9 @@ void Recorder::write(AVFrame * f) {
 	int error;
 	AVPacket packet;
 
-	if (frame) {
+	/*if (frame) {
 		frame->key_frame = (n_frame % keyFrameRate) == 0 ? 1 : 0;
-	}
+	}*/
     n_frame++;
 
 	error = avcodec_send_frame(video_context, f);
@@ -216,7 +216,7 @@ void Recorder::write(AVFrame * f) {
 
 	av_init_packet(&packet);
 	packet.stream_index = video_stream->index;
-	packet.flags |= AV_PKT_FLAG_KEY;
+	//packet.flags |= AV_PKT_FLAG_KEY;
 	packet.pos = -1;
     
 	while (error >= 0) {
