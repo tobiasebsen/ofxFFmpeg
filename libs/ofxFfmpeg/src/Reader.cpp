@@ -82,7 +82,7 @@ void Reader::readThread(const char * filename, PacketQueue & videoPackets) {
                         
                         if (packet.stream_index == video_stream_index) {
                             videoPackets.push(&packet);
-                            av_log(NULL, AV_LOG_INFO, "%d\n", videoPackets.size());
+                            av_log(NULL, AV_LOG_INFO, "%d\n", (int)videoPackets.size());
                             lastVideoPts = av_rescale_q(packet.pts + packet.duration - 1, video_stream->time_base, { 1, AV_TIME_BASE });
                         }
                         if (packet.stream_index == audio_stream_index) {

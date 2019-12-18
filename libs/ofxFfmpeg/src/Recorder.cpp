@@ -12,7 +12,6 @@ using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
 bool Recorder::init() {
-	int error;
 
 	/** Create a new format context for the output container format. */
 	if (!(format_context = avformat_alloc_context())) {
@@ -24,8 +23,6 @@ bool Recorder::init() {
 
 //--------------------------------------------------------------
 bool Recorder::open(const string filename) {
-
-	int error;
 
 	close();
 	init();
@@ -48,9 +45,11 @@ bool Recorder::open(const string filename) {
 		return false;
 	}
 
-	av_strlcpy(format_context->filename, filePath.c_str(), sizeof(format_context->filename));
+	format_context->url = av_strdup(filePath.c_str());
 
 	av_dump_format(format_context, 0, filePath.c_str(), 1);
+    
+    return true;
 }
 
 //--------------------------------------------------------------
@@ -200,7 +199,6 @@ void Recorder::stop() {
 //--------------------------------------------------------------
 void Recorder::write(AVFrame * f) {
 
-	int error;
 	AVPacket packet;
 
 	if (frame) {
