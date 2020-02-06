@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
+
 #include "Reader.h"
-#include "VideoThread.h"
+#include "Decoder.h"
+#include "VideoScaler.h"
 
 struct AVFormatContext;
 struct AVStream;
@@ -75,7 +77,7 @@ namespace ofxFFmpeg {
         uint64_t frameQueuePts;
         uint64_t frameQueueDuration;*/
 
-		PacketQueue videoPackets;
+		//PacketQueue videoPackets;
 		shared_ptr<Reader> reader;
 
 		bool playing = false;

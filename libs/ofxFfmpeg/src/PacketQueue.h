@@ -4,19 +4,21 @@
 #include <stdint.h>
 #include <mutex>
 
+#include "Reader.h"
+
 struct AVPacket;
 
 namespace ofxFFmpeg {
 
-	class PacketQueue {
+    class PacketQueue : public PacketReceiver, public PacketSupplier {
 	public:
-
-		void push(AVPacket * packet);
-		AVPacket * pop();
         
-        size_t size() {
-            return queue.size();
-        }
+        //bool readyPacket();
+        void receivePacket(AVPacket * packet);
+        
+        AVPacket * supplyPacket();
+
+        size_t size() { return queue.size(); }
 
 		void wait();
         void notify();

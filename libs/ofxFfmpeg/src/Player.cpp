@@ -25,7 +25,7 @@ bool Player::load(string filename) {
 	
 	filePath = ofFilePath::getAbsolutePath(filename);
 
-	reader = shared_ptr<Reader>(new Reader(filePath.c_str(), videoPackets));
+	//reader = shared_ptr<Reader>(new Reader(filePath.c_str(), videoPackets));
 
 	return true;
 
@@ -187,11 +187,11 @@ void Player::draw(float x, float y) const {
 }
 
 float Player::getWidth() const {
-	return reader ? reader->getWidth() : 0;
+	return 0;
 }
 
 float Player::getHeight() const {
-    return reader ? reader->getHeight() : 0;
+    return 0;
 }
 
 bool Player::setPixelFormat(ofPixelFormat pixelFormat) {
@@ -219,7 +219,7 @@ float Player::getDuration() const {
 }
 
 int Player::getTotalNumFrames() const {
-	return reader ? reader->getTotalNumFrames() : 0;
+	return 0;
 }
 
 void Player::setFrame(int f) {
@@ -260,7 +260,7 @@ void Player::update() {
 		uint64_t timeDelta = timeNow - timeLastFrame;
 		pts += timeDelta;//(timeDelta / av_q2d(video_stream->time_base)) / AV_TIME_BASE;
 
-		reader->read(pts + AV_TIME_BASE * 0.25);
+		//reader->read(pts + AV_TIME_BASE * 0.25);
 
         //ofLog() << pts;
         /*if (pts > video_stream->duration) {
