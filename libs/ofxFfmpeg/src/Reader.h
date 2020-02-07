@@ -4,67 +4,71 @@
 #include <mutex>
 #include <queue>
 
-#include "PacketQueue.h"
-#include "VideoThread.h"
-
 struct AVFormatContext;
 struct AVStream;
+struct AVCodec;
+struct AVCodecContext;
+struct AVPacket;
 
 namespace ofxFFmpeg {
+    
+    class PacketSupplier {
+    public:
+        virtual AVPacket * supplyPacket() = 0;
+        void free(AVPacket * packet);
+    };
+    
+    class PacketReceiver {
+    public:
+        virtual bool readyPacket() { return true; }
+        virtual void receivePacket(AVPacket *packet) = 0;
+    };
 
-	class Reader {
+    class Reader : public PacketSupplier {
 	public:
-		Reader(const char * filename, PacketQueue & videoQueue) : threadObj(&Reader::readThread, this, filename, std::ref(videoQueue) ), running(true) {}
 		~Reader() {
-			stop();
+            close();
 		}
-		void stop() {
-            video.reset();
-			running = false;
-			condition.notify_all();
-			threadObj.join();
-		}
+
+        /////////////////////////////////////////////////
+
+        bool open(std::string filename);
+        void close();
+
+		/////////////////////////////////////////////////
+
+		bool read(AVPacket * packet);
+		bool read(PacketReceiver * packet);
+		AVPacket * supplyPacket();
+        int getStreamIndex(AVPacket * packet);
+
+        /////////////////////////////////////////////////
+
+        unsigned int getNumStreams();
+        int getVideoStreamIndex();
+        int getAudioStreamIndex();
+        AVStream * getStream(int stream_index);
+
+        /////////////////////////////////////////////////
+
+        bool start(PacketReceiver * receiver);
+        void stop();
 		bool isRunning() {
 			return running;
 		}
+		void readThread(PacketReceiver * receiver);
+        void notify();
 
-		void readThread(const char * filename, PacketQueue & videoQueue);
-        
-        uint64_t getLastVideoTime() {
-            return lastVideoPts;
-        }
-
-		void read(uint64_t pts);
-
-		int getWidth();
-		int getHeight();
-
-		int getTotalNumFrames() const;
 		float getDuration() const;
 
-	private:
-		std::thread threadObj;
-		std::mutex lock;
-		std::condition_variable condition;
-		bool running;
+	protected:
+        int error;
 
-		AVFormatContext * format_context = NULL;
-		AVStream * video_stream = NULL;
+        AVFormatContext * format_context = NULL;
         
-        uint64_t lastVideoPts;
-        
-        class Action {
-        public:
-            enum _type {
-                READ,
-                SEEK
-            } type;
-            uint64_t pts;
-            Action(_type t, uint64_t p) : type(t), pts(p) {}
-        };
-        
-        std::queue<Action> actions;
-        
-        std::shared_ptr<VideoThread> video;
+        std::thread * threadObj;
+        std::mutex lock;
+        std::condition_variable condition;
+        bool running;
 	};
 }

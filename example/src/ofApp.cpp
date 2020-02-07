@@ -5,108 +5,98 @@ void ofApp::setup(){
 	ofLogToConsole();
 	ofSetFrameRate(60);
     
-    player.load("fingers.mov");
-	//player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
-    //player.load("/Users/tobias/Downloads/Left_2019_0614_150843.mov");
-    //player.setLoopState(OF_LOOP_NONE);
-    player.play();
+    //reader.open(ofFilePath::getAbsolutePath("fingers.mov"));
+    //reader.open(ofFilePath::getAbsolutePath("SampleHap.mov"));
+    //player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
+    //reader.open("/Users/tobias/Downloads/Sky Q Brand Reveal 35 Master TV (1080p) (1).mov");
+	player.load("C:/Users/tobias/Downloads/Setup-Public-perception.mp4");
+    
+    /*ofLog() << reader.getDuration() << " s";
+    ofLog() << reader.getNumStreams() << " streams";
+    
+    if (video.open(reader)) {
 
-    //grabber.setup(1920/2, 1080/2);
-	//grabber.setDesiredFrameRate(30);
+        ofLog() << video.getTotalNumFrames() << " frames";
+        ofLog() << video.getWidth() << "x" << video.getHeight();
 
-	/*recorder.open("test.mov");
-    recorder.setCodec("libx264");
-    recorder.setWidth(player.getWidth());
-    recorder.setHeight(player.getHeight());
-    recorder.setFrameRate(30);
-    recorder.setBitRate(1000);*/
-    //recorder.start();
+        pix.allocate(video.getWidth(), video.getHeight(), 3);
+        
+        scaler.setup(video);
+    }
+    
+    if (audio.open(reader)) {
+
+    }
+
+    reader.start(this);*/
+    //video.start(&reader, this);
 }
 
 //--------------------------------------------------------------
 void ofApp::exit(){
     //recorder.flush();
     //recorder.close();
-    player.close();
+    //player.close();
+    //video.close();
+    //reader.close();
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     
-    player.play();
-
-    player.update();
-    if (player.isFrameNew()) {
-        //recorder.write(player.getPixels());
-    }
-    
     //tex.loadData(pix);
-    
-    /*grabber.update();
-    if (grabber.isFrameNew()) {
-		ofPixels & pixels = grabber.getPixels();
-		recorder.write(pixels);
-	}*/
+	player.update();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    //grabber.draw(0, 0);
-    player.draw(0, 0);
+    
+    /*if (tex.isAllocated())
+        tex.draw(0, 0);*/
+
+	player.draw(0, 0);
     
     ofDrawBitmapString(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
+    ofDrawBitmapString(ofToString(fps.getFps(),1) + " fps", 20, 40);
 }
 
 //--------------------------------------------------------------
-void ofApp::keyPressed(int key){
+void ofApp::receivePacket(AVPacket *pkt) {
+
+    fps.newFrame();
+    
+    uint64_t after = ofGetElapsedTimeMicros();
+    //ofLog() << "Read:   " << (after-before) << " us";
+    
+    if (video.match(pkt)) {
+
+         uint64_t before = ofGetElapsedTimeMicros();
+         video.send(pkt);
+         after = ofGetElapsedTimeMicros();
+         ofLog() << "Send: " << (after-before) << " us";
+        
+         before = after;
+         auto frm = video.receive();
+         if (frm) {
+             after = ofGetElapsedTimeMicros();
+             ofLog() << "Receive: " << (after-before) << " us";
+             
+             before = after;
+             scaler.scale(frm, pix.getData());
+             after = ofGetElapsedTimeMicros();
+             ofLog() << "Scale: " << (after-before) << " us";
+             
+             //tex.loadData(pix);
+             
+             video.free(frm);
+         }
+     }
 }
 
 //--------------------------------------------------------------
-void ofApp::keyReleased(int key){
+void ofApp::receiveFrame(AVFrame * frame) {
 
-}
+    fps.newFrame();
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y ){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseEntered(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseExited(int x, int y){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+    scaler.scale(frame, pix.getData());
 }

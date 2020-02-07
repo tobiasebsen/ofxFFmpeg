@@ -1,8 +1,10 @@
 #pragma once
 
 #include "ofMain.h"
+
 #include "Reader.h"
-#include "VideoThread.h"
+#include "Decoder.h"
+#include "VideoScaler.h"
 
 struct AVFormatContext;
 struct AVStream;
@@ -13,7 +15,7 @@ struct SwsContext;
 
 namespace ofxFFmpeg {
 
-    class Player : public ofBaseVideoPlayer {
+    class Player : public PacketReceiver, public FrameReceiver, public ofBaseVideoPlayer {
     public:
 		Player();
 		~Player();
@@ -22,6 +24,9 @@ namespace ofxFFmpeg {
         void close();
 		bool isLoaded() const;
 		bool isInitialized() const;
+
+		void receivePacket(AVPacket * packet);
+		void receiveFrame(AVFrame * frame);
 
 		void update();
 		bool isFrameNew() const;
@@ -55,28 +60,13 @@ namespace ofxFFmpeg {
 		void setFrame(int frame);
 		void setPosition(float pct);
 
-        void fillQueue();
-        void readFrame();
-
     protected:
 
 		string filePath;
 
-        /*AVFormatContext * format_context = NULL;
-        AVStream *video_stream = NULL;
-        AVCodec *video_codec = NULL;
-        AVCodecContext *video_context = NULL;
-		//AVFrame * frame = NULL;
-        SwsContext * sws_context = NULL;
-
-		int video_stream_index = -1;
-
-        std::map<uint64_t, AVFrame*> frameQueue;
-        uint64_t frameQueuePts;
-        uint64_t frameQueueDuration;*/
-
-		PacketQueue videoPackets;
-		shared_ptr<Reader> reader;
+		ofxFFmpeg::Reader reader;
+		ofxFFmpeg::VideoDecoder video;
+		ofxFFmpeg::VideoScaler scaler;
 
 		bool playing = false;
 		bool frameNew;

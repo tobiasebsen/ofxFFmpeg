@@ -7,14 +7,14 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
-void PacketQueue::push(AVPacket * packet) {
-	std::lock_guard<std::mutex> locker(lock);
+void PacketQueue::receivePacket(AVPacket *packet) {
+    std::lock_guard<std::mutex> locker(lock);
     AVPacket * p = av_packet_clone(packet);
-	queue.emplace_back(p);
+    queue.emplace_back(p);
     condition.notify_one();
 }
 
-AVPacket * PacketQueue::pop() {
+AVPacket * PacketQueue::supplyPacket() {
     std::unique_lock<std::mutex> locker(lock);
     condition.wait(locker);
     if (queue.size() > 0) {
