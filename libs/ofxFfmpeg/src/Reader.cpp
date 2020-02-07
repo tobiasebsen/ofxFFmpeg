@@ -116,15 +116,10 @@ void Reader::readThread(PacketReceiver * receiver) {
     
 	while (running) {
         
-        if (receiver->readyPacket()) {
-            AVPacket * packet = supplyPacket();
-            if (packet) {
-                receiver->receivePacket(packet);
-                av_packet_unref(packet);
-            }
-        }
-        else {
-            // wait
+        AVPacket * packet = supplyPacket();
+        if (packet) {
+            receiver->receivePacket(packet);
+            av_packet_unref(packet);
         }
     }
 }

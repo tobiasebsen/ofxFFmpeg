@@ -11,12 +11,21 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
-void VideoScaler::setup(int width, int height, int pix_fmt) {
+bool VideoScaler::setup(int width, int height, int pix_fmt) {
+	clear();
     sws_context = sws_getContext(width, height, (enum AVPixelFormat)pix_fmt, width, height, AV_PIX_FMT_RGB24, 0, 0, 0, 0);
+	return sws_context != NULL;
 }
 
-void VideoScaler::setup(Decoder & decoder) {
-    setup(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat());
+bool VideoScaler::setup(VideoDecoder & decoder) {
+    return setup(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat());
+}
+
+void VideoScaler::clear() {
+	if (sws_context) {
+		sws_freeContext(sws_context);
+		sws_context = NULL;
+	}
 }
 
 bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData) {

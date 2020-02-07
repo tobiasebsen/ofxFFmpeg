@@ -61,14 +61,16 @@ namespace ofxFFmpeg {
     
     class VideoDecoder : public Decoder {
     public:
-        int getWidth();
-        int getHeight();
+		bool open(Reader & reader);
+        int getWidth() const;
+        int getHeight() const;
         int getPixelFormat() const;
     };
     
     class AudioDecoder : public Decoder {
     public:
-        int getNumChannels();
-        int getSampleRate();
+		bool open(Reader & reader);
+		int getNumChannels() const;
+        int getSampleRate() const;
     };
 }

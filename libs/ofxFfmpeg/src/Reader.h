@@ -34,8 +34,12 @@ namespace ofxFFmpeg {
 
         bool open(std::string filename);
         void close();
-        bool read(AVPacket * packet);
-        AVPacket * supplyPacket();
+
+		/////////////////////////////////////////////////
+
+		bool read(AVPacket * packet);
+		bool read(PacketReceiver * packet);
+		AVPacket * supplyPacket();
         int getStreamIndex(AVPacket * packet);
 
         /////////////////////////////////////////////////

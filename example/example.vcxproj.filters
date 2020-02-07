@@ -16,7 +16,10 @@
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp">
       <Filter>addons\ofxFFmpeg\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp">
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp">
@@ -25,10 +28,10 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp">
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Recorder.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoThread.cpp">
+    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -440,7 +443,10 @@
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\version.h">
       <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libswscale</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.h">
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Decoder.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h">
@@ -449,10 +455,13 @@
     <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h">
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Recorder.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoThread.h">
+    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\FrameCache.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
   </ItemGroup>

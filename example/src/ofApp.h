@@ -19,8 +19,8 @@ public:
     ofxFFmpeg::Player player;
     ofxFFmpeg::Reader reader;
     ofxFFmpeg::PacketQueue packetQueue;
-    ofxFFmpeg::Decoder video;
-    ofxFFmpeg::Decoder audio;
+    ofxFFmpeg::VideoDecoder video;
+    ofxFFmpeg::AudioDecoder audio;
     ofxFFmpeg::VideoScaler scaler;
 
     ofxFFmpeg::Recorder recorder;

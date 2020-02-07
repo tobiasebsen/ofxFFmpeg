@@ -140,12 +140,21 @@ void Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver) 
 }
 
 //--------------------------------------------------------------
-int VideoDecoder::getWidth() {
+bool VideoDecoder::open(Reader & reader) {
+	int stream_index = reader.getVideoStreamIndex();
+	if (stream_index == -1)
+		return false;
+	AVStream * stream = reader.getStream(stream_index);
+	return Decoder::open(stream);
+}
+
+//--------------------------------------------------------------
+int VideoDecoder::getWidth() const {
     return stream->codecpar->width;
 }
 
 //--------------------------------------------------------------
-int VideoDecoder::getHeight() {
+int VideoDecoder::getHeight() const {
     return stream->codecpar->height;
 }
 
@@ -154,12 +163,20 @@ int VideoDecoder::getPixelFormat() const {
     return codec_context->pix_fmt;
 }
 
+bool ofxFFmpeg::AudioDecoder::open(Reader & reader) {
+	int stream_index = reader.getAudioStreamIndex();
+	if (stream_index == -1)
+		return false;
+	AVStream * stream = reader.getStream(stream_index);
+	return Decoder::open(stream);
+}
+
 //--------------------------------------------------------------
-int AudioDecoder::getNumChannels() {
+int AudioDecoder::getNumChannels() const {
     return stream->codecpar->channels;
 }
 
 //--------------------------------------------------------------
-int AudioDecoder::getSampleRate() {
+int AudioDecoder::getSampleRate() const {
     return stream->codecpar->sample_rate;
 }

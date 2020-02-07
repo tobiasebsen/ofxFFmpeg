@@ -188,20 +188,24 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp" />
-    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoThread.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Recorder.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
     <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp" />
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Decoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\FrameCache.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoThread.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Recorder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h" />
     <ClInclude Include="src\ofApp.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h" />
@@ -319,7 +323,6 @@
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswresample\version.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\swscale.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libswscale\version.h" />
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ofxFfmpeg\src\Recorder.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="$(OF_ROOT)\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">

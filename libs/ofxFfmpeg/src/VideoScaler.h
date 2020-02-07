@@ -13,14 +13,15 @@ namespace ofxFFmpeg {
     
     class PixelReceiver {
     public:
-        void receivePixels();
+        virtual void receivePixels(const uint8_t * pixelData) = 0;
     };
 
     class VideoScaler {
     public:
 
-        void setup(int width, int height, int pix_fmt);
-        void setup(Decoder & decoder);
+        bool setup(int width, int height, int pix_fmt);
+        bool setup(VideoDecoder & decoder);
+		void clear();
 
         bool scale(AVFrame * frame, const uint8_t * pixelData);
         uint8_t * scale(AVFrame * frame);
@@ -31,7 +32,7 @@ namespace ofxFFmpeg {
         void scaleThread();
 
     private:
-        SwsContext * sws_context;
+        SwsContext * sws_context = NULL;
         const uint8_t * pixelData;
     };
 }
