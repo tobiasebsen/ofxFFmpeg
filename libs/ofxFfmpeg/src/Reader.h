@@ -22,6 +22,7 @@ namespace ofxFFmpeg {
     public:
         virtual bool readyPacket() { return true; }
         virtual void receivePacket(AVPacket *packet) = 0;
+		virtual void endRead() {}
     };
 
     class Reader : public PacketSupplier {
@@ -33,6 +34,7 @@ namespace ofxFFmpeg {
         /////////////////////////////////////////////////
 
         bool open(std::string filename);
+		bool isOpen() const;
         void close();
 
 		/////////////////////////////////////////////////
@@ -66,9 +68,9 @@ namespace ofxFFmpeg {
 
         AVFormatContext * format_context = NULL;
         
-        std::thread * threadObj;
+        std::thread * threadObj = NULL;
         std::mutex lock;
         std::condition_variable condition;
-        bool running;
+        bool running = false;
 	};
 }

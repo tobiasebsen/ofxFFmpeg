@@ -7,7 +7,6 @@
 #include "PacketQueue.h"
 
 struct AVStream;
-struct AVCodec;
 struct AVCodecContext;
 struct AVFrame;
 
@@ -15,7 +14,7 @@ namespace ofxFFmpeg {
     
     class FrameReceiver {
     public:
-        virtual void receiveFrame(AVFrame * frame) = 0;
+        virtual void receiveFrame(AVFrame * frame, int stream_index) = 0;
     };
 
 	class Decoder {
@@ -36,7 +35,8 @@ namespace ofxFFmpeg {
         void free(AVFrame * frame);
 
         bool decode(AVPacket * packet, FrameReceiver * receiver);
-        
+		bool flush(FrameReceiver * receiver);
+
         /////////////////////////////////////////////////
 
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);
@@ -55,7 +55,6 @@ namespace ofxFFmpeg {
 		bool running = false;
 
         AVStream * stream = NULL;
-        AVCodec * codec = NULL;
         AVCodecContext * codec_context = NULL;
 	};
     

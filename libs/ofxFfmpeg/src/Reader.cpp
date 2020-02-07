@@ -14,6 +14,7 @@ using namespace ofxFFmpeg;
 //--------------------------------------------------------------
 void PacketSupplier::free(AVPacket *packet) {
     av_packet_unref(packet);
+	av_packet_free(&packet);
 }
 
 //--------------------------------------------------------------
@@ -30,6 +31,11 @@ bool Reader::open(std::string filename) {
     }
     
     return true;
+}
+
+//--------------------------------------------------------------
+bool ofxFFmpeg::Reader::isOpen() const {
+	return format_context != NULL;
 }
 
 //--------------------------------------------------------------
@@ -105,9 +111,10 @@ bool Reader::start(PacketReceiver * receiver) {
 
 //--------------------------------------------------------------
 void Reader::stop() {
-    if (running) {
+    if (running && threadObj) {
         running = false;
-        threadObj->join();
+		if (threadObj->joinable())
+	        threadObj->join();
     }
 }
 
@@ -121,6 +128,9 @@ void Reader::readThread(PacketReceiver * receiver) {
             receiver->receivePacket(packet);
             av_packet_unref(packet);
         }
+		else if (error == AVERROR_EOF) {
+			receiver->endRead();
+		}
     }
 }
 
@@ -132,5 +142,5 @@ void Reader::notify() {
 
 //--------------------------------------------------------------
 float Reader::getDuration() const {
-	return format_context ? (format_context->duration * av_q2d({ 1,AV_TIME_BASE })) : 0;
+	return format_context ? (format_context->duration * av_q2d({ 1, AV_TIME_BASE })) : 0;
 }

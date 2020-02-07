@@ -41,16 +41,27 @@ void Player::receivePacket(AVPacket * packet) {
 	}
 }
 
-void Player::receiveFrame(AVFrame * frame) {
+void ofxFFmpeg::Player::endRead() {
+	video.flush(this);
+}
 
-	scaler.scale(frame, pixels.getData());
-	frameNew = true;
+void Player::receiveFrame(AVFrame * frame, int stream_index) {
+
+	if (stream_index == video.getStreamIndex()) {
+		scaler.scale(frame, pixels.getData());
+		pixelsDirty = true;
+	}
 }
 
 void Player::update() {
 
-	if (frameNew) {
+	if (pixelsDirty) {
 		texture.loadData(pixels);
+		pixelsDirty = false;
+		frameNew = true;
+	}
+	else {
+		frameNew = false;
 	}
 }
 
@@ -90,7 +101,7 @@ int Player::getCurrentFrame() const {
 }
 
 float Player::getDuration() const {
-	return 0;
+	return reader.getDuration();
 }
 
 int Player::getTotalNumFrames() const {
@@ -106,7 +117,7 @@ void Player::setPosition(float pct) {
 }
 
 bool Player::isLoaded() const {
-	return false;
+	return reader.isOpen();
 }
 
 bool Player::isInitialized() const {

@@ -26,7 +26,8 @@ namespace ofxFFmpeg {
 		bool isInitialized() const;
 
 		void receivePacket(AVPacket * packet);
-		void receiveFrame(AVFrame * frame);
+		void endRead();
+		void receiveFrame(AVFrame * frame, int stream_index);
 
 		void update();
 		bool isFrameNew() const;
@@ -69,9 +70,9 @@ namespace ofxFFmpeg {
 		ofxFFmpeg::VideoScaler scaler;
 
 		bool playing = false;
-		bool frameNew;
+		bool pixelsDirty = false;
+		bool frameNew = false;
 
-		uint64_t timeLastFrame;
 		uint64_t pts;
 
         ofLoopType loopState = OF_LOOP_NORMAL;

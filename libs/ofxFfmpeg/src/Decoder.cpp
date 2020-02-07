@@ -16,7 +16,7 @@ bool Decoder::open(AVStream * stream) {
 
     this->stream = stream;
     
-    codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    AVCodec * codec = avcodec_find_decoder(stream->codecpar->codec_id);
     if (codec == NULL) {
         av_log(NULL, AV_LOG_ERROR, "Codec not found\n");
         return false;
@@ -44,6 +44,7 @@ void Decoder::close() {
         avcodec_close(codec_context);
         codec_context = NULL;
     }
+	stream = NULL;
 }
 
 //--------------------------------------------------------------
@@ -53,7 +54,7 @@ int Decoder::getTotalNumFrames() const {
 
 //--------------------------------------------------------------
 int Decoder::getStreamIndex() const {
-    return stream->index;
+    return stream ? stream->index : -1;
 }
 
 //--------------------------------------------------------------
@@ -64,7 +65,6 @@ bool Decoder::match(AVPacket * packet) {
 //--------------------------------------------------------------
 bool Decoder::send(AVPacket *packet) {
     error = avcodec_send_packet(codec_context, packet);
-    av_packet_unref(packet);
     return error >= 0;
 }
 
@@ -96,13 +96,18 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
         AVFrame * frame = NULL;
         while ((frame = receive()) != NULL) {
 
-            receiver->receiveFrame(frame);
+            receiver->receiveFrame(frame, stream->index);
 
-            av_frame_unref(frame);
+            free(frame);
         }
         return true;
     }
     return false;
+}
+
+//--------------------------------------------------------------
+bool ofxFFmpeg::Decoder::flush(FrameReceiver * receiver) {
+	return decode(NULL, receiver);
 }
 
 //--------------------------------------------------------------
