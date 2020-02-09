@@ -3,6 +3,7 @@
 extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
+#include "libavutil/hwcontext.h"
 #include "libavutil/avstring.h"
 #include "libavutil/opt.h"
 #include "libavutil/time.h"
@@ -45,16 +46,6 @@ void Decoder::close() {
         codec_context = NULL;
     }
 	stream = NULL;
-}
-
-//--------------------------------------------------------------
-int Decoder::getTotalNumFrames() const {
-    return stream->nb_frames;
-}
-
-//--------------------------------------------------------------
-int Decoder::getStreamIndex() const {
-    return stream ? stream->index : -1;
 }
 
 //--------------------------------------------------------------
@@ -145,6 +136,26 @@ void Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver) 
 }
 
 //--------------------------------------------------------------
+int Decoder::getTotalNumFrames() const {
+    return stream ? stream->nb_frames : 0;
+}
+
+//--------------------------------------------------------------
+int Decoder::getStreamIndex() const {
+    return stream ? stream->index : -1;
+}
+
+//--------------------------------------------------------------
+int Decoder::getBitsPerSample() const {
+    return stream ? stream->codecpar->bits_per_coded_sample : 0;
+}
+
+//--------------------------------------------------------------
+uint64_t Decoder::getBitRate() const {
+    return stream ? stream->codecpar->bit_rate : 0;
+}
+
+//--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader) {
 	int stream_index = reader.getVideoStreamIndex();
 	if (stream_index == -1)
@@ -184,4 +195,9 @@ int AudioDecoder::getNumChannels() const {
 //--------------------------------------------------------------
 int AudioDecoder::getSampleRate() const {
     return stream->codecpar->sample_rate;
+}
+
+//--------------------------------------------------------------
+int AudioDecoder::getFrameSize() const {
+    return stream->codecpar->frame_size;
 }

@@ -23,13 +23,11 @@ namespace ofxFFmpeg {
         bool open(AVStream * stream);
         void close();
         
-        int getStreamIndex() const;
-        int getTotalNumFrames() const;
-        
         /////////////////////////////////////////////////
 
         bool match(AVPacket * packet);
         bool send(AVPacket * packet);
+
         bool receive(AVFrame * frame);
         AVFrame * receive();
         void free(AVFrame * frame);
@@ -41,12 +39,19 @@ namespace ofxFFmpeg {
 
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);
         void stop();
-        bool isRunning() {
+		void decodeThread(PacketSupplier * supplier, FrameReceiver * receiver);
+        bool isRunning() const {
             return running;
         }
-		void decodeThread(PacketSupplier * supplier, FrameReceiver * receiver);
+        
+        /////////////////////////////////////////////////
 
-	protected:
+        int getStreamIndex() const;
+        int getTotalNumFrames() const;
+        int getBitsPerSample() const;
+        uint64_t getBitRate() const;
+
+    protected:
         int error;
 
 		std::thread * threadObj;
@@ -71,5 +76,6 @@ namespace ofxFFmpeg {
 		bool open(Reader & reader);
 		int getNumChannels() const;
         int getSampleRate() const;
+        int getFrameSize() const;
     };
 }

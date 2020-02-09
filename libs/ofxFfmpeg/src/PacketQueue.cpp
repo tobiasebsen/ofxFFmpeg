@@ -16,11 +16,14 @@ void PacketQueue::receivePacket(AVPacket *packet) {
 
 AVPacket * PacketQueue::supplyPacket() {
     std::unique_lock<std::mutex> locker(lock);
-    condition.wait(locker);
-    if (queue.size() > 0) {
-        AVPacket * packet = queue.front();
-        queue.pop_front();
-        return packet;
+    while (queue.size() == 0) {
+        condition.wait(locker);
+        if (queue.size() > 0) {
+            AVPacket * packet = queue.front();
+            queue.pop_front();
+            condition.notify_one();
+            return packet;
+        }
     }
     return NULL;
 }

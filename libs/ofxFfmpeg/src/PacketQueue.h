@@ -12,10 +12,9 @@ namespace ofxFFmpeg {
 
     class PacketQueue : public PacketReceiver, public PacketSupplier {
 	public:
-        
-        //bool readyPacket();
+        PacketQueue(size_t size) : maxSize(size) {}
+
         void receivePacket(AVPacket * packet);
-        
         AVPacket * supplyPacket();
 
         size_t size() { return queue.size(); }
@@ -25,6 +24,7 @@ namespace ofxFFmpeg {
 
 	private:
 		std::deque<AVPacket*> queue;
+        size_t maxSize;
 		uint64_t ptsHead = 0;
 		uint64_t ptsTail = 0;
 

@@ -336,6 +336,7 @@
 		F63CA82F23734DE200FFA436 /* PacketQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PacketQueue.h; path = ../libs/ofxFfmpeg/src/PacketQueue.h; sourceTree = "<group>"; };
 		F6541E1F23E6BA6900ECAEBE /* VideoScaler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VideoScaler.h; path = ../libs/ofxFfmpeg/src/VideoScaler.h; sourceTree = "<group>"; };
 		F6541E2023E6BF9E00ECAEBE /* VideoScaler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = VideoScaler.cpp; path = ../libs/ofxFfmpeg/src/VideoScaler.cpp; sourceTree = "<group>"; };
+		F6541E2323EDC92700ECAEBE /* FrameCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrameCache.h; path = ../libs/ofxFfmpeg/src/FrameCache.h; sourceTree = "<group>"; };
 		F6857CD123638D620028A6FE /* Player.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../libs/ofxFfmpeg/src/Player.h; sourceTree = "<group>"; };
 		F6857CD223638DCB0028A6FE /* Player.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Player.cpp; path = ../libs/ofxFfmpeg/src/Player.cpp; sourceTree = "<group>"; };
 		F8EA54FACA66740563A54DD5 /* pixdesc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = pixdesc.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/pixdesc.h; sourceTree = SOURCE_ROOT; };
@@ -489,6 +490,7 @@
 		72098B77FB0DBCDFFD477BC2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				F6541E2323EDC92700ECAEBE /* FrameCache.h */,
 				F63CA82A23734DE100FFA436 /* PacketQueue.cpp */,
 				F63CA82F23734DE200FFA436 /* PacketQueue.h */,
 				F63CA82D23734DE100FFA436 /* Reader.cpp */,

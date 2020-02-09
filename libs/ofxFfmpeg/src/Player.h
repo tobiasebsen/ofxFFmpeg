@@ -68,6 +68,10 @@ namespace ofxFFmpeg {
 		ofxFFmpeg::Reader reader;
 		ofxFFmpeg::VideoDecoder video;
 		ofxFFmpeg::VideoScaler scaler;
+        ofxFFmpeg::AudioDecoder audio;
+        
+        std::mutex mutex;
+        std::condition_variable frame_cond;
 
 		bool playing = false;
 		bool pixelsDirty = false;

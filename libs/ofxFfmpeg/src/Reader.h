@@ -44,24 +44,27 @@ namespace ofxFFmpeg {
 		AVPacket * supplyPacket();
         int getStreamIndex(AVPacket * packet);
 
+        void seek(uint64_t pts);
+
         /////////////////////////////////////////////////
 
         unsigned int getNumStreams();
         int getVideoStreamIndex();
         int getAudioStreamIndex();
         AVStream * getStream(int stream_index);
-
+        
         /////////////////////////////////////////////////
 
         bool start(PacketReceiver * receiver);
         void stop();
-		bool isRunning() {
-			return running;
-		}
 		void readThread(PacketReceiver * receiver);
+        bool isRunning() const {
+            return running;
+        }
         void notify();
 
 		float getDuration() const;
+        uint64_t getBitRate();
 
 	protected:
         int error;

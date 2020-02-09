@@ -15,21 +15,38 @@ bool Player::load(string filename) {
 	if (!reader.open(ofFilePath::getAbsolutePath(filename))) {
 		return false;
 	}
+    
+    ofLogVerbose() << "== FORMAT ==";
+    ofLogVerbose() << reader.getDuration() << " seconds";
+    ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
+    ofLogVerbose() << reader.getNumStreams() << " stream(s)";
 
-	if (!video.open(reader)) {
-		return false;
-	}
+	if (video.open(reader)) {
+        ofLogVerbose() << "== VIDEO STREAM ==";
+        ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
+        ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
+        ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
+        ofLogVerbose() << "  " << (video.getTotalNumFrames() / reader.getDuration()) << " fps";
+        ofLogVerbose() << "  " << (video.getBitRate() / 1024.f) << " kb/s";
+        scaler.setup(video);
+        pixels.allocate(video.getWidth(), video.getHeight(), OF_IMAGE_COLOR);
+    }
+    if (audio.open(reader)) {
+        ofLogVerbose() << "== AUDIO STREAM ==";
+        ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
+        ofLogVerbose() << "  " << audio.getBitsPerSample() << " bits";
+        ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
+        ofLogVerbose() << "  " << audio.getTotalNumFrames() << " frames";
+        ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
+        ofLogVerbose() << "  " << (audio.getBitRate() / 1024.f) << " kb/s";
+    }
 
-	scaler.setup(video);
-
-	pixels.allocate(video.getWidth(), video.getHeight(), OF_IMAGE_COLOR);
-
-	reader.start(this);
 
 	return true;
 }
 
 void Player::close() {
+    frame_cond.notify_all();
 	reader.close();
 	video.close();
 }
@@ -39,15 +56,25 @@ void Player::receivePacket(AVPacket * packet) {
 	if (video.match(packet)) {
 		video.decode(packet, this);
 	}
+    if (audio.match(packet)) {
+        // audio packet
+    }
 }
 
 void ofxFFmpeg::Player::endRead() {
-	video.flush(this);
+    if (loopState == OF_LOOP_NONE) {
+        video.flush(this);
+        reader.stop();
+    }
+    if (loopState == OF_LOOP_NORMAL)
+        reader.seek(0);
 }
 
 void Player::receiveFrame(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
+        std::unique_lock<std::mutex> lock(mutex);
+        frame_cond.wait(lock);
 		scaler.scale(frame, pixels.getData());
 		pixelsDirty = true;
 	}
@@ -56,12 +83,16 @@ void Player::receiveFrame(AVFrame * frame, int stream_index) {
 void Player::update() {
 
 	if (pixelsDirty) {
+        std::lock_guard<std::mutex> lock(mutex);
 		texture.loadData(pixels);
 		pixelsDirty = false;
 		frameNew = true;
+        frame_cond.notify_one();
 	}
 	else {
+        std::lock_guard<std::mutex> lock(mutex);
 		frameNew = false;
+        frame_cond.notify_one();
 	}
 }
 
@@ -129,10 +160,12 @@ bool Player::isFrameNew() const {
 }
 
 void Player::play() {
-
+    reader.start(this);
+    playing = true;
 }
 
 void Player::stop() {
+    reader.stop();
 	playing = false;
 }
 
@@ -145,7 +178,7 @@ bool Player::isPaused() const {
 }
 
 bool Player::isPlaying() const {
-	return playing;
+	return reader.isRunning();
 }
 
 void Player::setLoopState(ofLoopType state) {
