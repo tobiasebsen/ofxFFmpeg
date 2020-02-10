@@ -3,10 +3,10 @@
 using namespace ofxFFmpeg;
 
 
-ofxFFmpeg::Player::Player() {
+Player::Player() {
 }
 
-ofxFFmpeg::Player::~Player() {
+Player::~Player() {
 	close();
 }
 
@@ -55,6 +55,8 @@ void Player::receivePacket(AVPacket * packet) {
 
 	if (video.match(packet)) {
 		video.decode(packet, this);
+        //AVPacket * clone = videoPackets.clone(packet);
+        //videoPackets.push(clone);
 	}
     if (audio.match(packet)) {
         // audio packet
@@ -89,6 +91,11 @@ void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr
 }
 
 void Player::update() {
+    
+    if (isPlaying() && !isPaused()) {
+        double dt = ofGetLastFrameTime();
+        //pts += dt * reader.getTimeBase();
+    }
 
 	if (pixelsDirty) {
         std::lock_guard<std::mutex> lock(mutex);
@@ -169,22 +176,21 @@ bool Player::isFrameNew() const {
 
 void Player::play() {
 	if (reader.isOpen()) {
+        //video.start(&videoPackets, this);
 		reader.start(this);
-		playing = true;
 	}
 }
 
 void Player::stop() {
     reader.stop();
-	playing = false;
 }
 
 void ofxFFmpeg::Player::setPaused(bool paused) {
-	playing = !paused;
+	this->paused = paused;
 }
 
 bool Player::isPaused() const {
-	return !playing;
+	return paused;
 }
 
 bool Player::isPlaying() const {

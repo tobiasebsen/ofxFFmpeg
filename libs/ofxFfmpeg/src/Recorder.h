@@ -8,7 +8,6 @@ struct AVCodec;
 struct AVStream;
 struct AVCodecContext;
 struct AVFrame;
-struct AVPacket;
 struct SwsContext;
 
 namespace ofxFFmpeg {

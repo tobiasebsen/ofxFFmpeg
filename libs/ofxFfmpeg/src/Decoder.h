@@ -21,7 +21,7 @@ namespace ofxFFmpeg {
 	class Decoder {
 	public:
 
-        bool open(AVStream * stream, bool hardwareAccel = true);
+        bool open(AVStream * stream, bool hardwareAccel = false);
         void close();
         
         /////////////////////////////////////////////////
@@ -37,6 +37,10 @@ namespace ofxFFmpeg {
 		bool flush(FrameReceiver * receiver);
 
         /////////////////////////////////////////////////
+        
+        uint64_t rescale(AVFrame * frame);
+        
+        /////////////////////////////////////////////////
 
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);
         void stop();
@@ -46,11 +50,12 @@ namespace ofxFFmpeg {
         }
         
         /////////////////////////////////////////////////
-
+        
         int getStreamIndex() const;
         int getTotalNumFrames() const;
         int getBitsPerSample() const;
         uint64_t getBitRate() const;
+        double getTimeBase() const;
 
     protected:
         int error;

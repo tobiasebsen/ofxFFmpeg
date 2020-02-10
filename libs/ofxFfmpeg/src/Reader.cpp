@@ -65,9 +65,8 @@ AVPacket * Reader::supplyPacket() {
 
 //--------------------------------------------------------------
 void Reader::seek(uint64_t pts) {
-    for (int i=0; i<format_context->nb_streams; i++) {
-        av_seek_frame(format_context, i, pts, 0);
-    }
+    int video_stream_index = getVideoStreamIndex();
+    av_seek_frame(format_context, video_stream_index, pts, 0);
 }
 
 //--------------------------------------------------------------
@@ -153,6 +152,11 @@ float Reader::getDuration() const {
 }
 
 //--------------------------------------------------------------
-uint64_t Reader::getBitRate() {
+uint64_t Reader::getBitRate() const {
     return format_context ? format_context->bit_rate : 0;
+}
+
+//--------------------------------------------------------------
+double Reader::getTimeBase() const {
+    return av_q2d(AV_TIME_BASE_Q);
 }

@@ -64,7 +64,8 @@ namespace ofxFFmpeg {
         void notify();
 
 		float getDuration() const;
-        uint64_t getBitRate();
+        uint64_t getBitRate() const;
+        double getTimeBase() const;
 
 	protected:
         int error;

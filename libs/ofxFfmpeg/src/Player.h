@@ -67,6 +67,7 @@ namespace ofxFFmpeg {
 		string filePath;
 
 		ofxFFmpeg::Reader reader;
+        ofxFFmpeg::PacketQueue videoPackets;
 		ofxFFmpeg::VideoDecoder video;
 		ofxFFmpeg::VideoScaler scaler;
         ofxFFmpeg::AudioDecoder audio;
@@ -74,11 +75,11 @@ namespace ofxFFmpeg {
         std::mutex mutex;
         std::condition_variable frame_cond;
 
-		bool playing = false;
 		bool pixelsDirty = false;
 		bool frameNew = false;
 
 		uint64_t pts;
+        bool paused = false;
 
         ofLoopType loopState = OF_LOOP_NORMAL;
 

@@ -37,6 +37,8 @@ bool Decoder::open(AVStream * stream, bool hardwareAccel) {
 
 #if defined _WIN32
 		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_DXVA2;
+#elif defined __APPLE__
+        AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
 #else
 		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
 #endif
@@ -136,7 +138,6 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
 
 			if (frame->format == hw_format) {
 				AVFrame * sw_frame = av_frame_alloc();
-				sw_frame->format = sw_format;
 				error = av_hwframe_transfer_data(sw_frame, frame, 0);
 				receiver->receiveFrame(sw_frame, stream->index);
 				av_frame_free(&sw_frame);
@@ -153,8 +154,13 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::Decoder::flush(FrameReceiver * receiver) {
+bool Decoder::flush(FrameReceiver * receiver) {
 	return decode(NULL, receiver);
+}
+
+//--------------------------------------------------------------
+uint64_t Decoder::rescale(AVFrame * frame) {
+    return av_rescale_q(frame->pts, stream->time_base, AV_TIME_BASE_Q);
 }
 
 //--------------------------------------------------------------
@@ -214,6 +220,11 @@ uint64_t Decoder::getBitRate() const {
 }
 
 //--------------------------------------------------------------
+double Decoder::getTimeBase() const {
+    return stream ? av_q2d(stream->time_base) : 0.;
+}
+
+//--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader) {
 	int stream_index = reader.getVideoStreamIndex();
 	if (stream_index == -1)
@@ -234,8 +245,8 @@ int VideoDecoder::getHeight() const {
 
 //--------------------------------------------------------------
 int VideoDecoder::getPixelFormat() const {
-	if (sw_format != -1)
-		return sw_format;
+	if (hw_format != -1)
+		return AV_PIX_FMT_NV12;
     return codec_context ? codec_context->pix_fmt : AV_PIX_FMT_NONE;
 }
 

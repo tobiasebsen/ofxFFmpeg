@@ -10,7 +10,7 @@ public:
     void update();
     void draw();
     
-    ofxFFmpeg::Player player;
+    ofxFFmpegPlayer player;
     
     ofFpsCounter fps;
 };
