@@ -11,9 +11,9 @@ struct SwsContext;
 
 namespace ofxFFmpeg {
     
-    class PixelReceiver {
+    class ImageReceiver {
     public:
-        virtual void receivePixels(const uint8_t * pixelData) = 0;
+        virtual void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) = 0;
     };
 
     class VideoScaler {
@@ -23,9 +23,8 @@ namespace ofxFFmpeg {
         bool setup(VideoDecoder & decoder);
 		void clear();
 
-        bool scale(AVFrame * frame, const uint8_t * pixelData);
-        uint8_t * scale(AVFrame * frame);
-        void free(uint8_t * pixelData);
+		bool scale(AVFrame * frame, ImageReceiver * receiver);
+		bool scale(AVFrame * frame, const uint8_t * imageData);
         
         void start();
         void stop();

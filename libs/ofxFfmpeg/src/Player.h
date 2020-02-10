@@ -15,7 +15,7 @@ struct SwsContext;
 
 namespace ofxFFmpeg {
 
-    class Player : public PacketReceiver, public FrameReceiver, public ofBaseVideoPlayer {
+    class Player : public PacketReceiver, public FrameReceiver, public ImageReceiver, public ofBaseVideoPlayer {
     public:
 		Player();
 		~Player();
@@ -28,6 +28,7 @@ namespace ofxFFmpeg {
 		void receivePacket(AVPacket * packet);
 		void endRead();
 		void receiveFrame(AVFrame * frame, int stream_index);
+		void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
 
 		void update();
 		bool isFrameNew() const;

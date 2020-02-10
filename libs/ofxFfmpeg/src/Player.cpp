@@ -73,11 +73,19 @@ void ofxFFmpeg::Player::endRead() {
 void Player::receiveFrame(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
-        std::unique_lock<std::mutex> lock(mutex);
-        frame_cond.wait(lock);
+		std::unique_lock<std::mutex> lock(mutex);
+		frame_cond.wait(lock);
 		scaler.scale(frame, pixels.getData());
 		pixelsDirty = true;
 	}
+}
+
+void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
+	std::unique_lock<std::mutex> lock(mutex);
+	frame_cond.wait(lock);
+	pixels.allocate(video.getWidth(), video.getHeight(), 3);
+	pixels.setFromPixels(imageData.get(), video.getWidth(), video.getHeight(), 3);
+	pixelsDirty = true;
 }
 
 void Player::update() {
@@ -160,8 +168,10 @@ bool Player::isFrameNew() const {
 }
 
 void Player::play() {
-    reader.start(this);
-    playing = true;
+	if (reader.isOpen()) {
+		reader.start(this);
+		playing = true;
+	}
 }
 
 void Player::stop() {

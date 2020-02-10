@@ -13,7 +13,7 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool Decoder::open(AVStream * stream) {
+bool Decoder::open(AVStream * stream, bool hardwareAccel) {
 
     this->stream = stream;
     
@@ -30,10 +30,54 @@ bool Decoder::open(AVStream * stream) {
     
     avcodec_parameters_to_context(codec_context, stream->codecpar);
 
+	hw_format = -1;
+	sw_format = -1;
+
+	if (hardwareAccel) {
+
+#if defined _WIN32
+		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_DXVA2;
+#else
+		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
+#endif
+
+		int i = 0;
+		const AVCodecHWConfig *config = NULL;
+		do {
+			config = avcodec_get_hw_config(codec, i);
+			if (config && config->device_type == hw_type) {
+				hw_format = config->pix_fmt;
+			}
+			i++;
+		} while (config != NULL);
+
+		error = av_hwdevice_ctx_create(&hardware_context, hw_type, NULL, NULL, 0);
+		if (error < 0) {
+			av_log(NULL, AV_LOG_ERROR, "Cannot create hardware context\n");
+		}
+		else {
+			codec_context->hw_device_ctx = av_buffer_ref(hardware_context);
+		}
+	}
+
     if ((error = avcodec_open2(codec_context, codec, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot open codec context\n");
         return false;
     }
+
+	/*if (hardwareAccel) {
+		AVPixelFormat * formats = NULL;
+		codec_context->hw_frames_ctx = av_hwframe_ctx_alloc(hardware_context);
+		av_hwframe_ctx_init(codec_context->hw_frames_ctx);
+		error = av_hwframe_transfer_get_formats(codec_context->hw_frames_ctx, AV_HWFRAME_TRANSFER_DIRECTION_TO, &formats, 0);
+		if (error >= 0) {
+			while (*formats != AV_PIX_FMT_NONE) {
+				sw_format = *formats;
+				formats++;
+			}
+			av_freep(&formats);
+		}
+	}*/
     
     return true;
 }
@@ -45,12 +89,15 @@ void Decoder::close() {
         avcodec_close(codec_context);
         codec_context = NULL;
     }
+	if (hardware_context) {
+		av_buffer_unref(&hardware_context);
+	}
 	stream = NULL;
 }
 
 //--------------------------------------------------------------
 bool Decoder::match(AVPacket * packet) {
-    return packet->stream_index == stream->index;
+    return stream && (packet->stream_index == stream->index);
 }
 
 //--------------------------------------------------------------
@@ -87,7 +134,16 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
         AVFrame * frame = NULL;
         while ((frame = receive()) != NULL) {
 
-            receiver->receiveFrame(frame, stream->index);
+			if (frame->format == hw_format) {
+				AVFrame * sw_frame = av_frame_alloc();
+				sw_frame->format = sw_format;
+				error = av_hwframe_transfer_data(sw_frame, frame, 0);
+				receiver->receiveFrame(sw_frame, stream->index);
+				av_frame_free(&sw_frame);
+			}
+			else {
+				receiver->receiveFrame(frame, stream->index);
+			}
 
             free(frame);
         }
@@ -114,9 +170,11 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 
 //--------------------------------------------------------------
 void Decoder::stop() {
-    if (running) {
+    if (running && threadObj) {
         running = false;
         threadObj->join();
+		delete threadObj;
+		threadObj = NULL;
     }
 }
 
@@ -166,19 +224,22 @@ bool VideoDecoder::open(Reader & reader) {
 
 //--------------------------------------------------------------
 int VideoDecoder::getWidth() const {
-    return stream->codecpar->width;
+    return stream ? stream->codecpar->width : 0;
 }
 
 //--------------------------------------------------------------
 int VideoDecoder::getHeight() const {
-    return stream->codecpar->height;
+    return stream ? stream->codecpar->height : 0;
 }
 
 //--------------------------------------------------------------
 int VideoDecoder::getPixelFormat() const {
-    return codec_context->pix_fmt;
+	if (sw_format != -1)
+		return sw_format;
+    return codec_context ? codec_context->pix_fmt : AV_PIX_FMT_NONE;
 }
 
+//--------------------------------------------------------------
 bool ofxFFmpeg::AudioDecoder::open(Reader & reader) {
 	int stream_index = reader.getAudioStreamIndex();
 	if (stream_index == -1)

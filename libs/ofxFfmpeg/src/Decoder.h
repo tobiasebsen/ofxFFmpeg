@@ -8,6 +8,7 @@
 
 struct AVStream;
 struct AVCodecContext;
+struct AVBufferRef;
 struct AVFrame;
 
 namespace ofxFFmpeg {
@@ -20,7 +21,7 @@ namespace ofxFFmpeg {
 	class Decoder {
 	public:
 
-        bool open(AVStream * stream);
+        bool open(AVStream * stream, bool hardwareAccel = true);
         void close();
         
         /////////////////////////////////////////////////
@@ -61,6 +62,9 @@ namespace ofxFFmpeg {
 
         AVStream * stream = NULL;
         AVCodecContext * codec_context = NULL;
+		AVBufferRef * hardware_context = NULL;
+		int hw_format = -1;
+		int sw_format = -1;
 	};
     
     class VideoDecoder : public Decoder {

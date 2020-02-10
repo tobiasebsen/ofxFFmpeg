@@ -28,9 +28,18 @@ void VideoScaler::clear() {
 	}
 }
 
+bool VideoScaler::scale(AVFrame * frame, ImageReceiver * receiver) {
+	std::shared_ptr<uint8_t> imageData = std::shared_ptr<uint8_t>(new uint8_t[frame->width * frame->height * 3]);
+	const int out_linesize[1] = { 3 * frame->width };
+	const uint8_t * pixelData = imageData.get();
+	int ret = sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
+	receiver->receiveImage(frame->pts, frame->pkt_duration, imageData);
+	return true;
+}
+
 bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData) {
      const int out_linesize[1] = { 3 * frame->width };
-     sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
+     int ret = sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
      return true;
 }
 
