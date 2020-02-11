@@ -234,7 +234,8 @@ void Recorder::write(const ofPixels & pixels) {
 		return;
 	}
 
-    frame->pts = (1.0 / 30) * 90000 * pts;
+    //frame->pts = (1.0 / 30) * 90000 * pts;
+	frame->pts = av_rescale_q(n_frame, av_inv_q(video_context->framerate), video_stream->time_base);
     pts++;
     
     const int in_linesize[1] = { 3 * video_context->width };

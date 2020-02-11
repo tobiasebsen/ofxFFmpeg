@@ -25,11 +25,6 @@ namespace ofxFFmpeg {
 		bool isLoaded() const;
 		bool isInitialized() const;
 
-		void receivePacket(AVPacket * packet);
-		void endRead();
-		void receiveFrame(AVFrame * frame, int stream_index);
-		void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
-
 		void update();
 		bool isFrameNew() const;
 
@@ -64,6 +59,11 @@ namespace ofxFFmpeg {
 
     protected:
 
+		void receivePacket(AVPacket * packet);
+		void endRead();
+		void receiveFrame(AVFrame * frame, int stream_index);
+		void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
+
 		string filePath;
 
 		ofxFFmpeg::Reader reader;
@@ -71,6 +71,9 @@ namespace ofxFFmpeg {
 		ofxFFmpeg::VideoDecoder video;
 		ofxFFmpeg::VideoScaler scaler;
         ofxFFmpeg::AudioDecoder audio;
+
+		int64_t lastVideoPts;
+		int64_t lastAudioPts;
         
         std::mutex mutex;
         std::condition_variable frame_cond;
@@ -78,6 +81,7 @@ namespace ofxFFmpeg {
 		bool pixelsDirty = false;
 		bool frameNew = false;
 
+		double timeSeconds;
 		uint64_t pts;
         bool paused = false;
 

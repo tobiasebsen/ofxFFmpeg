@@ -7,13 +7,12 @@ extern "C" {
 #include "libavutil/avstring.h"
 #include "libavutil/opt.h"
 #include "libavutil/time.h"
-#include "libswscale/swscale.h"
 }
 
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool Decoder::open(AVStream * stream, bool hardwareAccel) {
+bool Decoder::open(AVStream * stream) {
 
     this->stream = stream;
     
@@ -30,57 +29,11 @@ bool Decoder::open(AVStream * stream, bool hardwareAccel) {
     
     avcodec_parameters_to_context(codec_context, stream->codecpar);
 
-	hw_format = -1;
-	sw_format = -1;
-
-	if (hardwareAccel) {
-
-#if defined _WIN32
-		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_DXVA2;
-#elif defined __APPLE__
-        AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
-#else
-		AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
-#endif
-
-		int i = 0;
-		const AVCodecHWConfig *config = NULL;
-		do {
-			config = avcodec_get_hw_config(codec, i);
-			if (config && config->device_type == hw_type) {
-				hw_format = config->pix_fmt;
-			}
-			i++;
-		} while (config != NULL);
-
-		error = av_hwdevice_ctx_create(&hardware_context, hw_type, NULL, NULL, 0);
-		if (error < 0) {
-			av_log(NULL, AV_LOG_ERROR, "Cannot create hardware context\n");
-		}
-		else {
-			codec_context->hw_device_ctx = av_buffer_ref(hardware_context);
-		}
-	}
-
     if ((error = avcodec_open2(codec_context, codec, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot open codec context\n");
         return false;
     }
 
-	/*if (hardwareAccel) {
-		AVPixelFormat * formats = NULL;
-		codec_context->hw_frames_ctx = av_hwframe_ctx_alloc(hardware_context);
-		av_hwframe_ctx_init(codec_context->hw_frames_ctx);
-		error = av_hwframe_transfer_get_formats(codec_context->hw_frames_ctx, AV_HWFRAME_TRANSFER_DIRECTION_TO, &formats, 0);
-		if (error >= 0) {
-			while (*formats != AV_PIX_FMT_NONE) {
-				sw_format = *formats;
-				formats++;
-			}
-			av_freep(&formats);
-		}
-	}*/
-    
     return true;
 }
 
@@ -91,9 +44,6 @@ void Decoder::close() {
         avcodec_close(codec_context);
         codec_context = NULL;
     }
-	if (hardware_context) {
-		av_buffer_unref(&hardware_context);
-	}
 	stream = NULL;
 }
 
@@ -136,15 +86,7 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
         AVFrame * frame = NULL;
         while ((frame = receive()) != NULL) {
 
-			if (frame->format == hw_format) {
-				AVFrame * sw_frame = av_frame_alloc();
-				error = av_hwframe_transfer_data(sw_frame, frame, 0);
-				receiver->receiveFrame(sw_frame, stream->index);
-				av_frame_free(&sw_frame);
-			}
-			else {
-				receiver->receiveFrame(frame, stream->index);
-			}
+			receiver->receiveFrame(frame, stream->index);
 
             free(frame);
         }
@@ -156,11 +98,6 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
 //--------------------------------------------------------------
 bool Decoder::flush(FrameReceiver * receiver) {
 	return decode(NULL, receiver);
-}
-
-//--------------------------------------------------------------
-uint64_t Decoder::rescale(AVFrame * frame) {
-    return av_rescale_q(frame->pts, stream->time_base, AV_TIME_BASE_Q);
 }
 
 //--------------------------------------------------------------
@@ -225,6 +162,22 @@ double Decoder::getTimeBase() const {
 }
 
 //--------------------------------------------------------------
+uint64_t ofxFFmpeg::Decoder::getTimeStamp(AVPacket * packet) const {
+	return av_rescale_q(packet->pts, stream->time_base, { 1, AV_TIME_BASE });
+}
+
+//--------------------------------------------------------------
+uint64_t Decoder::getTimeStamp(AVFrame * frame) const {
+	return av_rescale_q(frame->pts, stream->time_base, { 1, AV_TIME_BASE });
+	//return frame->pts;
+}
+
+//--------------------------------------------------------------
+int ofxFFmpeg::Decoder::getFrameNum(uint64_t pts) const {
+	return av_rescale_q(pts, stream->avg_frame_rate, { AV_TIME_BASE, 1 });
+}
+
+//--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader) {
 	int stream_index = reader.getVideoStreamIndex();
 	if (stream_index == -1)
@@ -245,8 +198,6 @@ int VideoDecoder::getHeight() const {
 
 //--------------------------------------------------------------
 int VideoDecoder::getPixelFormat() const {
-	if (hw_format != -1)
-		return AV_PIX_FMT_NV12;
     return codec_context ? codec_context->pix_fmt : AV_PIX_FMT_NONE;
 }
 

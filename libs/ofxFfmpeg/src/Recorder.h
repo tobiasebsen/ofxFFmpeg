@@ -2,13 +2,7 @@
 
 #include "ofMain.h"
 
-struct AVIOContext;
-struct AVFormatContext;
-struct AVCodec;
-struct AVStream;
-struct AVCodecContext;
-struct AVFrame;
-struct SwsContext;
+#include "AvTypes.h"
 
 namespace ofxFFmpeg {
 

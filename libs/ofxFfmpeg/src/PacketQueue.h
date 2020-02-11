@@ -7,8 +7,6 @@
 #include "Queue.h"
 #include "Reader.h"
 
-struct AVPacket;
-
 namespace ofxFFmpeg {
 
     class PacketQueue : public Queue<AVPacket>, public PacketSupplier {

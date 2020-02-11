@@ -4,11 +4,7 @@
 #include <mutex>
 #include <queue>
 
-struct AVFormatContext;
-struct AVStream;
-struct AVCodec;
-struct AVCodecContext;
-struct AVPacket;
+#include "AvTypes.h"
 
 namespace ofxFFmpeg {
     

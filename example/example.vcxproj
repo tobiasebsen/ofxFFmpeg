@@ -189,6 +189,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\HardwareDecoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp" />
@@ -196,16 +198,21 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\AvTypes.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Decoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Encoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\FrameCache.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\FrameQueue.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\HardwareDecoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Queue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Recorder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Writer.h" />
     <ClInclude Include="src\ofApp.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h" />
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h" />

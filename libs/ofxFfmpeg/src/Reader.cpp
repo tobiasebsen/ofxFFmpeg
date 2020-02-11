@@ -148,7 +148,7 @@ void Reader::notify() {
 
 //--------------------------------------------------------------
 float Reader::getDuration() const {
-	return format_context ? (format_context->duration * av_q2d({ 1, AV_TIME_BASE })) : 0;
+	return format_context ? (format_context->duration * getTimeBase()) : 0;
 }
 
 //--------------------------------------------------------------
@@ -158,5 +158,5 @@ uint64_t Reader::getBitRate() const {
 
 //--------------------------------------------------------------
 double Reader::getTimeBase() const {
-    return av_q2d(AV_TIME_BASE_Q);
+    return av_q2d({ 1, AV_TIME_BASE });
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Queue.h"
+#include "AvTypes.h"
 
 namespace ofxFFmpeg {
 

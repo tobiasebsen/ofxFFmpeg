@@ -3,13 +3,9 @@
 #include <thread>
 #include <mutex>
 
+#include "AvTypes.h"
 #include "Reader.h"
 #include "PacketQueue.h"
-
-struct AVStream;
-struct AVCodecContext;
-struct AVBufferRef;
-struct AVFrame;
 
 namespace ofxFFmpeg {
     
@@ -21,7 +17,7 @@ namespace ofxFFmpeg {
 	class Decoder {
 	public:
 
-        bool open(AVStream * stream, bool hardwareAccel = false);
+        bool open(AVStream * stream);
         void close();
         
         /////////////////////////////////////////////////
@@ -38,10 +34,6 @@ namespace ofxFFmpeg {
 
         /////////////////////////////////////////////////
         
-        uint64_t rescale(AVFrame * frame);
-        
-        /////////////////////////////////////////////////
-
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);
         void stop();
 		void decodeThread(PacketSupplier * supplier, FrameReceiver * receiver);
@@ -56,6 +48,9 @@ namespace ofxFFmpeg {
         int getBitsPerSample() const;
         uint64_t getBitRate() const;
         double getTimeBase() const;
+		uint64_t getTimeStamp(AVPacket * frame) const;
+		uint64_t getTimeStamp(AVFrame * frame) const;
+		int getFrameNum(uint64_t pts) const;
 
     protected:
         int error;
@@ -67,9 +62,6 @@ namespace ofxFFmpeg {
 
         AVStream * stream = NULL;
         AVCodecContext * codec_context = NULL;
-		AVBufferRef * hardware_context = NULL;
-		int hw_format = -1;
-		int sw_format = -1;
 	};
     
     class VideoDecoder : public Decoder {

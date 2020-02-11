@@ -15,6 +15,9 @@ bool Player::load(string filename) {
 	if (!reader.open(ofFilePath::getAbsolutePath(filename))) {
 		return false;
 	}
+
+	timeSeconds = 0;
+	lastVideoPts = 0;
     
     ofLogVerbose() << "== FORMAT ==";
     ofLogVerbose() << reader.getDuration() << " seconds";
@@ -40,7 +43,6 @@ bool Player::load(string filename) {
         ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
         ofLogVerbose() << "  " << (audio.getBitRate() / 1024.f) << " kb/s";
     }
-
 
 	return true;
 }
@@ -68,8 +70,11 @@ void ofxFFmpeg::Player::endRead() {
         video.flush(this);
         reader.stop();
     }
-    if (loopState == OF_LOOP_NORMAL)
-        reader.seek(0);
+	if (loopState == OF_LOOP_NORMAL) {
+		reader.seek(0);
+		timeSeconds = 0;
+		lastVideoPts = 0;
+	}
 }
 
 void Player::receiveFrame(AVFrame * frame, int stream_index) {
@@ -78,6 +83,7 @@ void Player::receiveFrame(AVFrame * frame, int stream_index) {
 		std::unique_lock<std::mutex> lock(mutex);
 		frame_cond.wait(lock);
 		scaler.scale(frame, pixels.getData());
+		lastVideoPts = video.getTimeStamp(frame);
 		pixelsDirty = true;
 	}
 }
@@ -91,23 +97,37 @@ void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr
 }
 
 void Player::update() {
+
+	uint64_t duration = 0;
     
     if (isPlaying() && !isPaused()) {
         double dt = ofGetLastFrameTime();
-        //pts += dt * reader.getTimeBase();
+		timeSeconds += dt;
+        pts = timeSeconds / reader.getTimeBase();
+		duration = dt / reader.getTimeBase();
+		//ofLog() << "Clock: " << pts << " " << duration;
     }
+
+	if (pts >= lastVideoPts) {
+		std::lock_guard<std::mutex> lock(mutex);
+		frame_cond.notify_one();
+	}
 
 	if (pixelsDirty) {
         std::lock_guard<std::mutex> lock(mutex);
+		//ofLog() << "Last:  " << lastVideoPts;
 		texture.loadData(pixels);
+		timeSeconds = lastVideoPts * reader.getTimeBase();
 		pixelsDirty = false;
 		frameNew = true;
-        frame_cond.notify_one();
+		//if (pts + duration > lastVideoPts) {
+			//frame_cond.notify_one();
+		//}
 	}
 	else {
         std::lock_guard<std::mutex> lock(mutex);
 		frameNew = false;
-        frame_cond.notify_one();
+        //frame_cond.notify_one();
 	}
 }
 
@@ -142,8 +162,7 @@ float Player::getPosition() const {
 }
 
 int Player::getCurrentFrame() const {
-
-	return -1;
+	return video.getFrameNum(lastVideoPts);
 }
 
 float Player::getDuration() const {
@@ -151,7 +170,7 @@ float Player::getDuration() const {
 }
 
 int Player::getTotalNumFrames() const {
-	return 0;
+	return video.getTotalNumFrames();
 }
 
 void Player::setFrame(int f) {
@@ -167,7 +186,7 @@ bool Player::isLoaded() const {
 }
 
 bool Player::isInitialized() const {
-	return false;
+	return reader.isOpen();
 }
 
 bool Player::isFrameNew() const {

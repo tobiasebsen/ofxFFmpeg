@@ -13,9 +13,6 @@
     <ClCompile Include="src\ofApp.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.cpp">
-      <Filter>addons\ofxFFmpeg\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
@@ -32,6 +29,12 @@
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\HardwareDecoder.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -462,6 +465,24 @@
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\FrameCache.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\FrameQueue.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Queue.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\HardwareDecoder.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Encoder.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\AvTypes.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Writer.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
   </ItemGroup>
