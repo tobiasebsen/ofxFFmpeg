@@ -196,6 +196,7 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Recorder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Writer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
   </ItemGroup>
@@ -210,6 +211,7 @@
     <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Queue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Flow.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Recorder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Writer.h" />

@@ -5,23 +5,11 @@
 #include <queue>
 
 #include "AvTypes.h"
+#include "Flow.h"
 
 namespace ofxFFmpeg {
     
-    class PacketSupplier {
-    public:
-        virtual AVPacket * supplyPacket() = 0;
-        void free(AVPacket * packet);
-    };
-    
-    class PacketReceiver {
-    public:
-        virtual bool readyPacket() { return true; }
-        virtual void receivePacket(AVPacket *packet) = 0;
-		virtual void endRead() {}
-    };
-
-    class Reader : public PacketSupplier {
+    class Reader {
 	public:
 		~Reader() {
             close();
@@ -36,8 +24,8 @@ namespace ofxFFmpeg {
 		/////////////////////////////////////////////////
 
 		bool read(AVPacket * packet);
-		bool read(PacketReceiver * packet);
-		AVPacket * supplyPacket();
+		bool read(PacketReceiver * receiver);
+		AVPacket * read();
         int getStreamIndex(AVPacket * packet);
 
         void seek(uint64_t pts);
@@ -52,13 +40,15 @@ namespace ofxFFmpeg {
         /////////////////////////////////////////////////
 
         bool start(PacketReceiver * receiver);
-        void stop();
+        void stop(PacketReceiver * receiver);
 		void readThread(PacketReceiver * receiver);
         bool isRunning() const {
             return running;
         }
         void notify();
 
+		std::string getName();
+		std::string getLongName();
 		float getDuration() const;
         uint64_t getBitRate() const;
         double getTimeBase() const;

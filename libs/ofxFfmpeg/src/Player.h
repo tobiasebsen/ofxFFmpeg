@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 
+#include "Flow.h"
 #include "Reader.h"
 #include "Decoder.h"
 #include "VideoScaler.h"
@@ -15,7 +16,7 @@ struct SwsContext;
 
 namespace ofxFFmpeg {
 
-    class Player : public PacketReceiver, public FrameReceiver, public ImageReceiver, public ofBaseVideoPlayer {
+    class Player : public PacketReceiver, public FrameReceiver, public ofBaseVideoPlayer {
     public:
 		Player();
 		~Player();
@@ -50,7 +51,10 @@ namespace ofxFFmpeg {
 		float getPosition() const;
 		int getCurrentFrame() const;
         float getDuration() const;
+		bool getIsMovieDone() const;
         int getTotalNumFrames() const;
+
+		void nextFrame();
         
         void setLoopState(ofLoopType state);
 
@@ -59,10 +63,11 @@ namespace ofxFFmpeg {
 
     protected:
 
-		void receivePacket(AVPacket * packet);
-		void endRead();
-		void receiveFrame(AVFrame * frame, int stream_index);
-		void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
+		virtual void receivePacket(AVPacket * packet);
+		virtual void endPacket();
+		virtual void notifyPacket();
+		virtual void receiveFrame(AVFrame * frame, int stream_index);
+		virtual void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
 
 		string filePath;
 
@@ -76,16 +81,19 @@ namespace ofxFFmpeg {
 		int64_t lastAudioPts;
         
         std::mutex mutex;
-        std::condition_variable frame_cond;
+        std::condition_variable frame_receive_cond;
+		std::condition_variable frame_ready_cond;
 
 		bool pixelsDirty = false;
 		bool frameNew = false;
+		bool isMovieDone = false;
 
 		double timeSeconds;
 		uint64_t pts;
         bool paused = false;
 
         ofLoopType loopState = OF_LOOP_NORMAL;
+		bool loopRequest = false;
 
         ofPixels pixels;
         ofTexture texture;

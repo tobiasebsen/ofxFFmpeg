@@ -9,7 +9,7 @@
 
 namespace ofxFFmpeg {
 
-    class PacketQueue : public Queue<AVPacket>, public PacketSupplier {
+    class PacketQueue : public Queue<AVPacket> {
 	public:
         AVPacket * clone(AVPacket * p);
         void free(AVPacket * p);

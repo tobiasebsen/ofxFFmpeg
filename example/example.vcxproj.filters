@@ -37,6 +37,9 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Writer.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -483,6 +486,9 @@
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\Writer.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\Flow.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
   </ItemGroup>

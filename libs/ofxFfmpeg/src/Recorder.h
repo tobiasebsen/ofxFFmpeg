@@ -3,48 +3,42 @@
 #include "ofMain.h"
 
 #include "AvTypes.h"
+#include "Flow.h"
+#include "Writer.h"
+#include "Encoder.h"
+#include "VideoScaler.h"
 
 namespace ofxFFmpeg {
 
-	class Recorder {
+	class Recorder : public PacketReceiver {
 	public:
-        bool init();
 		bool open(const string filename);
 		void close();
 
-        bool setCodec(string codecName);
-        bool setCodec(int codecId);
-        void setWidth(int width);
-        void setHeight(int height);
-        void setFrameRate(float frameRate);
-        void setBitRate(int bitRate);
-		void setProfile(int profile);
-		void setLevel(int level);
-        void setKeyFrame(int keyFrameRate);
-        
+		bool setVideoCodec(int codecId);
+		bool setVideoCodec(string codecName);
+
+		VideoEncoder & getVideoEncoder();
+
         bool start();
         void stop();
 
         void write(const ofPixels & pixels);
-		void write(AVFrame * frame);
-		void flush();
 
 		int getError();
 		string getErrorString();
 
 	protected:
 
+		void receivePacket(AVPacket * packet);
+
 		int error = 0;
-		AVIOContext *io_context = NULL;
-		AVFormatContext *format_context = NULL;
-		AVCodec *video_codec = NULL;
-		AVStream *video_stream = NULL;
-		AVCodecContext *video_context = NULL;
+
+		Writer writer;
+		VideoEncoder video;
+		VideoScaler scaler;
+
 		AVFrame *frame = NULL;
         uint64_t n_frame;
-        uint64_t pts;
-        int keyFrameRate = 15;
-
-		SwsContext * sws_context;
 	};
 }

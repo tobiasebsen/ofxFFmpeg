@@ -4,6 +4,7 @@
 #include <mutex>
 
 #include "Decoder.h"
+#include "Encoder.h"
 
 struct AVCodecContext;
 struct AVFrame;
@@ -11,21 +12,18 @@ struct SwsContext;
 
 namespace ofxFFmpeg {
     
-    class ImageReceiver {
-    public:
-        virtual void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) = 0;
-    };
-
     class VideoScaler {
     public:
 
-        bool setup(int width, int height, int pix_fmt);
+		bool setup(int src_width, int src_height, int src_fmt, int dst_width, int dst_height, int dst_fmt);
+		bool setup(int width, int height, int src_fmt, int dst_fmt);
         bool setup(VideoDecoder & decoder);
+		bool setup(VideoEncoder & encoder);
 		void clear();
 
-		bool scale(AVFrame * frame, ImageReceiver * receiver);
-		bool scale(AVFrame * frame, const uint8_t * imageData);
-        
+		bool scale(AVFrame * frame, const uint8_t * imageData, int line_stride);
+		bool scale(const uint8_t * imageData, int line_stride, int height, AVFrame * frame);
+
         void start();
         void stop();
         void scaleThread();

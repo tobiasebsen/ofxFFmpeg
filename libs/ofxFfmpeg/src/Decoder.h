@@ -4,16 +4,12 @@
 #include <mutex>
 
 #include "AvTypes.h"
+#include "Flow.h"
 #include "Reader.h"
 #include "PacketQueue.h"
 
 namespace ofxFFmpeg {
     
-    class FrameReceiver {
-    public:
-        virtual void receiveFrame(AVFrame * frame, int stream_index) = 0;
-    };
-
 	class Decoder {
 	public:
 
@@ -43,20 +39,23 @@ namespace ofxFFmpeg {
         
         /////////////////////////////////////////////////
         
-        int getStreamIndex() const;
+		std::string getName();
+		std::string getLongName();
+		int getStreamIndex() const;
         int getTotalNumFrames() const;
         int getBitsPerSample() const;
         uint64_t getBitRate() const;
         double getTimeBase() const;
 		uint64_t getTimeStamp(AVPacket * frame) const;
 		uint64_t getTimeStamp(AVFrame * frame) const;
+		uint64_t getTimeStamp(int frame_num) const;
 		int getFrameNum(uint64_t pts) const;
 
     protected:
         int error;
 
 		std::thread * threadObj;
-		std::mutex lock;
+		std::mutex mutex;
 		std::condition_variable condition;
 		bool running = false;
 

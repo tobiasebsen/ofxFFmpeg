@@ -81,7 +81,8 @@ void Decoder::free(AVFrame *frame) {
 
 //--------------------------------------------------------------
 bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
-    if (send(packet)) {
+	std::lock_guard<std::mutex> lock(mutex);
+	if (send(packet)) {
 
         AVFrame * frame = NULL;
         while ((frame = receive()) != NULL) {
@@ -130,7 +131,7 @@ void Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver) 
 
             decode(packet, receiver);
 
-            supplier->free(packet);
+            supplier->freePacket(packet);
         }
     }
     running = false;
@@ -139,6 +140,16 @@ void Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver) 
 //--------------------------------------------------------------
 int Decoder::getTotalNumFrames() const {
     return stream ? stream->nb_frames : 0;
+}
+
+//--------------------------------------------------------------
+std::string Decoder::getName() {
+	return codec_context->codec->name;
+}
+
+//--------------------------------------------------------------
+std::string Decoder::getLongName() {
+	return codec_context->codec->long_name;
 }
 
 //--------------------------------------------------------------
@@ -170,6 +181,11 @@ uint64_t ofxFFmpeg::Decoder::getTimeStamp(AVPacket * packet) const {
 uint64_t Decoder::getTimeStamp(AVFrame * frame) const {
 	return av_rescale_q(frame->pts, stream->time_base, { 1, AV_TIME_BASE });
 	//return frame->pts;
+}
+
+//--------------------------------------------------------------
+uint64_t Decoder::getTimeStamp(int frame_num) const {
+	return av_rescale_q(frame_num, { AV_TIME_BASE, 1 }, codec_context->framerate);
 }
 
 //--------------------------------------------------------------

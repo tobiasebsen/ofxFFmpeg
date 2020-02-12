@@ -12,12 +12,6 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-void PacketSupplier::free(AVPacket *packet) {
-    av_packet_unref(packet);
-	av_packet_free(&packet);
-}
-
-//--------------------------------------------------------------
 bool Reader::open(std::string filename) {
 
     if ((error = avformat_open_input(&format_context, filename.c_str(), NULL, NULL)) < 0) {
@@ -40,7 +34,7 @@ bool ofxFFmpeg::Reader::isOpen() const {
 
 //--------------------------------------------------------------
 void Reader::close() {
-    stop();
+    //stop();
     if (format_context) {
         avformat_close_input(&format_context);
     }
@@ -53,7 +47,18 @@ bool Reader::read(AVPacket * packet) {
 }
 
 //--------------------------------------------------------------
-AVPacket * Reader::supplyPacket() {
+bool Reader::read(PacketReceiver * receiver) {
+	AVPacket * packet = read();
+	if (packet) {
+		receiver->receivePacket(packet);
+		av_packet_unref(packet);
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------
+AVPacket * Reader::read() {
     AVPacket * packet = av_packet_alloc();
     av_init_packet(packet);
     if (!read(packet)) {
@@ -65,8 +70,8 @@ AVPacket * Reader::supplyPacket() {
 
 //--------------------------------------------------------------
 void Reader::seek(uint64_t pts) {
-    int video_stream_index = getVideoStreamIndex();
-    av_seek_frame(format_context, video_stream_index, pts, 0);
+    //int video_stream_index = getVideoStreamIndex();
+    av_seek_frame(format_context, -1, pts, 0);
 }
 
 //--------------------------------------------------------------
@@ -116,10 +121,11 @@ bool Reader::start(PacketReceiver * receiver) {
 }
 
 //--------------------------------------------------------------
-void Reader::stop() {
+void Reader::stop(PacketReceiver * receiver) {
     if (running && threadObj) {
         running = false;
-		if (threadObj->joinable())
+		receiver->notifyPacket();
+		if (threadObj->joinable() && std::this_thread::get_id() != threadObj->get_id())
 	        threadObj->join();
     }
 }
@@ -129,13 +135,13 @@ void Reader::readThread(PacketReceiver * receiver) {
     
 	while (running) {
         
-        AVPacket * packet = supplyPacket();
+        AVPacket * packet = read();
         if (packet) {
             receiver->receivePacket(packet);
             av_packet_unref(packet);
         }
 		else if (error == AVERROR_EOF) {
-			receiver->endRead();
+			receiver->endPacket();
 		}
     }
 }
@@ -144,6 +150,16 @@ void Reader::readThread(PacketReceiver * receiver) {
 void Reader::notify() {
     std::unique_lock<std::mutex> locker(lock);
     condition.notify_all();
+}
+
+//--------------------------------------------------------------
+std::string Reader::getName() {
+	return format_context->iformat->name;
+}
+
+//--------------------------------------------------------------
+std::string ofxFFmpeg::Reader::getLongName() {
+	return format_context->iformat->long_name;
 }
 
 //--------------------------------------------------------------

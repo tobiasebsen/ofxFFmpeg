@@ -11,14 +11,22 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
-bool VideoScaler::setup(int width, int height, int pix_fmt) {
+bool ofxFFmpeg::VideoScaler::setup(int src_width, int src_height, int src_fmt, int dst_width, int dst_height, int dst_fmt) {
 	clear();
-    sws_context = sws_getContext(width, height, (enum AVPixelFormat)pix_fmt, width, height, AV_PIX_FMT_RGB24, 0, 0, 0, 0);
+	sws_context = sws_getContext(src_width, src_height, (enum AVPixelFormat)src_fmt, dst_width, dst_height, (enum AVPixelFormat)dst_fmt, 0, 0, 0, 0);
 	return sws_context != NULL;
 }
 
+bool ofxFFmpeg::VideoScaler::setup(int width, int height, int src_fmt, int dst_fmt) {
+	return setup(width, height, src_fmt, width, height, dst_fmt);
+}
+
 bool VideoScaler::setup(VideoDecoder & decoder) {
-    return setup(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat());
+    return setup(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat(), AV_PIX_FMT_RGB24);
+}
+
+bool ofxFFmpeg::VideoScaler::setup(VideoEncoder & encoder) {
+	return setup(encoder.getWidth(), encoder.getHeight(), AV_PIX_FMT_RGB24, encoder.getPixelFormat());
 }
 
 void VideoScaler::clear() {
@@ -28,18 +36,15 @@ void VideoScaler::clear() {
 	}
 }
 
-bool VideoScaler::scale(AVFrame * frame, ImageReceiver * receiver) {
-	std::shared_ptr<uint8_t> imageData = std::shared_ptr<uint8_t>(new uint8_t[frame->width * frame->height * 3]);
-	const int out_linesize[1] = { 3 * frame->width };
-	const uint8_t * pixelData = imageData.get();
-	int ret = sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
-	receiver->receiveImage(frame->pts, frame->pkt_duration, imageData);
-	return true;
-}
-
-bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData) {
-     const int out_linesize[1] = { 3 * frame->width };
+bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData, int line_stride) {
+     const int out_linesize[1] = { line_stride };
      int ret = sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
      return true;
+}
+
+bool ofxFFmpeg::VideoScaler::scale(const uint8_t * imageData, int line_stride, int height, AVFrame * frame) {
+	const int in_linesize[1] = { line_stride };
+	sws_scale(sws_context, (const uint8_t * const *)&imageData, in_linesize, 0, height, frame->data, frame->linesize);
+	return true;
 }
 

@@ -20,13 +20,15 @@ bool Player::load(string filename) {
 	lastVideoPts = 0;
     
     ofLogVerbose() << "== FORMAT ==";
-    ofLogVerbose() << reader.getDuration() << " seconds";
+	ofLogVerbose() << reader.getLongName();
+	ofLogVerbose() << reader.getDuration() << " seconds";
     ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
     ofLogVerbose() << reader.getNumStreams() << " stream(s)";
 
 	if (video.open(reader)) {
         ofLogVerbose() << "== VIDEO STREAM ==";
-        ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
+		ofLogVerbose() << "  " << video.getLongName();
+		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << (video.getTotalNumFrames() / reader.getDuration()) << " fps";
@@ -36,7 +38,8 @@ bool Player::load(string filename) {
     }
     if (audio.open(reader)) {
         ofLogVerbose() << "== AUDIO STREAM ==";
-        ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
+		ofLogVerbose() << "  " << audio.getLongName();
+		ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
         ofLogVerbose() << "  " << audio.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
         ofLogVerbose() << "  " << audio.getTotalNumFrames() << " frames";
@@ -48,7 +51,7 @@ bool Player::load(string filename) {
 }
 
 void Player::close() {
-    frame_cond.notify_all();
+	reader.stop(this);
 	reader.close();
 	video.close();
 }
@@ -65,32 +68,44 @@ void Player::receivePacket(AVPacket * packet) {
     }
 }
 
-void ofxFFmpeg::Player::endRead() {
+void Player::endPacket() {
     if (loopState == OF_LOOP_NONE) {
         video.flush(this);
-        reader.stop();
+        reader.stop(this);
+		isMovieDone = true;
     }
 	if (loopState == OF_LOOP_NORMAL) {
 		reader.seek(0);
-		timeSeconds = 0;
-		lastVideoPts = 0;
+		//timeSeconds = 0;
+		//lastVideoPts = 0;
 	}
+}
+
+void Player::notifyPacket() {
+	std::lock_guard<std::mutex> lock(mutex);
+	frame_receive_cond.notify_all();
 }
 
 void Player::receiveFrame(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
-		std::unique_lock<std::mutex> lock(mutex);
-		frame_cond.wait(lock);
-		scaler.scale(frame, pixels.getData());
-		lastVideoPts = video.getTimeStamp(frame);
-		pixelsDirty = true;
+		{
+			std::unique_lock<std::mutex> lock(mutex);
+			frame_receive_cond.wait(lock);
+		}
+		{
+			std::lock_guard<std::mutex> lock(mutex);
+			scaler.scale(frame, pixels.getData(), pixels.getBytesStride());
+			lastVideoPts = video.getTimeStamp(frame);
+			pixelsDirty = true;
+			frame_ready_cond.notify_one();
+		}
 	}
 }
 
 void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
 	std::unique_lock<std::mutex> lock(mutex);
-	frame_cond.wait(lock);
+	frame_receive_cond.wait(lock);
 	pixels.allocate(video.getWidth(), video.getHeight(), 3);
 	pixels.setFromPixels(imageData.get(), video.getWidth(), video.getHeight(), 3);
 	pixelsDirty = true;
@@ -110,24 +125,24 @@ void Player::update() {
 
 	if (pts >= lastVideoPts) {
 		std::lock_guard<std::mutex> lock(mutex);
-		frame_cond.notify_one();
+		frame_receive_cond.notify_one();
 	}
 
 	if (pixelsDirty) {
         std::lock_guard<std::mutex> lock(mutex);
-		//ofLog() << "Last:  " << lastVideoPts;
+
+		//ofLog() << "Last: " << lastVideoPts << " " << video.getFrameNum(lastVideoPts);
+
+		if (!texture.isAllocated() || texture.getWidth() != pixels.getWidth() || texture.getHeight() != pixels.getHeight())
+			texture.allocate(pixels);
+
 		texture.loadData(pixels);
 		timeSeconds = lastVideoPts * reader.getTimeBase();
 		pixelsDirty = false;
 		frameNew = true;
-		//if (pts + duration > lastVideoPts) {
-			//frame_cond.notify_one();
-		//}
 	}
 	else {
-        std::lock_guard<std::mutex> lock(mutex);
 		frameNew = false;
-        //frame_cond.notify_one();
 	}
 }
 
@@ -169,12 +184,27 @@ float Player::getDuration() const {
 	return reader.getDuration();
 }
 
+bool ofxFFmpeg::Player::getIsMovieDone() const {
+	return isMovieDone;
+}
+
 int Player::getTotalNumFrames() const {
 	return video.getTotalNumFrames();
 }
 
-void Player::setFrame(int f) {
+void ofxFFmpeg::Player::nextFrame() {
+	std::lock_guard<std::mutex> lock(mutex);
+	frame_receive_cond.notify_all();
+}
 
+void Player::setFrame(int f) {
+	// TODO
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+		pts = video.getTimeStamp(f);
+		reader.seek(pts);
+		frame_receive_cond.notify_all();
+	}
 }
 
 void Player::setPosition(float pct) {
@@ -197,11 +227,12 @@ void Player::play() {
 	if (reader.isOpen()) {
         //video.start(&videoPackets, this);
 		reader.start(this);
+		isMovieDone = false;
 	}
 }
 
 void Player::stop() {
-    reader.stop();
+    reader.stop(this);
 }
 
 void ofxFFmpeg::Player::setPaused(bool paused) {
