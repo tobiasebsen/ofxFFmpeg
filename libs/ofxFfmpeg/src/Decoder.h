@@ -19,8 +19,8 @@ namespace ofxFFmpeg {
         /////////////////////////////////////////////////
 
         bool match(AVPacket * packet);
-        bool send(AVPacket * packet);
-
+        
+		bool send(AVPacket * packet);
         bool receive(AVFrame * frame);
         AVFrame * receive();
         void free(AVFrame * frame);
@@ -62,6 +62,8 @@ namespace ofxFFmpeg {
         AVStream * stream = NULL;
         AVCodecContext * codec_context = NULL;
 	};
+
+	/////////////////////////////////////////////////////
     
     class VideoDecoder : public Decoder {
     public:
@@ -69,9 +71,12 @@ namespace ofxFFmpeg {
         int getWidth() const;
         int getHeight() const;
         int getPixelFormat() const;
+		double getFrameRate();
     };
     
-    class AudioDecoder : public Decoder {
+	/////////////////////////////////////////////////////
+	
+	class AudioDecoder : public Decoder {
     public:
 		bool open(Reader & reader);
 		int getNumChannels() const;

@@ -1,9 +1,9 @@
-#include "Recorder.h"
+#include "ofxFFmpegRecorder.h"
 
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool Recorder::open(const string filename) {
+bool ofxFFmpegRecorder::open(const string filename) {
 
 	string filePath = ofFilePath::getAbsolutePath(filename);
 
@@ -16,21 +16,21 @@ bool Recorder::open(const string filename) {
 }
 
 //--------------------------------------------------------------
-bool Recorder::setVideoCodec(int codecId) {
+bool ofxFFmpegRecorder::setVideoCodec(int codecId) {
   	return video.setup(codecId);
 }
 
 //--------------------------------------------------------------
-bool Recorder::setVideoCodec(string codecName) {
+bool ofxFFmpegRecorder::setVideoCodec(string codecName) {
 	return video.setup(codecName);
 }
 
-VideoEncoder & ofxFFmpeg::Recorder::getVideoEncoder() {
+ofxFFmpeg::VideoEncoder & ofxFFmpegRecorder::getVideoEncoder() {
 	return video;
 }
 
 //--------------------------------------------------------------
-bool Recorder::start() {
+bool ofxFFmpegRecorder::start() {
 
 	AVStream * stream = writer.addStream();
 	video.begin(stream);
@@ -46,7 +46,7 @@ bool Recorder::start() {
     return true;
 }
 //--------------------------------------------------------------
-void Recorder::stop() {
+void ofxFFmpegRecorder::stop() {
 	video.flush(this);
 	writer.end();
 	video.freeFrame(frame);
@@ -55,13 +55,13 @@ void Recorder::stop() {
 }
 
 //--------------------------------------------------------------
-void Recorder::receivePacket(AVPacket * packet) {
+void ofxFFmpegRecorder::receivePacket(AVPacket * packet) {
 
 	writer.write(packet);
 }
 
 //--------------------------------------------------------------
-void Recorder::write(const ofPixels & pixels) {
+void ofxFFmpegRecorder::write(const ofPixels & pixels) {
 
 	scaler.scale(pixels.getData(), pixels.getBytesStride(), pixels.getHeight(), frame);
     
@@ -72,12 +72,12 @@ void Recorder::write(const ofPixels & pixels) {
 }
 
 //--------------------------------------------------------------
-int Recorder::getError() {
+int ofxFFmpegRecorder::getError() {
 	return error;
 }
 
 //--------------------------------------------------------------
-string Recorder::getErrorString() {
+string ofxFFmpegRecorder::getErrorString() {
 	/*char errstr[AV_ERROR_MAX_STRING_SIZE];
 	av_strerror(error, errstr, sizeof(errstr));
 	return string(errstr);*/
@@ -85,7 +85,7 @@ string Recorder::getErrorString() {
 }
 
 //--------------------------------------------------------------
-void Recorder::close() {
+void ofxFFmpegRecorder::close() {
 	video.freeFrame(frame);
 	frame = NULL;
 	video.close();

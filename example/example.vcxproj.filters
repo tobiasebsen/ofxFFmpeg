@@ -19,13 +19,7 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\PacketQueue.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
-    <ClCompile Include="..\libs\ofxFfmpeg\src\Player.cpp">
-      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp">
-      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\libs\ofxFfmpeg\src\Recorder.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp">
@@ -39,6 +33,12 @@
     </ClCompile>
     <ClCompile Include="..\libs\ofxFfmpeg\src\Writer.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ofxFFmpegPlayer.cpp">
+      <Filter>addons\ofxFFmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ofxFFmpegRecorder.cpp">
+      <Filter>addons\ofxFFmpeg\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -93,6 +93,9 @@
     <Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg\src">
       <UniqueIdentifier>{3AEC9899-FF4D-76C2-06EA-42C7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="addons\ofxFFmpeg\libs\ofxFfmpeg\include">
+      <UniqueIdentifier>{a24a2dae-6dbf-4c8a-af7a-20abbffdda16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ofApp.h">
@@ -100,9 +103,6 @@
     </ClInclude>
     <ClInclude Include="src\ofApp.h">
       <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\addons\ofxFFmpeg\src\ofxFFmpeg.h">
-      <Filter>addons\ofxFFmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec\ac3_parser.h">
       <Filter>addons\ofxFFmpeg\libs\ffmpeg\include\libavcodec</Filter>
@@ -455,13 +455,7 @@
     <ClInclude Include="..\libs\ofxFfmpeg\src\PacketQueue.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Player.h">
-      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-    </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h">
-      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Recorder.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h">
@@ -490,6 +484,15 @@
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\src\Flow.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxFFmpegPlayer.h">
+      <Filter>addons\ofxFFmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ofxFFmpegRecorder.h">
+      <Filter>addons\ofxFFmpeg\src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

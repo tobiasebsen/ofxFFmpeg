@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "ofxFFmpeg.h"
+#include "ofxFFmpegPlayer.h"
 
 class ofApp : public ofBaseApp {
 public:

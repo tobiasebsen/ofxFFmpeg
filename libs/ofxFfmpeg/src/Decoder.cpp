@@ -98,7 +98,12 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
 
 //--------------------------------------------------------------
 bool Decoder::flush(FrameReceiver * receiver) {
-	return decode(NULL, receiver);
+	if (!decode(NULL, receiver))
+		return false;
+
+	avcodec_flush_buffers(codec_context);
+
+	return true;
 }
 
 //--------------------------------------------------------------
@@ -185,7 +190,7 @@ uint64_t Decoder::getTimeStamp(AVFrame * frame) const {
 
 //--------------------------------------------------------------
 uint64_t Decoder::getTimeStamp(int frame_num) const {
-	return av_rescale_q(frame_num, { AV_TIME_BASE, 1 }, codec_context->framerate);
+	return av_rescale_q(frame_num, { AV_TIME_BASE, 1 }, stream->r_frame_rate);
 }
 
 //--------------------------------------------------------------
@@ -215,6 +220,10 @@ int VideoDecoder::getHeight() const {
 //--------------------------------------------------------------
 int VideoDecoder::getPixelFormat() const {
     return codec_context ? codec_context->pix_fmt : AV_PIX_FMT_NONE;
+}
+
+double VideoDecoder::getFrameRate() {
+	return stream ? av_q2d(stream->r_frame_rate) : 0;
 }
 
 //--------------------------------------------------------------

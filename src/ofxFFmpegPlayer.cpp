@@ -1,18 +1,18 @@
-#include "Player.h"
+#include "ofxFFmpegPlayer.h"
 
 using namespace ofxFFmpeg;
 
 
-Player::Player() {
+ofxFFmpegPlayer::ofxFFmpegPlayer() {
 }
 
-Player::~Player() {
+ofxFFmpegPlayer::~ofxFFmpegPlayer() {
 	close();
 }
 
-bool Player::load(string filename) {
+bool ofxFFmpegPlayer::load(string filename) {
 
-	if (!reader.open(ofFilePath::getAbsolutePath(filename))) {
+	if (!reader.open(ofFilePath::getAbsolutePath(filename, true))) {
 		return false;
 	}
 
@@ -50,13 +50,13 @@ bool Player::load(string filename) {
 	return true;
 }
 
-void Player::close() {
+void ofxFFmpegPlayer::close() {
 	reader.stop(this);
 	reader.close();
 	video.close();
 }
 
-void Player::receivePacket(AVPacket * packet) {
+void ofxFFmpegPlayer::receivePacket(AVPacket * packet) {
 
 	if (video.match(packet)) {
 		video.decode(packet, this);
@@ -68,7 +68,7 @@ void Player::receivePacket(AVPacket * packet) {
     }
 }
 
-void Player::endPacket() {
+void ofxFFmpegPlayer::endPacket() {
     if (loopState == OF_LOOP_NONE) {
         video.flush(this);
         reader.stop(this);
@@ -81,12 +81,12 @@ void Player::endPacket() {
 	}
 }
 
-void Player::notifyPacket() {
+void ofxFFmpegPlayer::notifyPacket() {
 	std::lock_guard<std::mutex> lock(mutex);
 	frame_receive_cond.notify_all();
 }
 
-void Player::receiveFrame(AVFrame * frame, int stream_index) {
+void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
 		{
@@ -103,7 +103,7 @@ void Player::receiveFrame(AVFrame * frame, int stream_index) {
 	}
 }
 
-void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
+void ofxFFmpegPlayer::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
 	std::unique_lock<std::mutex> lock(mutex);
 	frame_receive_cond.wait(lock);
 	pixels.allocate(video.getWidth(), video.getHeight(), 3);
@@ -111,7 +111,7 @@ void Player::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr
 	pixelsDirty = true;
 }
 
-void Player::update() {
+void ofxFFmpegPlayer::update() {
 
 	uint64_t duration = 0;
     
@@ -120,7 +120,7 @@ void Player::update() {
 		timeSeconds += dt;
         pts = timeSeconds / reader.getTimeBase();
 		duration = dt / reader.getTimeBase();
-		//ofLog() << "Clock: " << pts << " " << duration;
+		ofLog() << "Clock: " << pts << " " << duration;
     }
 
 	if (pts >= lastVideoPts) {
@@ -146,84 +146,85 @@ void Player::update() {
 	}
 }
 
-void Player::draw(float x, float y, float w, float h) const {
+void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
 	if (texture.isAllocated())
 		texture.draw(x, y, w, h);
 }
 
-void Player::draw(float x, float y) const {
+void ofxFFmpegPlayer::draw(float x, float y) const {
     if (texture.isAllocated())
         texture.draw(x, y);
 }
 
-float Player::getWidth() const {
+float ofxFFmpegPlayer::getWidth() const {
 	return video.getWidth();
 }
 
-float Player::getHeight() const {
+float ofxFFmpegPlayer::getHeight() const {
     return video.getHeight();
 }
 
-bool Player::setPixelFormat(ofPixelFormat pixelFormat) {
+bool ofxFFmpegPlayer::setPixelFormat(ofPixelFormat pixelFormat) {
 	return false;
 }
 
-ofPixelFormat Player::getPixelFormat() const {
+ofPixelFormat ofxFFmpegPlayer::getPixelFormat() const {
 	return OF_PIXELS_RGB;
 }
 
-float Player::getPosition() const {
+float ofxFFmpegPlayer::getPosition() const {
 	return (float)getCurrentFrame() / (float)getTotalNumFrames();
 }
 
-int Player::getCurrentFrame() const {
+int ofxFFmpegPlayer::getCurrentFrame() const {
 	return video.getFrameNum(lastVideoPts);
 }
 
-float Player::getDuration() const {
+float ofxFFmpegPlayer::getDuration() const {
 	return reader.getDuration();
 }
 
-bool ofxFFmpeg::Player::getIsMovieDone() const {
+bool ofxFFmpegPlayer::getIsMovieDone() const {
 	return isMovieDone;
 }
 
-int Player::getTotalNumFrames() const {
+int ofxFFmpegPlayer::getTotalNumFrames() const {
 	return video.getTotalNumFrames();
 }
 
-void ofxFFmpeg::Player::nextFrame() {
+void ofxFFmpegPlayer::nextFrame() {
 	std::lock_guard<std::mutex> lock(mutex);
 	frame_receive_cond.notify_all();
 }
 
-void Player::setFrame(int f) {
+void ofxFFmpegPlayer::setFrame(int f) {
 	// TODO
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 		pts = video.getTimeStamp(f);
+		timeSeconds = pts * reader.getTimeBase();
 		reader.seek(pts);
 		frame_receive_cond.notify_all();
 	}
 }
 
-void Player::setPosition(float pct) {
+void ofxFFmpegPlayer::setPosition(float pct) {
 	setFrame(pct * getTotalNumFrames());
 }
 
-bool Player::isLoaded() const {
+bool ofxFFmpegPlayer::isLoaded() const {
 	return reader.isOpen();
 }
 
-bool Player::isInitialized() const {
+bool ofxFFmpegPlayer::isInitialized() const {
 	return reader.isOpen();
 }
 
-bool Player::isFrameNew() const {
+bool ofxFFmpegPlayer::isFrameNew() const {
 	return frameNew;
 }
 
-void Player::play() {
+void ofxFFmpegPlayer::play() {
 	if (reader.isOpen()) {
         //video.start(&videoPackets, this);
 		reader.start(this);
@@ -231,30 +232,30 @@ void Player::play() {
 	}
 }
 
-void Player::stop() {
+void ofxFFmpegPlayer::stop() {
     reader.stop(this);
 }
 
-void ofxFFmpeg::Player::setPaused(bool paused) {
+void ofxFFmpegPlayer::setPaused(bool paused) {
 	this->paused = paused;
 }
 
-bool Player::isPaused() const {
+bool ofxFFmpegPlayer::isPaused() const {
 	return paused;
 }
 
-bool Player::isPlaying() const {
+bool ofxFFmpegPlayer::isPlaying() const {
 	return reader.isRunning();
 }
 
-void Player::setLoopState(ofLoopType state) {
+void ofxFFmpegPlayer::setLoopState(ofLoopType state) {
     loopState = state;
 }
 
-ofPixels & Player::getPixels() {
+ofPixels & ofxFFmpegPlayer::getPixels() {
 	return pixels;
 }
 
-const ofPixels & Player::getPixels() const {
+const ofPixels & ofxFFmpegPlayer::getPixels() const {
 	return pixels;
 }

@@ -8,11 +8,11 @@ void ofApp::setup(){
     ofSetVerticalSync(false);
 	ofSetFrameRate(60);
     
-    //player.load("fingers.mov");
+    player.load("fingers.mov");
     //player.load("SampleHap.mov");
     //player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
     //player.load("/Users/tobias/Downloads/Sky Q Brand Reveal 35 Master TV (1080p) (1).mov");
-	player.load("C:/Users/tobias/Downloads/Setup-Public-perception.mp4");
+	//player.load("C:/Users/tobias/Downloads/Setup-Public-perception.mp4");
     
     player.play();
 }

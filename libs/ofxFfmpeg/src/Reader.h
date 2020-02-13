@@ -45,7 +45,6 @@ namespace ofxFFmpeg {
         bool isRunning() const {
             return running;
         }
-        void notify();
 
 		std::string getName();
 		std::string getLongName();
@@ -59,7 +58,7 @@ namespace ofxFFmpeg {
         AVFormatContext * format_context = NULL;
         
         std::thread * threadObj = NULL;
-        std::mutex lock;
+        std::mutex mutex;
         std::condition_variable condition;
         bool running = false;
 	};

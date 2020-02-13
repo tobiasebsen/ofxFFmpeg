@@ -115,6 +115,7 @@ bool Reader::start(PacketReceiver * receiver) {
         return false;
     
     running = true;
+	seek(0);
     threadObj = new std::thread(&Reader::readThread, this, receiver);
 
     return true;
@@ -144,12 +145,6 @@ void Reader::readThread(PacketReceiver * receiver) {
 			receiver->endPacket();
 		}
     }
-}
-
-//--------------------------------------------------------------
-void Reader::notify() {
-    std::unique_lock<std::mutex> locker(lock);
-    condition.notify_all();
 }
 
 //--------------------------------------------------------------
