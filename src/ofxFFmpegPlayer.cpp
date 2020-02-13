@@ -31,7 +31,7 @@ bool ofxFFmpegPlayer::load(string filename) {
 		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
-        ofLogVerbose() << "  " << (video.getTotalNumFrames() / reader.getDuration()) << " fps";
+        ofLogVerbose() << "  " << video.getFrameRate() << " fps";
         ofLogVerbose() << "  " << (video.getBitRate() / 1024.f) << " kb/s";
         scaler.setup(video);
         pixels.allocate(video.getWidth(), video.getHeight(), OF_IMAGE_COLOR);
@@ -120,7 +120,7 @@ void ofxFFmpegPlayer::update() {
 		timeSeconds += dt;
         pts = timeSeconds / reader.getTimeBase();
 		duration = dt / reader.getTimeBase();
-		ofLog() << "Clock: " << pts << " " << duration;
+		//ofLog() << "Clock: " << pts << " " << duration;
     }
 
 	if (pts >= lastVideoPts) {
