@@ -28,6 +28,8 @@ namespace ofxFFmpeg {
         bool decode(AVPacket * packet, FrameReceiver * receiver);
 		bool flush(FrameReceiver * receiver);
 
+		void copy(AVFrame * src_frame, uint8_t * dst_data, int dst_size, int align = 1);
+
         /////////////////////////////////////////////////
         
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);

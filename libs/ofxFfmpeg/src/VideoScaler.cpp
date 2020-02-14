@@ -29,6 +29,10 @@ bool ofxFFmpeg::VideoScaler::setup(VideoEncoder & encoder) {
 	return setup(encoder.getWidth(), encoder.getHeight(), AV_PIX_FMT_RGB24, encoder.getPixelFormat());
 }
 
+bool ofxFFmpeg::VideoScaler::isSetup() {
+	return sws_context != NULL;
+}
+
 void VideoScaler::clear() {
 	if (sws_context) {
 		sws_freeContext(sws_context);

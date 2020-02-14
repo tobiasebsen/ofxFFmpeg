@@ -494,6 +494,9 @@
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\src\AudioBuffer.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />

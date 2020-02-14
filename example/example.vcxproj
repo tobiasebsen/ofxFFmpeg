@@ -202,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\src\AudioBuffer.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\AvTypes.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Decoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\src\Encoder.h" />

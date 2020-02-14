@@ -35,6 +35,7 @@ namespace ofxFFmpeg {
 
 		AVFrame * allocateFrame();
 		void setTimeStamp(AVFrame * frame, int frame_num);
+		void setTimeStamp(AVFrame * frame, double time_sec);
 
 		void setWidth(int width);
 		void setHeight(int height);
@@ -47,5 +48,10 @@ namespace ofxFFmpeg {
 		int getWidth();
 		int getHeight();
 		int getPixelFormat();
+	};
+
+	class AudioEncoder : public Encoder {
+	public:
+
 	};
 }

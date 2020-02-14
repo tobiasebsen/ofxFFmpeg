@@ -143,6 +143,11 @@ void ofxFFmpeg::VideoEncoder::setTimeStamp(AVFrame * frame, int frame_num) {
 }
 
 //--------------------------------------------------------------
+void ofxFFmpeg::VideoEncoder::setTimeStamp(AVFrame * frame, double time_sec) {
+	frame->pts = time_sec / av_q2d(stream->time_base);
+}
+
+//--------------------------------------------------------------
 void VideoEncoder::setWidth(int width) {
 	codec_context->width = width;
 }

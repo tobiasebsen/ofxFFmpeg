@@ -7,3 +7,4 @@
 #include "Reader.h"
 #include "Writer.h"
 #include "VideoScaler.h"
+#include "AudioBuffer.h"

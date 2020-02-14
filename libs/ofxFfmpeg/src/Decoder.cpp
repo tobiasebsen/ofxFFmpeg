@@ -3,7 +3,7 @@
 extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
-#include "libavutil/hwcontext.h"
+#include "libavutil/imgutils.h"
 #include "libavutil/avstring.h"
 #include "libavutil/opt.h"
 #include "libavutil/time.h"
@@ -104,6 +104,14 @@ bool Decoder::flush(FrameReceiver * receiver) {
 	avcodec_flush_buffers(codec_context);
 
 	return true;
+}
+
+//--------------------------------------------------------------
+void ofxFFmpeg::Decoder::copy(AVFrame * src_frame, uint8_t * dst_data, int dst_size, int align) {
+	error = av_image_copy_to_buffer(dst_data, dst_size, src_frame->data, src_frame->linesize, (AVPixelFormat)src_frame->format, src_frame->width, src_frame->height, align);
+	if (error < 0) {
+		av_log(NULL, AV_LOG_ERROR, "Cannot copy image to buffer\n");
+	}
 }
 
 //--------------------------------------------------------------

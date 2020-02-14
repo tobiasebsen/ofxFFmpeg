@@ -33,8 +33,11 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
         ofLogVerbose() << "  " << (video.getBitRate() / 1024.f) << " kb/s";
-        scaler.setup(video);
-        pixels.allocate(video.getWidth(), video.getHeight(), OF_IMAGE_COLOR);
+
+		ofPixelFormat format = getPixelFormat();
+		if (format == OF_PIXELS_UNKNOWN)
+	        scaler.setup(video);
+        pixels.allocate(video.getWidth(), video.getHeight(), format);
     }
     if (audio.open(reader)) {
         ofLogVerbose() << "== AUDIO STREAM ==";
@@ -45,6 +48,14 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << audio.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
         ofLogVerbose() << "  " << (audio.getBitRate() / 1024.f) << " kb/s";
+
+		ofSoundStreamSettings settings;
+		settings.sampleRate = audio.getSampleRate();
+		settings.numOutputChannels = audio.getNumChannels();
+		//settings.numBuffers = 2;
+		//settings.bufferSize = 1024;
+		settings.setOutListener(this);
+		//audioStream.setup(settings);
     }
 
 	return true;
@@ -54,6 +65,7 @@ void ofxFFmpegPlayer::close() {
 	reader.stop(this);
 	reader.close();
 	video.close();
+	audio.close();
 }
 
 void ofxFFmpegPlayer::receivePacket(AVPacket * packet) {
@@ -65,6 +77,7 @@ void ofxFFmpegPlayer::receivePacket(AVPacket * packet) {
 	}
     if (audio.match(packet)) {
         // audio packet
+		//audio.decode(packet, this);
     }
 }
 
@@ -95,11 +108,19 @@ void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
 		}
 		{
 			std::lock_guard<std::mutex> lock(mutex);
-			scaler.scale(frame, pixels.getData(), pixels.getBytesStride());
+			
+			if (scaler.isSetup())
+				scaler.scale(frame, pixels.getData(), pixels.getBytesStride());
+			else
+				video.copy(frame, pixels.getData(), pixels.getTotalBytes());
+
 			lastVideoPts = video.getTimeStamp(frame);
 			pixelsDirty = true;
 			frame_ready_cond.notify_one();
 		}
+	}
+	if (stream_index == audio.getStreamIndex()) {
+
 	}
 }
 
@@ -169,7 +190,16 @@ bool ofxFFmpegPlayer::setPixelFormat(ofPixelFormat pixelFormat) {
 }
 
 ofPixelFormat ofxFFmpegPlayer::getPixelFormat() const {
-	return OF_PIXELS_RGB;
+	switch (video.getPixelFormat()) {
+	case OFX_FFMPEG_FORMAT_GRAY8:
+		return OF_PIXELS_GRAY;
+	case OFX_FFMPEG_FORMAT_RGB24:
+		return OF_PIXELS_RGB;
+	case OFX_FFMPEG_FORMAT_RGBA:
+		return OF_PIXELS_RGBA;
+	default:
+		return OF_PIXELS_UNKNOWN;
+	}
 }
 
 float ofxFFmpegPlayer::getPosition() const {
@@ -258,4 +288,8 @@ ofPixels & ofxFFmpegPlayer::getPixels() {
 
 const ofPixels & ofxFFmpegPlayer::getPixels() const {
 	return pixels;
+}
+
+void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
+	//ofLog() << "audioOut: " << buffer.getDurationMS();
 }

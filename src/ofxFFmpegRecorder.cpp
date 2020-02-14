@@ -25,8 +25,24 @@ bool ofxFFmpegRecorder::setVideoCodec(string codecName) {
 	return video.setup(codecName);
 }
 
+//--------------------------------------------------------------
+bool ofxFFmpegRecorder::setAudioCodec(int codecId) {
+	return audio.setup(codecId);
+}
+
+//--------------------------------------------------------------
+bool ofxFFmpegRecorder::setAudioCodec(string codecName) {
+	return audio.setup(codecName);
+}
+
+//--------------------------------------------------------------
 ofxFFmpeg::VideoEncoder & ofxFFmpegRecorder::getVideoEncoder() {
 	return video;
+}
+
+//--------------------------------------------------------------
+ofxFFmpeg::AudioEncoder & ofxFFmpegRecorder::getAudioEncoder() {
+	return audio;
 }
 
 //--------------------------------------------------------------
@@ -39,7 +55,7 @@ bool ofxFFmpegRecorder::start() {
 
 	writer.begin();
 
-    n_frame = 0;
+    frame_count = 0;
     
 	scaler.setup(video);
     
@@ -61,14 +77,29 @@ void ofxFFmpegRecorder::receivePacket(AVPacket * packet) {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegRecorder::write(const ofPixels & pixels) {
+void ofxFFmpegRecorder::write(const ofPixels & pixels, int frameNumber) {
 
 	scaler.scale(pixels.getData(), pixels.getBytesStride(), pixels.getHeight(), frame);
-    
-	video.setTimeStamp(frame, n_frame);
-	n_frame++;
+   
+	video.setTimeStamp(frame, (int)(frameNumber == -1 ? frame_count : frameNumber));
 
 	video.encode(frame, this);
+	frame_count++;
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegRecorder::write(const ofPixels & pixels, float timeSeconds) {
+
+	scaler.scale(pixels.getData(), pixels.getBytesStride(), pixels.getHeight(), frame);
+
+	video.setTimeStamp(frame, timeSeconds);
+
+	video.encode(frame, this);
+	frame_count++;
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegRecorder::audioIn(ofSoundBuffer & buffer) {
 }
 
 //--------------------------------------------------------------

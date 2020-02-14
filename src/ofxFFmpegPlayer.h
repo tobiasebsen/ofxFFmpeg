@@ -48,6 +48,8 @@ public:
 	void setFrame(int frame);
 	void setPosition(float pct);
 
+	void audioOut(ofSoundBuffer & buffer);
+
 protected:
 
 	virtual void receivePacket(AVPacket * packet);
@@ -63,6 +65,7 @@ protected:
 	ofxFFmpeg::VideoDecoder video;
 	ofxFFmpeg::VideoScaler scaler;
     ofxFFmpeg::AudioDecoder audio;
+	ofxFFmpeg::AudioBuffer audioBuffer;
 
 	int64_t lastVideoPts;
 	int64_t lastAudioPts;
@@ -70,6 +73,8 @@ protected:
     std::mutex mutex;
     std::condition_variable frame_receive_cond;
 	std::condition_variable frame_ready_cond;
+
+	ofSoundStream audioStream;
 
 	bool pixelsDirty = false;
 	bool frameNew = false;
