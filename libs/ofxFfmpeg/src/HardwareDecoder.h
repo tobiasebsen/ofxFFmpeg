@@ -13,6 +13,8 @@ namespace ofxFFmpeg {
 
 		int getPixelFormat() const;
 
+        static std::vector<std::string> getDeviceNames();
+
 	protected:
 		AVBufferRef * hardware_context = NULL;
 		int hw_format = -1;

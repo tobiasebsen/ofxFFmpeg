@@ -7,14 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		7E7457861FED782F3B71E09C /* Recorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 82A91BD80A4C5C3F9896C175 /* Recorder.cpp */; };
 		E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4B69E1D0A3A1BDC003C02F2 /* main.cpp */; };
 		E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E4B69E1E0A3A1BDC003C02F2 /* ofApp.cpp */; };
-		F63CA83023734DE200FFA436 /* PacketQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F63CA82A23734DE100FFA436 /* PacketQueue.cpp */; };
+		F63CA83023734DE200FFA436 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F63CA82A23734DE100FFA436 /* Queue.cpp */; };
 		F63CA83123734DE200FFA436 /* Decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F63CA82C23734DE100FFA436 /* Decoder.cpp */; };
 		F63CA83223734DE200FFA436 /* Reader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F63CA82D23734DE100FFA436 /* Reader.cpp */; };
 		F6541E2123E6BF9E00ECAEBE /* VideoScaler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E2023E6BF9E00ECAEBE /* VideoScaler.cpp */; };
-		F6857CD323638DCB0028A6FE /* Player.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6857CD223638DCB0028A6FE /* Player.cpp */; };
+		F6541E3B23F74D1C00ECAEBE /* Encoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E3523F74D1C00ECAEBE /* Encoder.cpp */; };
+		F6541E3C23F74D1C00ECAEBE /* Writer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E3723F74D1C00ECAEBE /* Writer.cpp */; };
+		F6541E3D23F74D1C00ECAEBE /* HardwareDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E3823F74D1C00ECAEBE /* HardwareDecoder.cpp */; };
+		F6541E4923F74D3A00ECAEBE /* ofxFFmpegPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4523F74D3900ECAEBE /* ofxFFmpegPlayer.cpp */; };
+		F6541E4A23F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4723F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -64,7 +67,6 @@
 		46465A83B0AB2A013CB780A0 /* buffersink.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = buffersink.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavfilter/buffersink.h; sourceTree = SOURCE_ROOT; };
 		4671E2C4DC103785F6A697AA /* postprocess.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = postprocess.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libpostproc/postprocess.h; sourceTree = SOURCE_ROOT; };
 		48DC48A9BF1A7882D891D1E8 /* buffer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = buffer.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/buffer.h; sourceTree = SOURCE_ROOT; };
-		48E46DEC3A3E18CF3FDCC3C1 /* ofxFFmpeg.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ofxFFmpeg.h; path = ../../../addons/ofxFFmpeg/src/ofxFFmpeg.h; sourceTree = SOURCE_ROOT; };
 		495E2C0713B43769CACF9840 /* xtea.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = xtea.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/xtea.h; sourceTree = SOURCE_ROOT; };
 		4D378214EEEBBB78C39BC1B1 /* spherical.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = spherical.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/spherical.h; sourceTree = SOURCE_ROOT; };
 		50761485C36F65306FD995A6 /* dxva2.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = dxva2.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavcodec/dxva2.h; sourceTree = SOURCE_ROOT; };
@@ -86,7 +88,6 @@
 		5C27D49B4C6B8ADE5370F975 /* hdr_dynamic_metadata.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = hdr_dynamic_metadata.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/hdr_dynamic_metadata.h; sourceTree = SOURCE_ROOT; };
 		5E5837E45865A252A5A1BDBC /* hwcontext_cuda.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = hwcontext_cuda.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/hwcontext_cuda.h; sourceTree = SOURCE_ROOT; };
 		617CC4D4D0316E5294CCF10D /* display.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = display.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/display.h; sourceTree = SOURCE_ROOT; };
-		66BA650D3FD1076A599470ED /* Recorder.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = Recorder.h; path = ../../../addons/ofxFFmpeg/libs/ofxFfmpeg/src/Recorder.h; sourceTree = SOURCE_ROOT; };
 		67AB06FB758674C75327A5DF /* mem.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = mem.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/mem.h; sourceTree = SOURCE_ROOT; };
 		69559B50B8108464FE9D519C /* frame.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = frame.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/frame.h; sourceTree = SOURCE_ROOT; };
 		69FAB8EF96E431AB051FC539 /* sha.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = sha.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/sha.h; sourceTree = SOURCE_ROOT; };
@@ -97,7 +98,6 @@
 		7638A7CD456B5E7CF7FF9761 /* qsv.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = qsv.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavcodec/qsv.h; sourceTree = SOURCE_ROOT; };
 		7EE5C2EAAB0F41993DA1FA83 /* ac3_parser.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ac3_parser.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavcodec/ac3_parser.h; sourceTree = SOURCE_ROOT; };
 		824F83E7F29A755054EAC785 /* downmix_info.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = downmix_info.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/downmix_info.h; sourceTree = SOURCE_ROOT; };
-		82A91BD80A4C5C3F9896C175 /* Recorder.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = Recorder.cpp; path = ../../../addons/ofxFFmpeg/libs/ofxFfmpeg/src/Recorder.cpp; sourceTree = SOURCE_ROOT; };
 		870EAD0AC7C0DF4E7791DEC4 /* hwcontext_d3d11va.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = hwcontext_d3d11va.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/hwcontext_d3d11va.h; sourceTree = SOURCE_ROOT; };
 		88728DF0530C7CC0FC2F4EB8 /* dv_profile.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = dv_profile.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavcodec/dv_profile.h; sourceTree = SOURCE_ROOT; };
 		89413BD0F0344CDBD4974544 /* hwcontext_dxva2.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = hwcontext_dxva2.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/hwcontext_dxva2.h; sourceTree = SOURCE_ROOT; };
@@ -326,18 +326,30 @@
 		EE85E742A7569478604A485C /* avfilter.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = avfilter.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavfilter/avfilter.h; sourceTree = SOURCE_ROOT; };
 		F12C0EBAB6B120AA5091143F /* timecode.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = timecode.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/timecode.h; sourceTree = SOURCE_ROOT; };
 		F3F6D89DBBAD8FC0B882F552 /* base64.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = base64.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/base64.h; sourceTree = SOURCE_ROOT; };
-		F63CA82A23734DE100FFA436 /* PacketQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PacketQueue.cpp; path = ../libs/ofxFfmpeg/src/PacketQueue.cpp; sourceTree = "<group>"; };
+		F63CA82A23734DE100FFA436 /* Queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Queue.cpp; path = ../libs/ofxFfmpeg/src/Queue.cpp; sourceTree = "<group>"; };
 		F63CA82B23734DE100FFA436 /* Decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Decoder.h; path = ../libs/ofxFfmpeg/src/Decoder.h; sourceTree = "<group>"; };
 		F63CA82C23734DE100FFA436 /* Decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Decoder.cpp; path = ../libs/ofxFfmpeg/src/Decoder.cpp; sourceTree = "<group>"; };
 		F63CA82D23734DE100FFA436 /* Reader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Reader.cpp; path = ../libs/ofxFfmpeg/src/Reader.cpp; sourceTree = "<group>"; };
 		F63CA82E23734DE200FFA436 /* Reader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Reader.h; path = ../libs/ofxFfmpeg/src/Reader.h; sourceTree = "<group>"; };
-		F63CA82F23734DE200FFA436 /* PacketQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PacketQueue.h; path = ../libs/ofxFfmpeg/src/PacketQueue.h; sourceTree = "<group>"; };
 		F6541E1F23E6BA6900ECAEBE /* VideoScaler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = VideoScaler.h; path = ../libs/ofxFfmpeg/src/VideoScaler.h; sourceTree = "<group>"; };
 		F6541E2023E6BF9E00ECAEBE /* VideoScaler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = VideoScaler.cpp; path = ../libs/ofxFfmpeg/src/VideoScaler.cpp; sourceTree = "<group>"; };
-		F6541E2323EDC92700ECAEBE /* FrameQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FrameQueue.h; path = ../libs/ofxFfmpeg/src/FrameQueue.h; sourceTree = "<group>"; };
 		F6541E2423F1E10100ECAEBE /* Queue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Queue.h; path = ../libs/ofxFfmpeg/src/Queue.h; sourceTree = "<group>"; };
-		F6857CD123638D620028A6FE /* Player.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Player.h; path = ../libs/ofxFfmpeg/src/Player.h; sourceTree = "<group>"; };
-		F6857CD223638DCB0028A6FE /* Player.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Player.cpp; path = ../libs/ofxFfmpeg/src/Player.cpp; sourceTree = "<group>"; };
+		F6541E3123F74D0C00ECAEBE /* ofxFFmpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxFFmpeg.h; path = ../libs/ofxFfmpeg/include/ofxFFmpeg.h; sourceTree = "<group>"; };
+		F6541E3223F74D1B00ECAEBE /* HardwareDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HardwareDecoder.h; path = ../libs/ofxFfmpeg/src/HardwareDecoder.h; sourceTree = "<group>"; };
+		F6541E3323F74D1B00ECAEBE /* Encoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Encoder.h; path = ../libs/ofxFfmpeg/src/Encoder.h; sourceTree = "<group>"; };
+		F6541E3423F74D1C00ECAEBE /* AvTypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AvTypes.h; path = ../libs/ofxFfmpeg/src/AvTypes.h; sourceTree = "<group>"; };
+		F6541E3523F74D1C00ECAEBE /* Encoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Encoder.cpp; path = ../libs/ofxFfmpeg/src/Encoder.cpp; sourceTree = "<group>"; };
+		F6541E3623F74D1C00ECAEBE /* Flow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Flow.h; path = ../libs/ofxFfmpeg/src/Flow.h; sourceTree = "<group>"; };
+		F6541E3723F74D1C00ECAEBE /* Writer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Writer.cpp; path = ../libs/ofxFfmpeg/src/Writer.cpp; sourceTree = "<group>"; };
+		F6541E3823F74D1C00ECAEBE /* HardwareDecoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HardwareDecoder.cpp; path = ../libs/ofxFfmpeg/src/HardwareDecoder.cpp; sourceTree = "<group>"; };
+		F6541E3923F74D1C00ECAEBE /* AudioBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AudioBuffer.h; path = ../libs/ofxFfmpeg/src/AudioBuffer.h; sourceTree = "<group>"; };
+		F6541E3A23F74D1C00ECAEBE /* Writer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Writer.h; path = ../libs/ofxFfmpeg/src/Writer.h; sourceTree = "<group>"; };
+		F6541E4523F74D3900ECAEBE /* ofxFFmpegPlayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ofxFFmpegPlayer.cpp; path = ../src/ofxFFmpegPlayer.cpp; sourceTree = "<group>"; };
+		F6541E4623F74D3900ECAEBE /* ofxFFmpegRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxFFmpegRecorder.h; path = ../src/ofxFFmpegRecorder.h; sourceTree = "<group>"; };
+		F6541E4723F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ofxFFmpegRecorder.cpp; path = ../src/ofxFFmpegRecorder.cpp; sourceTree = "<group>"; };
+		F6541E4823F74D3A00ECAEBE /* ofxFFmpegPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxFFmpegPlayer.h; path = ../src/ofxFFmpegPlayer.h; sourceTree = "<group>"; };
+		F6541E4B23F93A8E00ECAEBE /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Clock.h; path = ../libs/ofxFfmpeg/src/Clock.h; sourceTree = "<group>"; };
+		F6541E4C23F9955B00ECAEBE /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Cache.h; path = ../libs/ofxFfmpeg/src/Cache.h; sourceTree = "<group>"; };
 		F8EA54FACA66740563A54DD5 /* pixdesc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = pixdesc.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/pixdesc.h; sourceTree = SOURCE_ROOT; };
 		FD56D6093E2D76746ECC6A78 /* samplefmt.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = samplefmt.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/samplefmt.h; sourceTree = SOURCE_ROOT; };
 		FE21FC308A6072F44C2A0FC0 /* ffversion.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ffversion.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/ffversion.h; sourceTree = SOURCE_ROOT; };
@@ -489,20 +501,25 @@
 		72098B77FB0DBCDFFD477BC2 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				F6541E2323EDC92700ECAEBE /* FrameQueue.h */,
-				F63CA82A23734DE100FFA436 /* PacketQueue.cpp */,
-				F63CA82F23734DE200FFA436 /* PacketQueue.h */,
+				F6541E3923F74D1C00ECAEBE /* AudioBuffer.h */,
+				F6541E3423F74D1C00ECAEBE /* AvTypes.h */,
+				F6541E3523F74D1C00ECAEBE /* Encoder.cpp */,
+				F6541E3323F74D1B00ECAEBE /* Encoder.h */,
+				F6541E3623F74D1C00ECAEBE /* Flow.h */,
+				F6541E3823F74D1C00ECAEBE /* HardwareDecoder.cpp */,
+				F6541E3223F74D1B00ECAEBE /* HardwareDecoder.h */,
+				F6541E3723F74D1C00ECAEBE /* Writer.cpp */,
+				F6541E3A23F74D1C00ECAEBE /* Writer.h */,
 				F63CA82D23734DE100FFA436 /* Reader.cpp */,
 				F63CA82E23734DE200FFA436 /* Reader.h */,
 				F63CA82C23734DE100FFA436 /* Decoder.cpp */,
 				F63CA82B23734DE100FFA436 /* Decoder.h */,
-				82A91BD80A4C5C3F9896C175 /* Recorder.cpp */,
-				66BA650D3FD1076A599470ED /* Recorder.h */,
-				F6857CD123638D620028A6FE /* Player.h */,
-				F6857CD223638DCB0028A6FE /* Player.cpp */,
 				F6541E1F23E6BA6900ECAEBE /* VideoScaler.h */,
 				F6541E2023E6BF9E00ECAEBE /* VideoScaler.cpp */,
+				F63CA82A23734DE100FFA436 /* Queue.cpp */,
 				F6541E2423F1E10100ECAEBE /* Queue.h */,
+				F6541E4B23F93A8E00ECAEBE /* Clock.h */,
+				F6541E4C23F9955B00ECAEBE /* Cache.h */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -884,6 +901,7 @@
 		E7A99C9BE088C58E331CC0AD /* ofxFfmpeg */ = {
 			isa = PBXGroup;
 			children = (
+				F6541E3023F74CF700ECAEBE /* include */,
 				72098B77FB0DBCDFFD477BC2 /* src */,
 			);
 			name = ofxFfmpeg;
@@ -898,10 +916,21 @@
 			name = libswscale;
 			sourceTree = "<group>";
 		};
+		F6541E3023F74CF700ECAEBE /* include */ = {
+			isa = PBXGroup;
+			children = (
+				F6541E3123F74D0C00ECAEBE /* ofxFFmpeg.h */,
+			);
+			name = include;
+			sourceTree = "<group>";
+		};
 		F6CF5D5BF2F0B2AABEA29F46 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				48E46DEC3A3E18CF3FDCC3C1 /* ofxFFmpeg.h */,
+				F6541E4523F74D3900ECAEBE /* ofxFFmpegPlayer.cpp */,
+				F6541E4823F74D3A00ECAEBE /* ofxFFmpegPlayer.h */,
+				F6541E4723F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp */,
+				F6541E4623F74D3900ECAEBE /* ofxFFmpegRecorder.h */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -1021,14 +1050,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F6541E3C23F74D1C00ECAEBE /* Writer.cpp in Sources */,
+				F6541E3D23F74D1C00ECAEBE /* HardwareDecoder.cpp in Sources */,
 				E4B69E200A3A1BDC003C02F2 /* main.cpp in Sources */,
 				E4B69E210A3A1BDC003C02F2 /* ofApp.cpp in Sources */,
-				7E7457861FED782F3B71E09C /* Recorder.cpp in Sources */,
 				F6541E2123E6BF9E00ECAEBE /* VideoScaler.cpp in Sources */,
+				F6541E4923F74D3A00ECAEBE /* ofxFFmpegPlayer.cpp in Sources */,
 				F63CA83123734DE200FFA436 /* Decoder.cpp in Sources */,
-				F6857CD323638DCB0028A6FE /* Player.cpp in Sources */,
+				F6541E4A23F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp in Sources */,
 				F63CA83223734DE200FFA436 /* Reader.cpp in Sources */,
-				F63CA83023734DE200FFA436 /* PacketQueue.cpp in Sources */,
+				F6541E3B23F74D1C00ECAEBE /* Encoder.cpp in Sources */,
+				F63CA83023734DE200FFA436 /* Queue.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

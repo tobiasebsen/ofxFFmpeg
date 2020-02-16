@@ -1,4 +1,4 @@
-#include "PacketQueue.h"
+#include "Queue.h"
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -15,6 +15,6 @@ void PacketQueue::free(AVPacket *p) {
     av_packet_unref(p);
 }
 
-AVPacket * PacketQueue::supplyPacket() {
+/*AVPacket * PacketQueue::supplyPacket() {
     return Queue<AVPacket>::pop();
-}
+}*/

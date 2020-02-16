@@ -15,7 +15,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "132"
             endingLineNumber = "132"
-            landmarkName = "Reader::readThread(PacketReceiver * receiver)"
+            landmarkName = "Reader::stop(PacketReceiver * receiver)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -31,8 +31,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "60"
             endingLineNumber = "60"
-            landmarkName = "Reader::supplyPacket()"
-            landmarkType = "7">
+            landmarkName = "unknown"
+            landmarkType = "0">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -47,7 +47,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "56"
             endingLineNumber = "56"
-            landmarkName = "Decoder::open(AVStream * stream, bool hardwareAccel)"
+            landmarkName = "Decoder::send(AVPacket *packet)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -63,7 +63,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "140"
             endingLineNumber = "140"
-            landmarkName = "Decoder::decode(AVPacket *packet, FrameReceiver * receiver)"
+            landmarkName = "Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -79,7 +79,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "191"
             endingLineNumber = "191"
-            landmarkName = "Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver)"
+            landmarkName = "ofxFFmpeg::Decoder::getTimeStamp(AVPacket * packet)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -96,6 +96,38 @@
             startingLineNumber = "98"
             endingLineNumber = "98"
             landmarkName = "Player::update()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../src/ofxFFmpegPlayer.cpp"
+            timestampString = "603411856.4117"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
+            landmarkName = "ofxFFmpegPlayer::load(string filename)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "../src/ofxFFmpegPlayer.cpp"
+            timestampString = "603411856.41203"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "112"
+            endingLineNumber = "112"
+            landmarkName = "ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

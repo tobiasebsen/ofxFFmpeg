@@ -31,6 +31,5 @@ namespace ofxFFmpeg {
 
     private:
         SwsContext * sws_context = NULL;
-        const uint8_t * pixelData;
     };
 }

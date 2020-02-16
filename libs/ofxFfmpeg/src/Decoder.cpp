@@ -120,18 +120,18 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
         return false;
     
     running = true;
-    threadObj = new std::thread(&Decoder::decodeThread, this, supplier, receiver);
+    thread_obj = new std::thread(&Decoder::decodeThread, this, supplier, receiver);
 
     return true;
 }
 
 //--------------------------------------------------------------
 void Decoder::stop() {
-    if (running && threadObj) {
+    if (running && thread_obj) {
         running = false;
-        threadObj->join();
-		delete threadObj;
-		threadObj = NULL;
+        thread_obj->join();
+		delete thread_obj;
+		thread_obj = NULL;
     }
 }
 

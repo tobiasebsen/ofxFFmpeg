@@ -57,7 +57,7 @@ namespace ofxFFmpeg {
 
         AVFormatContext * format_context = NULL;
         
-        std::thread * threadObj = NULL;
+        std::thread * thread_obj = NULL;
         std::mutex mutex;
         std::condition_variable condition;
         bool running = false;

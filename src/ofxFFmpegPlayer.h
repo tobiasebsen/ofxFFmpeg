@@ -61,9 +61,12 @@ protected:
 	string filePath;
 
 	ofxFFmpeg::Reader reader;
+    
     ofxFFmpeg::PacketQueue videoPackets;
 	ofxFFmpeg::VideoDecoder video;
+    ofxFFmpeg::FrameCache videoFrames;
 	ofxFFmpeg::VideoScaler scaler;
+
     ofxFFmpeg::AudioDecoder audio;
 	ofxFFmpeg::AudioBuffer audioBuffer;
 

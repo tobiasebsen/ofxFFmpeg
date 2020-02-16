@@ -8,3 +8,7 @@
 #include "Writer.h"
 #include "VideoScaler.h"
 #include "AudioBuffer.h"
+#include "Queue.h"
+#include "Cache.h"
+
+#include "HardwareDecoder.h"

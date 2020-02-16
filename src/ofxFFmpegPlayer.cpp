@@ -37,7 +37,7 @@ bool ofxFFmpegPlayer::load(string filename) {
 		ofPixelFormat format = getPixelFormat();
 		if (format == OF_PIXELS_UNKNOWN)
 	        scaler.setup(video);
-        pixels.allocate(video.getWidth(), video.getHeight(), format);
+        pixels.allocate(video.getWidth(), video.getHeight(), format == OF_PIXELS_UNKNOWN ? OF_PIXELS_RGB : format);
     }
     if (audio.open(reader)) {
         ofLogVerbose() << "== AUDIO STREAM ==";

@@ -12,5 +12,6 @@ namespace ofxFFmpeg {
 		std::vector<float> buffer;
 		int channels;
 		int num_samples;
+        int sample_rate;
 	};
 }

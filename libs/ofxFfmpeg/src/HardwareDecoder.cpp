@@ -95,3 +95,18 @@ bool HardwareDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
 int HardwareDecoder::getPixelFormat() const {
 	return AV_PIX_FMT_NV12;
 }
+
+std::vector<std::string> HardwareDecoder::getDeviceNames() {
+    std::vector<std::string> deviceNames;
+
+    AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
+    do {
+        type = av_hwdevice_iterate_types(type);
+        if (type != AV_HWDEVICE_TYPE_NONE) {
+            const char * name = av_hwdevice_get_type_name(type);
+            deviceNames.push_back(name);
+        }
+    } while (type != AV_HWDEVICE_TYPE_NONE);
+
+    return deviceNames;
+}

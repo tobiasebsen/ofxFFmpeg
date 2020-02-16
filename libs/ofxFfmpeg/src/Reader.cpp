@@ -116,18 +116,18 @@ bool Reader::start(PacketReceiver * receiver) {
     
     running = true;
 	seek(0);
-    threadObj = new std::thread(&Reader::readThread, this, receiver);
+    thread_obj = new std::thread(&Reader::readThread, this, receiver);
 
     return true;
 }
 
 //--------------------------------------------------------------
 void Reader::stop(PacketReceiver * receiver) {
-    if (running && threadObj) {
+    if (running && thread_obj) {
         running = false;
 		receiver->notifyPacket();
-		if (threadObj->joinable() && std::this_thread::get_id() != threadObj->get_id())
-	        threadObj->join();
+		if (thread_obj->joinable() && std::this_thread::get_id() != thread_obj->get_id())
+	        thread_obj->join();
     }
 }
 

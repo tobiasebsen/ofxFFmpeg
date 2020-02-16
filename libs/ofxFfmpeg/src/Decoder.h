@@ -6,7 +6,7 @@
 #include "AvTypes.h"
 #include "Flow.h"
 #include "Reader.h"
-#include "PacketQueue.h"
+#include "Queue.h"
 
 namespace ofxFFmpeg {
     
@@ -56,7 +56,7 @@ namespace ofxFFmpeg {
     protected:
         int error;
 
-		std::thread * threadObj;
+		std::thread * thread_obj;
 		std::mutex mutex;
 		std::condition_variable condition;
 		bool running = false;

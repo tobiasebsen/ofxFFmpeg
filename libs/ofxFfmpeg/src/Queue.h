@@ -3,6 +3,8 @@
 #include <queue>
 #include <mutex>
 
+#include "AvTypes.h"
+
 namespace ofxFFmpeg {
     
     template<typename T>
@@ -53,4 +55,16 @@ namespace ofxFFmpeg {
             return back;
         }
     }
+
+    class PacketQueue : public Queue<AVPacket> {
+    public:
+        AVPacket * clone(AVPacket * p);
+        void free(AVPacket * p);
+    };
+
+    class FrameQueue : public Queue<AVFrame> {
+    public:
+        AVFrame * clone(AVFrame * f);
+        void free(AVFrame * f);
+    };
 }
