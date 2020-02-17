@@ -12,7 +12,7 @@ namespace ofxFFmpeg {
     class Cache {
     public:
 
-        void store(T * t);
+        void store(uint64_t pts, T * t);
         T * fetch(uint64_t pts);
 
     protected:
@@ -22,11 +22,14 @@ namespace ofxFFmpeg {
     };
     
     template<typename T>
-    void Cache<T>::store(T * t) {
+    void Cache<T>::store(uint64_t pts, T * t) {
+        std::lock_guard<std::mutex> lock(mutex);
+        cache.emplace(std::pair<uint64_t, T*>(pts, t));
     }
     
     template<typename T>
     T * Cache<T>::fetch(uint64_t pts) {
+        std::lock_guard<std::mutex> lock(mutex);
     }
     
 
