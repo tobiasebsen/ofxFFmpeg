@@ -61,6 +61,7 @@ protected:
 	string filePath;
 
 	ofxFFmpeg::Reader reader;
+	ofxFFmpeg::Clock clock;
     
     ofxFFmpeg::PacketQueue videoPackets;
 	ofxFFmpeg::VideoDecoder video;

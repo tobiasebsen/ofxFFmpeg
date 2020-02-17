@@ -10,5 +10,6 @@
 #include "AudioBuffer.h"
 #include "Queue.h"
 #include "Cache.h"
+#include "Clock.h"
 
 #include "HardwareDecoder.h"

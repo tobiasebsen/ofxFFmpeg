@@ -291,5 +291,9 @@ const ofPixels & ofxFFmpegPlayer::getPixels() const {
 }
 
 void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
-	//ofLog() << "audioOut: " << buffer.getDurationMS();
+
+	audioBuffer.read(buffer.getBuffer().data(), buffer.getNumFrames(), buffer.getNumChannels(), buffer.getSampleRate());
+
+	uint64_t duration = buffer.getDurationMicros();
+	clock.tick(duration);
 }
