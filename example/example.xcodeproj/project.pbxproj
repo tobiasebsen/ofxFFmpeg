@@ -18,6 +18,8 @@
 		F6541E3D23F74D1C00ECAEBE /* HardwareDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E3823F74D1C00ECAEBE /* HardwareDecoder.cpp */; };
 		F6541E4923F74D3A00ECAEBE /* ofxFFmpegPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4523F74D3900ECAEBE /* ofxFFmpegPlayer.cpp */; };
 		F6541E4A23F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4723F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp */; };
+		F6541E4E23FAF51600ECAEBE /* AudioBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4D23FAF51600ECAEBE /* AudioBuffer.cpp */; };
+		F6541E5023FAF6D700ECAEBE /* Clock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F6541E4F23FAF6D700ECAEBE /* Clock.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -350,6 +352,8 @@
 		F6541E4823F74D3A00ECAEBE /* ofxFFmpegPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ofxFFmpegPlayer.h; path = ../src/ofxFFmpegPlayer.h; sourceTree = "<group>"; };
 		F6541E4B23F93A8E00ECAEBE /* Clock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Clock.h; path = ../libs/ofxFfmpeg/src/Clock.h; sourceTree = "<group>"; };
 		F6541E4C23F9955B00ECAEBE /* Cache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Cache.h; path = ../libs/ofxFfmpeg/src/Cache.h; sourceTree = "<group>"; };
+		F6541E4D23FAF51600ECAEBE /* AudioBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AudioBuffer.cpp; path = ../libs/ofxFfmpeg/src/AudioBuffer.cpp; sourceTree = "<group>"; };
+		F6541E4F23FAF6D700ECAEBE /* Clock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Clock.cpp; path = ../libs/ofxFfmpeg/src/Clock.cpp; sourceTree = "<group>"; };
 		F8EA54FACA66740563A54DD5 /* pixdesc.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = pixdesc.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/pixdesc.h; sourceTree = SOURCE_ROOT; };
 		FD56D6093E2D76746ECC6A78 /* samplefmt.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = samplefmt.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/samplefmt.h; sourceTree = SOURCE_ROOT; };
 		FE21FC308A6072F44C2A0FC0 /* ffversion.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = ffversion.h; path = ../../../addons/ofxFFmpeg/libs/ffmpeg/include/libavutil/ffversion.h; sourceTree = SOURCE_ROOT; };
@@ -501,6 +505,7 @@
 		72098B77FB0DBCDFFD477BC2 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				F6541E4D23FAF51600ECAEBE /* AudioBuffer.cpp */,
 				F6541E3923F74D1C00ECAEBE /* AudioBuffer.h */,
 				F6541E3423F74D1C00ECAEBE /* AvTypes.h */,
 				F6541E3523F74D1C00ECAEBE /* Encoder.cpp */,
@@ -518,6 +523,7 @@
 				F6541E2023E6BF9E00ECAEBE /* VideoScaler.cpp */,
 				F63CA82A23734DE100FFA436 /* Queue.cpp */,
 				F6541E2423F1E10100ECAEBE /* Queue.h */,
+				F6541E4F23FAF6D700ECAEBE /* Clock.cpp */,
 				F6541E4B23F93A8E00ECAEBE /* Clock.h */,
 				F6541E4C23F9955B00ECAEBE /* Cache.h */,
 			);
@@ -1058,6 +1064,8 @@
 				F6541E4923F74D3A00ECAEBE /* ofxFFmpegPlayer.cpp in Sources */,
 				F63CA83123734DE200FFA436 /* Decoder.cpp in Sources */,
 				F6541E4A23F74D3A00ECAEBE /* ofxFFmpegRecorder.cpp in Sources */,
+				F6541E5023FAF6D700ECAEBE /* Clock.cpp in Sources */,
+				F6541E4E23FAF51600ECAEBE /* AudioBuffer.cpp in Sources */,
 				F63CA83223734DE200FFA436 /* Reader.cpp in Sources */,
 				F6541E3B23F74D1C00ECAEBE /* Encoder.cpp in Sources */,
 				F63CA83023734DE200FFA436 /* Queue.cpp in Sources */,

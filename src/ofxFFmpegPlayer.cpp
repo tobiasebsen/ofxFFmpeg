@@ -72,11 +72,13 @@ void ofxFFmpegPlayer::close() {
 void ofxFFmpegPlayer::receivePacket(AVPacket * packet) {
 
 	if (video.match(packet)) {
+        ofLog() << "video packet " << video.getTimeStamp(packet);
 		video.decode(packet, this);
         //AVPacket * clone = videoPackets.clone(packet);
         //videoPackets.push(clone);
 	}
     if (audio.match(packet)) {
+        ofLog() << "audio packet " << audio.getTimeStamp(packet);
         // audio packet
 		//audio.decode(packet, this);
     }

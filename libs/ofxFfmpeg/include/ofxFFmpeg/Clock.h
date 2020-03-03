@@ -7,9 +7,14 @@ namespace ofxFFmpeg {
     class Clock {
     public:
         
-        void tick(uint64_t);
+        void reset();
+        
+        void tick(uint64_t duration);
+        
+        uint64_t getTime();
 
     protected:
         int64_t pts;
+        std::mutex mutex;
     };
 }
