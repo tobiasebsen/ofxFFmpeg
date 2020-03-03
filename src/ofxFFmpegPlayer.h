@@ -73,6 +73,8 @@ protected:
 
 	int64_t lastVideoPts;
 	int64_t lastAudioPts;
+	int64_t lastUpdatePts;
+	int64_t seekPts = -1;
         
     std::mutex mutex;
     std::condition_variable frame_receive_cond;

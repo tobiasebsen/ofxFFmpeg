@@ -1,4 +1,4 @@
-#include "Writer.h"
+#include "ofxFFmpeg/Writer.h"
 
 extern "C" {
 #include "libavformat/avformat.h"

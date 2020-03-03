@@ -18,6 +18,7 @@ bool ofxFFmpegPlayer::load(string filename) {
 
 	timeSeconds = 0;
 	lastVideoPts = 0;
+	lastUpdatePts = 0;
     
     ofLogVerbose() << "== FORMAT ==";
 	ofLogVerbose() << reader.getLongName();
@@ -109,6 +110,7 @@ void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
 		{
 			std::lock_guard<std::mutex> lock(mutex);
 			
+
 			if (scaler.isSetup())
 				scaler.scale(frame, pixels.getData(), pixels.getBytesStride());
 			else
@@ -142,9 +144,10 @@ void ofxFFmpegPlayer::update() {
         pts = timeSeconds / reader.getTimeBase();
 		duration = dt / reader.getTimeBase();
 		//ofLog() << "Clock: " << pts << " " << duration;
-    }
 
-	if (pts >= lastVideoPts) {
+	}
+
+	if (pts > lastVideoPts) {
 		std::lock_guard<std::mutex> lock(mutex);
 		frame_receive_cond.notify_one();
 	}
@@ -159,6 +162,10 @@ void ofxFFmpegPlayer::update() {
 
 		texture.loadData(pixels);
 		timeSeconds = lastVideoPts * reader.getTimeBase();
+		lastUpdatePts = lastVideoPts;
+		if (lastUpdatePts == seekPts)
+			seekPts = -1;
+
 		pixelsDirty = false;
 		frameNew = true;
 	}
@@ -207,7 +214,7 @@ float ofxFFmpegPlayer::getPosition() const {
 }
 
 int ofxFFmpegPlayer::getCurrentFrame() const {
-	return video.getFrameNum(lastVideoPts);
+	return video.getFrameNum(lastUpdatePts);
 }
 
 float ofxFFmpegPlayer::getDuration() const {
@@ -233,6 +240,7 @@ void ofxFFmpegPlayer::setFrame(int f) {
 		std::lock_guard<std::mutex> lock(mutex);
 		pts = video.getTimeStamp(f);
 		timeSeconds = pts * reader.getTimeBase();
+		seekPts = video.getTimeStamp(f);
 		reader.seek(pts);
 		frame_receive_cond.notify_all();
 	}
@@ -295,5 +303,5 @@ void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 	audioBuffer.read(buffer.getBuffer().data(), buffer.getNumFrames(), buffer.getNumChannels(), buffer.getSampleRate());
 
 	uint64_t duration = buffer.getDurationMicros();
-	clock.tick(duration);
+	//clock.tick(duration);
 }

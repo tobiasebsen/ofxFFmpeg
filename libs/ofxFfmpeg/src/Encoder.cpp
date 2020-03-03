@@ -1,4 +1,4 @@
-#include "Encoder.h"
+#include "ofxFFmpeg/Encoder.h"
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -71,8 +71,8 @@ bool Encoder::begin(AVStream * stream) {
 
 	this->stream = stream;
 
-	codec_context->time_base.num = codec_context->framerate.den;
-	codec_context->time_base.den = codec_context->framerate.num;
+	codec_context->time_base = av_inv_q(codec_context->framerate);
+	stream->avg_frame_rate = codec_context->framerate;
 
 	//if (output_format_context->flags & AVFMT_GLOBALHEADER)
 	codec_context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -118,7 +118,7 @@ bool Encoder::encode(AVFrame * frame, PacketReceiver * receiver) {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::Encoder::flush(PacketReceiver * receiver) {
+void Encoder::flush(PacketReceiver * receiver) {
 	encode(NULL, receiver);
 }
 

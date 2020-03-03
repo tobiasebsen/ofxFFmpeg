@@ -1,4 +1,4 @@
-#include "HardwareDecoder.h"
+#include "ofxFFmpeg/HardwareDecoder.h"
 
 extern "C" {
 #include "libavformat/avformat.h"

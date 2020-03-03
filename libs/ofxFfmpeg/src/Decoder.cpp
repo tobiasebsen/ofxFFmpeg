@@ -1,4 +1,4 @@
-#include "Decoder.h"
+#include "ofxFFmpeg/Decoder.h"
 
 extern "C" {
 #include "libavformat/avformat.h"

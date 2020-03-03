@@ -1,4 +1,4 @@
-#include "Queue.h"
+#include "ofxFFmpeg/Queue.h"
 
 extern "C" {
 #include "libavformat/avformat.h"

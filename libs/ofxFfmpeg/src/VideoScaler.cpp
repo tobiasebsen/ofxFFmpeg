@@ -1,4 +1,4 @@
-#include "VideoScaler.h"
+#include "ofxFFmpeg/VideoScaler.h"
 
 extern "C" {
 #include "libavformat/avformat.h"
