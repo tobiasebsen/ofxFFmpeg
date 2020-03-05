@@ -83,6 +83,7 @@ namespace ofxFFmpeg {
 		bool open(Reader & reader);
 		int getNumChannels() const;
         int getSampleRate() const;
+        int getSampleFormat() const;
         int getFrameSize() const;
     };
 }

@@ -15,3 +15,4 @@ struct AVPacket;
 struct AVFrame;
 struct AVBufferRef;
 struct SwsContext;
+struct SwrContext;

@@ -69,7 +69,8 @@ protected:
 	ofxFFmpeg::VideoScaler scaler;
 
     ofxFFmpeg::AudioDecoder audio;
-	ofxFFmpeg::AudioBuffer audioBuffer;
+    ofxFFmpeg::AudioResampler resampler;
+	ofxFFmpeg::AudioBuffer<float> audioBuffer;
 
 	int64_t lastVideoPts;
 	int64_t lastAudioPts;
