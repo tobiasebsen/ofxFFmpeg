@@ -230,6 +230,7 @@ int VideoDecoder::getPixelFormat() const {
     return codec_context ? codec_context->pix_fmt : AV_PIX_FMT_NONE;
 }
 
+//--------------------------------------------------------------
 double VideoDecoder::getFrameRate() {
 	return stream ? av_q2d(stream->r_frame_rate) : 0;
 }
@@ -251,6 +252,11 @@ int AudioDecoder::getNumChannels() const {
 //--------------------------------------------------------------
 int AudioDecoder::getSampleRate() const {
     return stream->codecpar->sample_rate;
+}
+
+//--------------------------------------------------------------
+int AudioDecoder::getSampleFormat() const {
+    return stream->codecpar->format;
 }
 
 //--------------------------------------------------------------

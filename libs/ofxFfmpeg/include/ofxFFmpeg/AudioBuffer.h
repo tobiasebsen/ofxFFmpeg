@@ -1,28 +1,49 @@
 #pragma once
 
 #include <vector>
+#include <mutex>
 
 namespace ofxFFmpeg {
 
+    template<typename T>
 	class AudioBuffer {
 	public:
-		void setup(int channels, int samples);
+        void setup(size_t size) {
+            buffer.resize(size);
+        }
 
-        void reset();
+        void reset() {
+            read_total = 0;
+            write_total = 0;
+        }
 
-		int read(float * buffer, int frames, int channels, int sample_rate);
-        int write(float * buffer, int frames, int channels, int sample_rate);
-	
+		int read(T * buffer, int samples);
+        int write(T * buffer, int samples);
+        
+        int get_read_available() {
+            return (write_total - read_total);
+        }
+        int get_write_available() {
+            return buffer.size() - (write_total - read_total);
+        }
+
 	protected:
-		std::vector<float> buffer;
-		int samples;
-		int channels;
-        int sample_rate;
+		std::vector<T> buffer;
 
-		int read_offset;
-		int write_offset;
+        size_t read_total;
+        size_t write_total;
 
-        uint64_t read_total;
-        uint64_t write_total;
+        std::mutex mutex;
+        std::condition_variable condition;
 	};
+    
+    template<typename T>
+    int AudioBuffer<T>::write(T * buffer, int samples) {
+        return 0;
+    }
+
+    template<typename T>
+    int AudioBuffer<T>::read(T * buffer, int samples) {
+        return 0;
+    }
 }
