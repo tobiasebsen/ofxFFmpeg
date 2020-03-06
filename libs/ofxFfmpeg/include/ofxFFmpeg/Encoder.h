@@ -36,11 +36,14 @@ namespace ofxFFmpeg {
 		AVFrame * allocateFrame();
 		void setTimeStamp(AVFrame * frame, int frame_num);
 		void setTimeStamp(AVFrame * frame, double time_sec);
+		void setTimeStamp(AVPacket * packet);
 
 		void setWidth(int width);
 		void setHeight(int height);
 		void setFrameRate(float frameRate);
 		void setBitRate(int bitRate);
+		void setMaxBitRate(int bitRate);
+		void setBufferSize(int bufferSize);
 		void setProfile(int profile);
 		void setLevel(int level);
 		void setKeyFrame(int key_frame);

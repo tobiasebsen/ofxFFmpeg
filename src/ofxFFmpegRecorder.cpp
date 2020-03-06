@@ -73,6 +73,7 @@ void ofxFFmpegRecorder::stop() {
 //--------------------------------------------------------------
 void ofxFFmpegRecorder::receivePacket(AVPacket * packet) {
 
+	video.setTimeStamp(packet);
 	writer.write(packet);
 }
 

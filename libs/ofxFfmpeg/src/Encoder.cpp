@@ -138,13 +138,19 @@ AVFrame * VideoEncoder::allocateFrame() {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::VideoEncoder::setTimeStamp(AVFrame * frame, int frame_num) {
-	frame->pts = av_rescale_q(frame_num, av_inv_q(codec_context->framerate), stream->time_base);
+void VideoEncoder::setTimeStamp(AVFrame * frame, int frame_num) {
+	frame->pts = frame_num;// av_rescale_q(frame_num, av_inv_q(codec_context->framerate), stream->time_base);
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::VideoEncoder::setTimeStamp(AVFrame * frame, double time_sec) {
+void VideoEncoder::setTimeStamp(AVFrame * frame, double time_sec) {
 	frame->pts = time_sec / av_q2d(stream->time_base);
+}
+
+//--------------------------------------------------------------
+void ofxFFmpeg::VideoEncoder::setTimeStamp(AVPacket * packet) {
+	packet->pts = av_rescale_q(packet->pts, codec_context->time_base, stream->time_base);
+	packet->dts = av_rescale_q(packet->dts, codec_context->time_base, stream->time_base);
 }
 
 //--------------------------------------------------------------
@@ -162,6 +168,15 @@ void VideoEncoder::setFrameRate(float frameRate) {
 //--------------------------------------------------------------
 void VideoEncoder::setBitRate(int bitRate) {
 	codec_context->bit_rate = bitRate;
+}
+//--------------------------------------------------------------
+void VideoEncoder::setMaxBitRate(int bitRate) {
+	codec_context->rc_min_rate = codec_context->bit_rate;
+	codec_context->rc_max_rate = bitRate;
+}
+//--------------------------------------------------------------
+void ofxFFmpeg::VideoEncoder::setBufferSize(int bufferSize) {
+	codec_context->rc_buffer_size = bufferSize;
 }
 //--------------------------------------------------------------
 void VideoEncoder::setProfile(int profile) {
