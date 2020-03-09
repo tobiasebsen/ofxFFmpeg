@@ -82,6 +82,7 @@ namespace ofxFFmpeg {
     public:
 		bool open(Reader & reader);
 		int getNumChannels() const;
+        uint64_t getChannelLayout() const;
         int getSampleRate() const;
         int getSampleFormat() const;
         int getFrameSize() const;
