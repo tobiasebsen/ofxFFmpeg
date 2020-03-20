@@ -91,22 +91,14 @@ int Reader::getStreamIndex(AVPacket * packet) {
 
 //--------------------------------------------------------------
 int Reader::getVideoStreamIndex() {
-    for (int i = 0; i < format_context->nb_streams; i++) {
-        if (format_context->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
-            return i;
-        }
-    }
-    return -1;
+	AVCodec * codec;
+	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0));
 }
 
 //--------------------------------------------------------------
 int Reader::getAudioStreamIndex() {
-    for (int i = 0; i < format_context->nb_streams; i++) {
-        if (format_context->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
-            return i;
-        }
-    }
-    return -1;
+	AVCodec * codec;
+	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0));
 }
 
 //--------------------------------------------------------------

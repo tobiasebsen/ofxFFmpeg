@@ -7,17 +7,6 @@ void ofApp::setup(){
 
     ofSetVerticalSync(false);
 	ofSetFrameRate(60);
-       
-	player.load("hap_15a_shot.mp4");
-    //player.load("fingers.mov");
-    //player.load("SampleHap.mov");
-	//player.load("C:/Users/tobias/Downloads/puppets_with_alpha_hevc.mov");
-	//player.load("C:/Users/tobias/Downloads/pacificCoastDemoHap1080p/1080p/Drums_Fill1_GFX.mov");
-	//player.load("C:/Users/tobias/Downloads/Left_2019_0614_150843.mov");
-    //player.load("/Users/tobias/Downloads/Sky Q Brand Reveal 35 Master TV (1080p) (1).mov");
-	//player.load("C:/Users/tobias/Downloads/Setup-Public-perception.mp4");
-    
-    player.play();
 }
 
 //--------------------------------------------------------------
@@ -39,5 +28,12 @@ void ofApp::draw(){
     
     ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
+}
+
+void ofApp::dragEvent(ofDragInfo dragInfo) {
+	if (dragInfo.files.size() > 0) {
+		player.load(dragInfo.files[0]);
+		player.play();
+	}
 }
 

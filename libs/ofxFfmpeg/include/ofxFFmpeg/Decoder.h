@@ -57,8 +57,6 @@ namespace ofxFFmpeg {
         int error;
 
 		std::thread * thread_obj;
-		std::mutex mutex;
-		std::condition_variable condition;
 		bool running = false;
 
         AVStream * stream = NULL;

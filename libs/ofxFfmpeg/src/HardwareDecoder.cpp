@@ -11,6 +11,7 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
+//--------------------------------------------------------------
 bool HardwareDecoder::open(Reader & reader) {
 
 	if (!VideoDecoder::open(reader))
@@ -61,6 +62,7 @@ bool HardwareDecoder::open(Reader & reader) {
 	return true;
 }
 
+//--------------------------------------------------------------
 void HardwareDecoder::close() {
 	VideoDecoder::close();
 
@@ -69,6 +71,7 @@ void HardwareDecoder::close() {
 	}
 }
 
+//--------------------------------------------------------------
 bool HardwareDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
 	if (send(packet)) {
 
@@ -92,21 +95,22 @@ bool HardwareDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
 	return false;
 }
 
+//--------------------------------------------------------------
 int HardwareDecoder::getPixelFormat() const {
 	return AV_PIX_FMT_NV12;
 }
 
-std::vector<std::string> HardwareDecoder::getDeviceNames() {
-    std::vector<std::string> deviceNames;
+//--------------------------------------------------------------
+std::vector<int> HardwareDecoder::getDeviceTypes() {
+    std::vector<int> deviceTypes;
 
     AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
     do {
         type = av_hwdevice_iterate_types(type);
         if (type != AV_HWDEVICE_TYPE_NONE) {
-            const char * name = av_hwdevice_get_type_name(type);
-            deviceNames.push_back(name);
+			deviceTypes.push_back(type);
         }
     } while (type != AV_HWDEVICE_TYPE_NONE);
 
-    return deviceNames;
+    return deviceTypes;
 }

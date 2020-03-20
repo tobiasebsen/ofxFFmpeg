@@ -189,6 +189,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\libs\ofxFfmpeg\src\AudioBuffer.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\AudioResampler.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\HardwareDecoder.cpp" />
@@ -202,19 +203,20 @@
     <ClCompile Include="src\ofApp.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\libs\ofxFfmpeg\include\AvTypes.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\AudioBuffer.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\AvTypes.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Cache.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Clock.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Decoder.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Encoder.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\HardwareDecoder.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Queue.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Reader.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Flow.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\VideoScaler.h" />
-    <ClInclude Include="..\libs\ofxFfmpeg\src\Writer.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\AudioBuffer.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\AudioResampler.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Cache.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Clock.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Decoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Encoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Flow.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\HardwareDecoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Queue.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Reader.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\VideoScaler.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Writer.h" />
     <ClInclude Include="..\src\ofxFFmpegPlayer.h" />
     <ClInclude Include="..\src\ofxFFmpegRecorder.h" />
     <ClInclude Include="src\ofApp.h" />

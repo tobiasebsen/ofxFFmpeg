@@ -14,6 +14,8 @@ ofxFFmpegPlayer::~ofxFFmpegPlayer() {
 //--------------------------------------------------------------
 bool ofxFFmpegPlayer::load(string filename) {
 
+	close();
+
 	if (!reader.open(ofFilePath::getAbsolutePath(filename, true))) {
 		return false;
 	}
@@ -35,7 +37,7 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
-        ofLogVerbose() << "  " << (video.getBitRate() / 1024.f) << " kb/s";
+        ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
 
 		ofPixelFormat format = getPixelFormat();
 		if (format == OF_PIXELS_UNKNOWN)
@@ -50,13 +52,11 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
         ofLogVerbose() << "  " << audio.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
-        ofLogVerbose() << "  " << (audio.getBitRate() / 1024.f) << " kb/s";
+        ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
 
 		ofSoundStreamSettings settings;
 		settings.sampleRate = audio.getSampleRate();
 		settings.numOutputChannels = audio.getNumChannels();
-		//settings.numBuffers = 2;
-		//settings.bufferSize = 1024;
 		settings.setOutListener(this);
 		//audioStream.setup(settings);
 

@@ -14,6 +14,8 @@ using namespace ofxFFmpeg;
 //--------------------------------------------------------------
 bool Decoder::open(AVStream * stream) {
 
+	close();
+
     this->stream = stream;
     
     AVCodec * codec = avcodec_find_decoder(stream->codecpar->codec_id);
@@ -81,7 +83,6 @@ void Decoder::free(AVFrame *frame) {
 
 //--------------------------------------------------------------
 bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
-	std::lock_guard<std::mutex> lock(mutex);
 	if (send(packet)) {
 
         AVFrame * frame = NULL;
@@ -238,7 +239,7 @@ double VideoDecoder::getFrameRate() {
 //--------------------------------------------------------------
 bool ofxFFmpeg::AudioDecoder::open(Reader & reader) {
 	int stream_index = reader.getAudioStreamIndex();
-	if (stream_index == -1)
+	if (stream_index < 0)
 		return false;
 	AVStream * stream = reader.getStream(stream_index);
 	return Decoder::open(stream);
