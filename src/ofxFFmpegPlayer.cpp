@@ -58,7 +58,7 @@ bool ofxFFmpegPlayer::load(string filename) {
 		settings.sampleRate = audio.getSampleRate();
 		settings.numOutputChannels = audio.getNumChannels();
 		settings.setOutListener(this);
-		//audioStream.setup(settings);
+		audioStream.setup(settings);
 
         resampler.setup(audio, settings.sampleRate, settings.numOutputChannels, AudioResampler::getSampleFormat<float>());
         audioBuffer.setup(audio.getSampleRate() * audio.getNumChannels());
@@ -135,7 +135,15 @@ void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
 	}
 	if (stream_index == audio.getStreamIndex()) {
 
+        int samples = 0;
+        float * buffer = (float*)resampler.resample(frame, &samples);
+        samples *= audio.getNumChannels();
+        
+        if (samples > audioBuffer.get_write_available())
+            audioBuffer.wait(samples);
 
+        audioBuffer.write(buffer, samples);
+        resampler.free(buffer);
 	}
 }
 

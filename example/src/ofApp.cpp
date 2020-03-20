@@ -30,6 +30,7 @@ void ofApp::draw(){
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
 }
 
+//--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 	if (dragInfo.files.size() > 0) {
 		player.load(dragInfo.files[0]);

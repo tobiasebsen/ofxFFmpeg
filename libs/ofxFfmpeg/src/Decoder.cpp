@@ -251,6 +251,11 @@ int AudioDecoder::getNumChannels() const {
 }
 
 //--------------------------------------------------------------
+uint64_t AudioDecoder::getChannelLayout() const {
+    return stream->codecpar->channel_layout;
+}
+
+//--------------------------------------------------------------
 int AudioDecoder::getSampleRate() const {
     return stream->codecpar->sample_rate;
 }
