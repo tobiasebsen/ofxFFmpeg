@@ -6,26 +6,32 @@ namespace ofxFFmpeg {
 
 	class PacketSupplier {
 	public:
-		virtual AVPacket * supplyPacket() = 0;
-		virtual void freePacket(AVPacket * packet) = 0;
+		virtual AVPacket * supply() = 0;
+		virtual void free(AVPacket * packet) = 0;
+		virtual void terminatePacketSupplier() {}
+		virtual void resumePacketSupplier() {}
 	};
 
 	class PacketReceiver {
 	public:
-		virtual void receivePacket(AVPacket * packet) = 0;
-		virtual void endPacket() {}
-		virtual void notifyPacket() {}
+		virtual void receive(AVPacket * packet) = 0;
+		virtual void notifyEndPacket() {}
+		virtual void terminatePacketReceiver() {}
+		virtual void resumePacketReceiver() {}
+
 	};
 
 	class FrameReceiver {
 	public:
-		virtual void receiveFrame(AVFrame * frame, int stream_index) = 0;
-		virtual void endFrame() {}
+		virtual void receive(AVFrame * frame, int stream_index) = 0;
+		virtual void notifyEndFrame() {}
+		virtual void terminateFrameReceiver() {}
+		virtual void resumeFrameReceiver() {}
 	};
 
 	class ImageReceiver {
 	public:
-		virtual void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) = 0;
-		virtual void endImage() {}
+		virtual void receive(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) = 0;
+		virtual void notifyEnd() {}
 	};
 }

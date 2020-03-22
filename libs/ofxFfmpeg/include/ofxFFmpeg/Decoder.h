@@ -13,10 +13,15 @@ namespace ofxFFmpeg {
 	class Decoder {
 	public:
 
+		/////////////////////////////////////////////////
+		// OPEN AND CLOSE
+
         bool open(AVStream * stream);
         void close();
+		bool isOpen();
         
         /////////////////////////////////////////////////
+		// DECODING
 
         bool match(AVPacket * packet);
         
@@ -31,15 +36,17 @@ namespace ofxFFmpeg {
 		void copy(AVFrame * src_frame, uint8_t * dst_data, int dst_size, int align = 1);
 
         /////////////////////////////////////////////////
+		// THREADING
         
         bool start(PacketSupplier * supplier, FrameReceiver * receiver);
         void stop();
-		void decodeThread(PacketSupplier * supplier, FrameReceiver * receiver);
+		void decodeThread();
         bool isRunning() const {
             return running;
         }
         
         /////////////////////////////////////////////////
+		// ACCESSORS
         
 		std::string getName();
 		std::string getLongName();
@@ -56,8 +63,10 @@ namespace ofxFFmpeg {
     protected:
         int error;
 
-		std::thread * thread_obj;
+		std::thread * thread_obj = NULL;
 		bool running = false;
+		PacketSupplier * supplier = NULL;
+		FrameReceiver * receiver = NULL;
 
         AVStream * stream = NULL;
         AVCodecContext * codec_context = NULL;

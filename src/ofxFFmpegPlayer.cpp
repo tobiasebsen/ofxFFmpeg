@@ -38,6 +38,7 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
         ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
+		ofLogVerbose() << "  " << HardwareDecoder::getNumHardwareConfig(reader.getVideoCodec()) << " hardware decoder(s) found";
 
 		ofPixelFormat format = getPixelFormat();
 		if (format == OF_PIXELS_UNKNOWN)
@@ -55,8 +56,10 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
 
 		ofSoundStreamSettings settings;
-		settings.sampleRate = audio.getSampleRate();
-		settings.numOutputChannels = audio.getNumChannels();
+		settings.sampleRate = 44100;
+		settings.numOutputChannels = 2;
+		settings.numInputChannels = 0;
+		settings.bufferSize = 512;
 		settings.setOutListener(this);
 		audioStream.setup(settings);
 
@@ -69,33 +72,61 @@ bool ofxFFmpegPlayer::load(string filename) {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::close() {
-	reader.stop(this);
-	reader.close();
+	
+	stop();
+
 	video.close();
 	audio.close();
+	reader.close();
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::receivePacket(AVPacket * packet) {
+void ofxFFmpegPlayer::play() {
+	if (reader.isOpen()) {
+		video.start(&videoPackets, this);
+		audio.start(&audioPackets, this);
+		reader.start(this);
+		isMovieDone = false;
+	}
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::stop() {
+	video.stop();
+	audio.stop();
+	reader.stop();
+	audioStream.stop();
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::receive(AVPacket * packet) {
 
 	if (video.match(packet)) {
-        //ofLog() << "video packet " << video.getTimeStamp(packet);
-		video.decode(packet, this);
-        //AVPacket * clone = videoPackets.clone(packet);
-        //videoPackets.push(clone);
+		if (video.isRunning()) {
+			videoPackets.receive(packet);
+		}
+		else {
+			video.decode(packet, this);
+		}
 	}
+
     if (audio.match(packet)) {
-        //ofLog() << "audio packet " << audio.getTimeStamp(packet);
-        // audio packet
-		audio.decode(packet, this);
-    }
+		if (audio.isRunning()) {
+			audioPackets.receive(packet);
+		}
+		else {
+			audio.decode(packet, this);
+		}
+	}
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::endPacket() {
+void ofxFFmpegPlayer::notifyEndPacket() {
     if (loopState == OF_LOOP_NONE) {
         video.flush(this);
-        reader.stop(this);
+		audio.flush(this);
+        reader.stop();
+		video.stop();
 		//isMovieDone = true;
     }
 	if (loopState == OF_LOOP_NORMAL) {
@@ -106,20 +137,41 @@ void ofxFFmpegPlayer::endPacket() {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::notifyPacket() {
+void ofxFFmpegPlayer::terminatePacketReceiver() {
 	std::lock_guard<std::mutex> lock(mutex);
 	frame_receive_cond.notify_all();
+	videoPackets.terminatePacketReceiver();
+	audioPackets.terminatePacketReceiver();
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
+void ofxFFmpegPlayer::resumePacketReceiver() {
+	videoPackets.resumePacketReceiver();
+	audioPackets.resumePacketReceiver();
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::terminateFrameReceiver() {
+	std::lock_guard<std::mutex> lock(mutex);
+	terminated = true;
+	frame_receive_cond.notify_all();
+	audioBuffer.terminate();
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::resumeFrameReceiver() {
+	terminated = false;
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
-		{
+		if (!terminated) {
 			std::unique_lock<std::mutex> lock(mutex);
 			frame_receive_cond.wait(lock);
 		}
-		{
+		if (!terminated) {
 			std::lock_guard<std::mutex> lock(mutex);
 			
 
@@ -148,7 +200,7 @@ void ofxFFmpegPlayer::receiveFrame(AVFrame * frame, int stream_index) {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
+void ofxFFmpegPlayer::receive(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
 	std::unique_lock<std::mutex> lock(mutex);
 	frame_receive_cond.wait(lock);
 	pixels.allocate(video.getWidth(), video.getHeight(), 3);
@@ -300,20 +352,6 @@ bool ofxFFmpegPlayer::isInitialized() const {
 //--------------------------------------------------------------
 bool ofxFFmpegPlayer::isFrameNew() const {
 	return frameNew;
-}
-
-//--------------------------------------------------------------
-void ofxFFmpegPlayer::play() {
-	if (reader.isOpen()) {
-        //video.start(&videoPackets, this);
-		reader.start(this);
-		isMovieDone = false;
-	}
-}
-
-//--------------------------------------------------------------
-void ofxFFmpegPlayer::stop() {
-    reader.stop(this);
 }
 
 //--------------------------------------------------------------

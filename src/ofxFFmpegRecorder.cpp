@@ -17,22 +17,22 @@ bool ofxFFmpegRecorder::open(const string filename) {
 
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::setVideoCodec(int codecId) {
-  	return video.setup(codecId);
+  	return video.open(codecId);
 }
 
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::setVideoCodec(string codecName) {
-	return video.setup(codecName);
+	return video.open(codecName);
 }
 
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::setAudioCodec(int codecId) {
-	return audio.setup(codecId);
+	return audio.open(codecId);
 }
 
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::setAudioCodec(string codecName) {
-	return audio.setup(codecName);
+	return audio.open(codecName);
 }
 
 //--------------------------------------------------------------
@@ -71,9 +71,12 @@ void ofxFFmpegRecorder::stop() {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegRecorder::receivePacket(AVPacket * packet) {
+void ofxFFmpegRecorder::receive(AVPacket * packet) {
 
-	video.setTimeStamp(packet);
+	int64_t frame_num = video.getTimeStamp(packet);
+	int64_t pts = video.getTimeStampFromFrameNum(frame_num);
+	video.setTimeStamp(packet, pts);
+
 	writer.write(packet);
 }
 

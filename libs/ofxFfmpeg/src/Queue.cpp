@@ -14,7 +14,3 @@ AVPacket * PacketQueue::clone(AVPacket *p) {
 void PacketQueue::free(AVPacket *p) {
     av_packet_unref(p);
 }
-
-/*AVPacket * PacketQueue::supplyPacket() {
-    return Queue<AVPacket>::pop();
-}*/

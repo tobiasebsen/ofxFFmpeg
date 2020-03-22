@@ -10,11 +10,20 @@ namespace ofxFFmpeg {
 
 	class Encoder {
 	public:
-		bool setup(AVCodec * codec);
-		bool setup(int codecId);
-		bool setup(std::string codecName);
+		~Encoder() {
+			close();
+		}
+
+		/////////////////////////////////////////////////
+		// OPEN AND CLOSE
+
+		bool open(AVCodec * codec);
+		bool open(int codecId);
+		bool open(std::string codecName);
 		void close();
 
+		/////////////////////////////////////////////////
+		// ENCODING
 		void freeFrame(AVFrame * frame);
 
 		bool begin(AVStream * stream);
@@ -34,9 +43,12 @@ namespace ofxFFmpeg {
 	public:
 
 		AVFrame * allocateFrame();
-		void setTimeStamp(AVFrame * frame, int frame_num);
-		void setTimeStamp(AVFrame * frame, double time_sec);
-		void setTimeStamp(AVPacket * packet);
+		void setTimeStamp(AVFrame * frame, int64_t pts);
+		void setTimeStamp(AVPacket * packet, int64_t pts);
+		int64_t getTimeStamp(AVFrame * frame);
+		int64_t getTimeStamp(AVPacket * packet);
+
+		int64_t getTimeStampFromFrameNum(int64_t frame_num);
 
 		void setWidth(int width);
 		void setHeight(int height);

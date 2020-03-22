@@ -52,24 +52,29 @@ public:
 
 protected:
 
-	virtual void receivePacket(AVPacket * packet);
-	virtual void endPacket();
-	virtual void notifyPacket();
-	virtual void receiveFrame(AVFrame * frame, int stream_index);
-	virtual void receiveImage(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
+	virtual void receive(AVPacket * packet);
+	virtual void notifyEndPacket();
+	virtual void terminatePacketReceiver();
+	virtual void resumePacketReceiver();
+
+	virtual void receive(AVFrame * frame, int stream_index);
+	virtual void terminateFrameReceiver();
+	virtual void resumeFrameReceiver();
+	virtual void receive(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
 
 	string filePath;
 
 	ofxFFmpeg::Reader reader;
 	ofxFFmpeg::Clock clock;
     
-    ofxFFmpeg::PacketQueue videoPackets;
-	ofxFFmpeg::VideoDecoder video;
-    ofxFFmpeg::FrameCache videoFrames;
+    ofxFFmpeg::VideoDecoder video;
+	ofxFFmpeg::PacketQueue videoPackets;
+	ofxFFmpeg::FrameCache videoFrames;
 	ofxFFmpeg::VideoScaler scaler;
 
     ofxFFmpeg::AudioDecoder audio;
-    ofxFFmpeg::AudioResampler resampler;
+	ofxFFmpeg::PacketQueue audioPackets;
+	ofxFFmpeg::AudioResampler resampler;
 	ofxFFmpeg::AudioBuffer<float> audioBuffer;
 
 	int64_t lastVideoPts;
@@ -80,6 +85,7 @@ protected:
     std::mutex mutex;
     std::condition_variable frame_receive_cond;
 	std::condition_variable frame_ready_cond;
+	std::atomic<bool> terminated;
 
 	ofSoundStream audioStream;
 

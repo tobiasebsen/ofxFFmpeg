@@ -10,7 +10,7 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
-bool Encoder::setup(AVCodec * codec) {
+bool Encoder::open(AVCodec * codec) {
 
 	close();
 
@@ -28,7 +28,7 @@ bool Encoder::setup(AVCodec * codec) {
 	return true;
 }
 
-bool Encoder::setup(int codecId) {
+bool Encoder::open(int codecId) {
 
 	AVCodec * codec;
 
@@ -38,10 +38,10 @@ bool Encoder::setup(int codecId) {
 		return false;
 	}
 
-	return setup(codec);
+	return open(codec);
 }
 
-bool Encoder::setup(std::string codecName) {
+bool Encoder::open(std::string codecName) {
 
 	AVCodec * codec;
 
@@ -51,7 +51,7 @@ bool Encoder::setup(std::string codecName) {
 		return false;
 	}
 
-	return setup(codec);
+	return open(codec);
 }
 
 void Encoder::close() {
@@ -110,7 +110,7 @@ bool Encoder::encode(AVFrame * frame, PacketReceiver * receiver) {
 	while (error >= 0) {
 		error = avcodec_receive_packet(codec_context, &packet);
 		if (error >= 0) {
-			receiver->receivePacket(&packet);
+			receiver->receive(&packet);
 			av_packet_unref(&packet);
 		}
 	}
@@ -138,19 +138,29 @@ AVFrame * VideoEncoder::allocateFrame() {
 }
 
 //--------------------------------------------------------------
-void VideoEncoder::setTimeStamp(AVFrame * frame, int frame_num) {
-	frame->pts = frame_num;// av_rescale_q(frame_num, av_inv_q(codec_context->framerate), stream->time_base);
+void VideoEncoder::setTimeStamp(AVFrame * frame, int64_t pts) {
+	frame->pts = pts;
 }
 
 //--------------------------------------------------------------
-void VideoEncoder::setTimeStamp(AVFrame * frame, double time_sec) {
-	frame->pts = time_sec / av_q2d(stream->time_base);
-}
-
-//--------------------------------------------------------------
-void ofxFFmpeg::VideoEncoder::setTimeStamp(AVPacket * packet) {
+void VideoEncoder::setTimeStamp(AVPacket * packet, int64_t pts) {
 	packet->pts = av_rescale_q(packet->pts, codec_context->time_base, stream->time_base);
 	packet->dts = av_rescale_q(packet->dts, codec_context->time_base, stream->time_base);
+}
+
+//--------------------------------------------------------------
+int64_t ofxFFmpeg::VideoEncoder::getTimeStamp(AVFrame * frame) {
+	return frame->pts;
+}
+
+//--------------------------------------------------------------
+int64_t ofxFFmpeg::VideoEncoder::getTimeStamp(AVPacket * packet) {
+	return packet->pts;
+}
+
+//--------------------------------------------------------------
+int64_t VideoEncoder::getTimeStampFromFrameNum(int64_t frame_num) {
+	return av_rescale_q(frame_num, codec_context->time_base, stream->time_base);
 }
 
 //--------------------------------------------------------------
@@ -175,7 +185,7 @@ void VideoEncoder::setMaxBitRate(int bitRate) {
 	codec_context->rc_max_rate = bitRate;
 }
 //--------------------------------------------------------------
-void ofxFFmpeg::VideoEncoder::setBufferSize(int bufferSize) {
+void VideoEncoder::setBufferSize(int bufferSize) {
 	codec_context->rc_buffer_size = bufferSize;
 }
 //--------------------------------------------------------------
@@ -190,15 +200,15 @@ void VideoEncoder::setLevel(int level) {
 void VideoEncoder::setKeyFrame(int key_frame) {
 	codec_context->gop_size = key_frame;
 }
-
+//--------------------------------------------------------------
 int VideoEncoder::getWidth() {
 	return codec_context->width;
 }
-
+//--------------------------------------------------------------
 int VideoEncoder::getHeight() {
 	return codec_context->height;
 }
-
+//--------------------------------------------------------------
 int VideoEncoder::getPixelFormat() {
 	return codec_context->pix_fmt;
 }

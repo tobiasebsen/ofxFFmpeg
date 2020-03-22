@@ -31,6 +31,11 @@ void ofApp::draw(){
 }
 
 //--------------------------------------------------------------
+void ofApp::keyPressed(int key) {
+	if (key == ' ') player.stop();
+}
+
+//--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 	if (dragInfo.files.size() > 0) {
 		player.load(dragInfo.files[0]);

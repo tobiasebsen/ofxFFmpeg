@@ -9,6 +9,7 @@ public:
     void exit();
     void update();
     void draw();
+	void keyPressed(int key);
 	void dragEvent(ofDragInfo dragInfo);
     
     ofxFFmpegPlayer player;

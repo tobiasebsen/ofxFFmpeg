@@ -14,6 +14,8 @@ namespace ofxFFmpeg {
 		int getPixelFormat() const;
 
         static std::vector<int> getDeviceTypes();
+		static int getNumHardwareConfig(const AVCodec * codec);
+		static int getDeviceType(const AVCodec * codec, int config_index);
 
 	protected:
 		AVBufferRef * hardware_context = NULL;

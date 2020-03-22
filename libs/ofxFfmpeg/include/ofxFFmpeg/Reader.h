@@ -16,12 +16,14 @@ namespace ofxFFmpeg {
 		}
 
         /////////////////////////////////////////////////
+		// OPEN AND CLOSE
 
         bool open(std::string filename);
 		bool isOpen() const;
         void close();
 
 		/////////////////////////////////////////////////
+		// READING AND SEEKING
 
 		bool read(AVPacket * packet);
 		bool read(PacketReceiver * receiver);
@@ -30,21 +32,28 @@ namespace ofxFFmpeg {
 
         void seek(uint64_t pts);
 
-        /////////////////////////////////////////////////
+		/////////////////////////////////////////////////
+        // STREAMS
 
-        unsigned int getNumStreams();
+        unsigned int getNumStreams() const;
         int getVideoStreamIndex();
         int getAudioStreamIndex();
-        AVStream * getStream(int stream_index);
-        
-        /////////////////////////////////////////////////
+        AVStream * getStream(int stream_index) const;
+		AVCodec * getVideoCodec();
+		AVCodec * getAudioCodec();
+
+		/////////////////////////////////////////////////
+        // THREADING
 
         bool start(PacketReceiver * receiver);
-        void stop(PacketReceiver * receiver);
-		void readThread(PacketReceiver * receiver);
+        void stop();
+		void readThread();
         bool isRunning() const {
             return running;
         }
+
+		/////////////////////////////////////////////////
+		// ACCESSORS
 
 		std::string getName();
 		std::string getLongName();
@@ -61,5 +70,6 @@ namespace ofxFFmpeg {
         std::mutex mutex;
         std::condition_variable condition;
         bool running = false;
+		PacketReceiver * receiver;
 	};
 }

@@ -5,6 +5,7 @@
 #include <atomic>
 
 #include "AvTypes.h"
+#include "Flow.h"
 
 namespace ofxFFmpeg {
     
@@ -21,6 +22,9 @@ namespace ofxFFmpeg {
 
 		void terminate();
 		void resume();
+
+		virtual void free(T *) = 0;
+		void flush();
 
     protected:
         size_t max_size;
@@ -40,7 +44,6 @@ namespace ofxFFmpeg {
         if (!terminated) {
             std::lock_guard<std::mutex> lock(mutex);
             queue.push(t);
-			mutex.unlock();
             cond_push.notify_one();
 			return true;
         }
@@ -55,37 +58,54 @@ namespace ofxFFmpeg {
         }
         if (!terminated) {
             std::lock_guard<std::mutex> lock(mutex);
-            T * back = queue.back();
+			T * front = queue.front();
             queue.pop();
-			mutex.unlock();
             cond_pop.notify_one();
-            return back;
+            return front;
         }
 		return nullptr;
     }
 
 	template<typename T>
-	inline void Queue<T>::terminate() {
+	void Queue<T>::terminate() {
 		terminated = true;
 		cond_push.notify_all();
 		cond_pop.notify_all();
 	}
 
 	template<typename T>
-	inline void Queue<T>::resume() {
+	void Queue<T>::resume() {
 		terminated = false;
 	}
 
+	template<typename T>
+	void Queue<T>::flush() {
+		std::lock_guard<std::mutex> lock(mutex);
+		while (queue.size() > 0) {
+			free(queue.front());
+			queue.pop();
+		}
+	}
 
-    class PacketQueue : public Queue<AVPacket> {
+
+    class PacketQueue : public Queue<AVPacket>, public PacketReceiver, public PacketSupplier {
     public:
+		void receive(AVPacket * packet) { push(clone(packet)); }
+		void terminatePacketReceiver() { terminate(); flush(); }
+		void resumePacketReceiver() { resume(); }
+
+		AVPacket * supply() { return pop(); }
+		void terminatePacketSupplier() { terminate(); flush(); }
+		void resumePacketSupplier() { resume(); }
+
         AVPacket * clone(AVPacket * p);
-        void free(AVPacket * p);
+        virtual void free(AVPacket * p);
     };
+
 
     class FrameQueue : public Queue<AVFrame> {
     public:
         AVFrame * clone(AVFrame * f);
-        void free(AVFrame * f);
+        virtual void free(AVFrame * f);
     };
 }

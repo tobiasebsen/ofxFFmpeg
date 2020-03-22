@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include <algorithm>
 
 namespace ofxFFmpeg {
@@ -17,7 +18,8 @@ namespace ofxFFmpeg {
         void reset() {
             read_total = 0;
             write_total = 0;
-        }
+			terminated = false;
+		}
 
 		int read(T * dst, int samples);
         int write(T * src, int samples);
@@ -30,11 +32,20 @@ namespace ofxFFmpeg {
         }
         
         void wait(size_t write_samples = 0) {
-            while (write_samples > get_write_available()) {
+            while (write_samples > get_write_available() && !terminated) {
                 std::unique_lock<std::mutex> lock(mutex);
                 condition.wait(lock);
             }
         }
+
+		void terminate() {
+			terminated = true;
+			condition.notify_all();
+		}
+
+		void resume() {
+			terminated = false;
+		}
 
 	protected:
 		std::vector<T> buffer;
@@ -44,6 +55,7 @@ namespace ofxFFmpeg {
 
         std::mutex mutex;
         std::condition_variable condition;
+		std::atomic<bool> terminated = false;
 	};
     
     template<typename T>

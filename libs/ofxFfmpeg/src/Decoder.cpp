@@ -50,6 +50,11 @@ void Decoder::close() {
 }
 
 //--------------------------------------------------------------
+bool ofxFFmpeg::Decoder::isOpen() {
+	return codec_context != NULL;
+}
+
+//--------------------------------------------------------------
 bool Decoder::match(AVPacket * packet) {
     return stream && (packet->stream_index == stream->index);
 }
@@ -88,7 +93,7 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
         AVFrame * frame = NULL;
         while ((frame = receive()) != NULL) {
 
-			receiver->receiveFrame(frame, stream->index);
+			receiver->receive(frame, stream->index);
 
             free(frame);
         }
@@ -120,8 +125,13 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
     if (running)
         return false;
     
+	this->supplier = supplier;
+	this->supplier->resumePacketSupplier();
+	this->receiver = receiver;
+	this->receiver->resumeFrameReceiver();
+
     running = true;
-    thread_obj = new std::thread(&Decoder::decodeThread, this, supplier, receiver);
+    thread_obj = new std::thread(&Decoder::decodeThread, this);
 
     return true;
 }
@@ -130,6 +140,8 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 void Decoder::stop() {
     if (running && thread_obj) {
         running = false;
+		receiver->terminateFrameReceiver();
+		supplier->terminatePacketSupplier();
         thread_obj->join();
 		delete thread_obj;
 		thread_obj = NULL;
@@ -137,15 +149,15 @@ void Decoder::stop() {
 }
 
 //--------------------------------------------------------------
-void Decoder::decodeThread(PacketSupplier * supplier, FrameReceiver * receiver) {
+void Decoder::decodeThread() {
 
     while (running) {
-        auto packet = supplier->supplyPacket();
+        auto packet = supplier->supply();
         if (packet && stream->index == packet->stream_index) {
 
             decode(packet, receiver);
 
-            supplier->freePacket(packet);
+            supplier->free(packet);
         }
     }
     running = false;

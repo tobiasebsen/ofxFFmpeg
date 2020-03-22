@@ -81,11 +81,11 @@ bool HardwareDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
 			if (frame->format == hw_format) {
 				AVFrame * sw_frame = av_frame_alloc();
 				error = av_hwframe_transfer_data(sw_frame, frame, 0);
-				receiver->receiveFrame(sw_frame, stream->index);
+				receiver->receive(sw_frame, stream->index);
 				av_frame_free(&sw_frame);
 			}
 			else {
-				receiver->receiveFrame(frame, stream->index);
+				receiver->receive(frame, stream->index);
 			}
 
 			free(frame);
@@ -113,4 +113,14 @@ std::vector<int> HardwareDecoder::getDeviceTypes() {
     } while (type != AV_HWDEVICE_TYPE_NONE);
 
     return deviceTypes;
+}
+
+//--------------------------------------------------------------
+int ofxFFmpeg::HardwareDecoder::getNumHardwareConfig(const AVCodec * codec) {
+	const AVCodecHWConfig *config = NULL;
+	for (int i=0; ; i++) {
+		config = avcodec_get_hw_config(codec, i);
+		if (config == NULL) return i;
+	}
+	return 0;
 }

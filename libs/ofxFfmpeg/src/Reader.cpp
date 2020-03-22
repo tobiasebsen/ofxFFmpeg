@@ -34,7 +34,7 @@ bool ofxFFmpeg::Reader::isOpen() const {
 
 //--------------------------------------------------------------
 void Reader::close() {
-    //stop();
+    stop();
     if (format_context) {
         avformat_close_input(&format_context);
     }
@@ -50,7 +50,7 @@ bool Reader::read(AVPacket * packet) {
 bool Reader::read(PacketReceiver * receiver) {
 	AVPacket * packet = read();
 	if (packet) {
-		receiver->receivePacket(packet);
+		receiver->receive(packet);
 		av_packet_unref(packet);
 		return true;
 	}
@@ -75,13 +75,20 @@ void Reader::seek(uint64_t pts) {
 }
 
 //--------------------------------------------------------------
-unsigned int Reader::getNumStreams() {
+unsigned int Reader::getNumStreams() const {
     return format_context->nb_streams;
 }
 
 //--------------------------------------------------------------
-AVStream * Reader::getStream(int stream_index) {
+AVStream * Reader::getStream(int stream_index) const {
     return format_context->streams[stream_index];
+}
+
+//--------------------------------------------------------------
+AVCodec * ofxFFmpeg::Reader::getVideoCodec() {
+	AVCodec * codec = NULL;
+	error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
+	return codec;
 }
 
 //--------------------------------------------------------------
@@ -107,34 +114,39 @@ bool Reader::start(PacketReceiver * receiver) {
         return false;
     
     running = true;
+	this->receiver = receiver;
+	this->receiver->resumePacketReceiver();
+
 	seek(0);
-    thread_obj = new std::thread(&Reader::readThread, this, receiver);
+    thread_obj = new std::thread(&Reader::readThread, this);
 
     return true;
 }
 
 //--------------------------------------------------------------
-void Reader::stop(PacketReceiver * receiver) {
+void Reader::stop() {
     if (running && thread_obj) {
         running = false;
-		receiver->notifyPacket();
+		receiver->terminatePacketReceiver();
 		if (thread_obj->joinable() && std::this_thread::get_id() != thread_obj->get_id())
 	        thread_obj->join();
+		delete thread_obj;
+		thread_obj = NULL;
     }
 }
 
 //--------------------------------------------------------------
-void Reader::readThread(PacketReceiver * receiver) {
+void Reader::readThread() {
     
 	while (running) {
         
         AVPacket * packet = read();
         if (packet) {
-            receiver->receivePacket(packet);
+            receiver->receive(packet);
             av_packet_unref(packet);
         }
 		else if (error == AVERROR_EOF) {
-			receiver->endPacket();
+			receiver->notifyEndPacket();
 		}
     }
 }
