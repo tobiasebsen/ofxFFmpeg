@@ -193,6 +193,7 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\HardwareDecoder.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Metrics.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Queue.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Reader.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\VideoScaler.cpp" />
@@ -213,6 +214,7 @@
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Encoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Flow.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\HardwareDecoder.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Metrics.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Queue.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Reader.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\VideoScaler.h" />

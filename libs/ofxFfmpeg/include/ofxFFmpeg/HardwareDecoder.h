@@ -1,25 +1,44 @@
 #pragma once
 
-#include "Decoder.h"
+#include <stdint.h>
+#include <string>
+#include <vector>
+
+#include "AvTypes.h"
 
 namespace ofxFFmpeg {
 
-	class HardwareDecoder : public VideoDecoder {
+	class HardwareDecoder {
 	public:
-		bool open(Reader & reader);
+		HardwareDecoder();
+		~HardwareDecoder() {
+			close();
+		}
+
+		bool open(int device_type = -1);
 		void close();
+		bool isOpen();
 
-		bool decode(AVPacket *packet, FrameReceiver * receiver);
+		std::string getDeviceName();
+		int getPixelFormat(const AVCodec * codec);
+		const AVCodecHWConfig * getConfig(const AVCodec * codec) const;
+		AVBufferRef * getContext() const;
+		std::vector<int> getFormats();
 
-		int getPixelFormat() const;
+		static bool transfer(AVFrame * hw_frame, AVFrame * sw_frame);
+		static AVFrame * transfer(AVFrame * hw_frame);
+		static void free(AVFrame * frame);
 
         static std::vector<int> getDeviceTypes();
 		static int getNumHardwareConfig(const AVCodec * codec);
 		static int getDeviceType(const AVCodec * codec, int config_index);
+		static int getDefaultDeviceType();
+		static std::string getDeviceName(int device_type);
 
 	protected:
-		AVBufferRef * hardware_context = NULL;
-		int hw_format = -1;
-		int sw_format = -1;
+		int error = 0;
+		int device_type;
+		AVBufferRef * hw_context = NULL;
+		//AVCodecHWConfig * hw_config;
 	};
 }

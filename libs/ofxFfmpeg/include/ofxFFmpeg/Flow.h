@@ -21,6 +21,13 @@ namespace ofxFFmpeg {
 
 	};
 
+	class FrameSupplier {
+	public:
+		virtual AVFrame * supply() = 0;
+		virtual void terminateFrameSupplier() {}
+		virtual void resumeFrameSupplier() {}
+	};
+
 	class FrameReceiver {
 	public:
 		virtual void receive(AVFrame * frame, int stream_index) = 0;

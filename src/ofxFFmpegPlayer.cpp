@@ -2,6 +2,8 @@
 
 using namespace ofxFFmpeg;
 
+ofxFFmpeg::HardwareDecoder ofxFFmpegPlayer::videoHardware;
+
 //--------------------------------------------------------------
 ofxFFmpegPlayer::ofxFFmpegPlayer() {
 }
@@ -30,20 +32,44 @@ bool ofxFFmpegPlayer::load(string filename) {
     ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
     ofLogVerbose() << reader.getNumStreams() << " stream(s)";
 
-	if (video.open(reader)) {
-        ofLogVerbose() << "== VIDEO STREAM ==";
+	if (!videoHardware.isOpen() && videoHardware.open()) {
+		ofLogVerbose() << "== HARDWARE ACCELERATION ==";
+		ofLogVerbose() << videoHardware.getDeviceName();
+	}
+
+	if (video.open(reader, &videoHardware)) {
+		ofLogVerbose() << "== VIDEO STREAM ==";
+		int num_hw = HardwareDecoder::getNumHardwareConfig(reader.getVideoCodec());
+		ofLogVerbose() << "  " << num_hw << " hardware decoder(s) found";
 		ofLogVerbose() << "  " << video.getLongName();
 		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
         ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
-		ofLogVerbose() << "  " << HardwareDecoder::getNumHardwareConfig(reader.getVideoCodec()) << " hardware decoder(s) found";
 
 		ofPixelFormat format = getPixelFormat();
-		if (format == OF_PIXELS_UNKNOWN)
-	        scaler.setup(video);
-        pixels.allocate(video.getWidth(), video.getHeight(), format == OF_PIXELS_UNKNOWN ? OF_PIXELS_RGB : format);
+		int num_planes = video.getNumPlanes();
+
+		pixelPlanes.resize(num_planes);
+		texturePlanes.resize(num_planes);
+
+		if (format == OF_PIXELS_UNKNOWN) {
+			scaler.allocate(video);
+			pixelPlanes[0].allocate(video.getWidth(), video.getHeight(), OF_PIXELS_RGB);
+		}
+		else if (format == OF_PIXELS_NV12) {
+			pixelPlanes[0].allocate(video.getWidth(), video.getHeight(), OF_PIXELS_NV12);
+			pixelPlanes[1].allocate(video.getWidth() / 2, video.getHeight() / 2, OF_PIXELS_RG);
+			texturePlanes[1].allocate(pixelPlanes[1]);
+			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_R, GL_RED);
+			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_G, GL_GREEN);
+			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_B, GL_ZERO);
+			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_A, GL_ONE);
+		}
+		else {
+			pixelPlanes[0].allocate(video.getWidth(), video.getHeight(), format);
+		}
     }
     if (audio.open(reader)) {
         ofLogVerbose() << "== AUDIO STREAM ==";
@@ -63,8 +89,8 @@ bool ofxFFmpegPlayer::load(string filename) {
 		settings.setOutListener(this);
 		audioStream.setup(settings);
 
-        resampler.setup(audio, settings.sampleRate, settings.numOutputChannels, AudioResampler::getSampleFormat<float>());
-        audioBuffer.setup(audio.getSampleRate() * audio.getNumChannels());
+        resampler.allocate(audio, settings.sampleRate, settings.numOutputChannels, AudioResampler::getSampleFormat<float>());
+        audioBuffer.allocate(audioStream.getSampleRate() * audioStream.getNumOutputChannels());
     }
 
 	return true;
@@ -78,6 +104,9 @@ void ofxFFmpegPlayer::close() {
 	video.close();
 	audio.close();
 	reader.close();
+
+	scaler.free();
+	resampler.free();
 }
 
 //--------------------------------------------------------------
@@ -101,6 +130,7 @@ void ofxFFmpegPlayer::stop() {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::receive(AVPacket * packet) {
 
+	// VIDEO PACKETS
 	if (video.match(packet)) {
 		if (video.isRunning()) {
 			videoPackets.receive(packet);
@@ -110,6 +140,7 @@ void ofxFFmpegPlayer::receive(AVPacket * packet) {
 		}
 	}
 
+	// AUDIO PACKETS
     if (audio.match(packet)) {
 		if (audio.isRunning()) {
 			audioPackets.receive(packet);
@@ -161,6 +192,7 @@ void ofxFFmpegPlayer::terminateFrameReceiver() {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::resumeFrameReceiver() {
 	terminated = false;
+	audioBuffer.resume();
 }
 
 //--------------------------------------------------------------
@@ -173,12 +205,22 @@ void ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 		}
 		if (!terminated) {
 			std::lock_guard<std::mutex> lock(mutex);
-			
 
-			if (scaler.isSetup())
-				scaler.scale(frame, pixels.getData(), pixels.getBytesStride());
-			else
-				video.copy(frame, pixels.getData(), pixels.getTotalBytes());
+			if (scaler.isAllocated())
+				scaler.scale(frame, pixelPlanes[0].getData(), pixelPlanes[0].getBytesStride());
+			else {
+				if (video.getPixelFormat() == OFX_FFMPEG_FORMAT_NV12) {
+					scaler.getMetrics().begin();
+					scaler.copyPlane(frame, 0, pixelPlanes[0].getData(), pixelPlanes[0].getWidth(), pixelPlanes[0].getHeight());
+					scaler.copyPlane(frame, 1, pixelPlanes[1].getData(), pixelPlanes[0].getWidth(), pixelPlanes[1].getHeight());
+					scaler.getMetrics().end();
+				}
+				else {
+					scaler.getMetrics().begin();
+					scaler.copy(frame, pixelPlanes[0].getData(), pixelPlanes[0].getTotalBytes());
+					scaler.getMetrics().end();
+				}
+			}
 
 			lastVideoPts = video.getTimeStamp(frame);
 			pixelsDirty = true;
@@ -189,7 +231,7 @@ void ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 
         int samples = 0;
         float * buffer = (float*)resampler.resample(frame, &samples);
-        samples *= audio.getNumChannels();
+		samples *= audioStream.getNumOutputChannels();
         
         if (samples > audioBuffer.get_write_available())
             audioBuffer.wait(samples);
@@ -197,15 +239,6 @@ void ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
         audioBuffer.write(buffer, samples);
         resampler.free(buffer);
 	}
-}
-
-//--------------------------------------------------------------
-void ofxFFmpegPlayer::receive(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData) {
-	std::unique_lock<std::mutex> lock(mutex);
-	frame_receive_cond.wait(lock);
-	pixels.allocate(video.getWidth(), video.getHeight(), 3);
-	pixels.setFromPixels(imageData.get(), video.getWidth(), video.getHeight(), 3);
-	pixelsDirty = true;
 }
 
 //--------------------------------------------------------------
@@ -232,10 +265,17 @@ void ofxFFmpegPlayer::update() {
 
 		//ofLog() << "Last: " << lastVideoPts << " " << video.getFrameNum(lastVideoPts);
 
-		if (!texture.isAllocated() || texture.getWidth() != pixels.getWidth() || texture.getHeight() != pixels.getHeight())
-			texture.allocate(pixels);
+		for (int i = 0; i < video.getNumPlanes(); i++) {
+			ofTexture & tex = texturePlanes[i];
+			ofPixels & pix = pixelPlanes[i];
+			if (pix.isAllocated()) {
+				if (!tex.isAllocated() || tex.getWidth() != pix.getWidth() || tex.getHeight() != pix.getHeight()) {
+					tex.allocate(pix);
+				}
+				tex.loadData(pix);
+			}
+		}
 
-		texture.loadData(pixels);
 		timeSeconds = lastVideoPts * reader.getTimeBase();
 		lastUpdatePts = lastVideoPts;
 		if (lastUpdatePts == seekPts)
@@ -251,14 +291,32 @@ void ofxFFmpegPlayer::update() {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
-	if (texture.isAllocated())
-		texture.draw(x, y, w, h);
+	/*if (texture.isAllocated())
+		texture.draw(x, y, w, h);*/
+	ofGetCurrentRenderer()->draw(*this, x, y, w, h);
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::draw(float x, float y) const {
-    if (texture.isAllocated())
-        texture.draw(x, y);
+	draw(x, y, getWidth(), getHeight());
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::drawDebug(float x, float y) const {
+	ofDrawBitmapStringHighlight("Reader:    " + ofToString(reader.getMetrics().getPeriodFiltered(), 1) + " us", x, y);
+	ofDrawBitmapStringHighlight("Video:     " + ofToString(video.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 20);
+	ofDrawBitmapStringHighlight("Scaler:    " + ofToString(scaler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 40);
+	ofDrawBitmapStringHighlight("Audio:     " + ofToString(audio.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 60);
+	ofDrawBitmapStringHighlight("Resampler: " + ofToString(resampler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 80);
+
+	ofDrawBitmapStringHighlight(ofToString(reader.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y);
+	ofDrawBitmapStringHighlight(ofToString(video.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 20);
+	ofDrawBitmapStringHighlight(ofToString(scaler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 40);
+	ofDrawBitmapStringHighlight(ofToString(audio.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 60);
+	ofDrawBitmapStringHighlight(ofToString(resampler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
+
+	float videoLoad = video.getMetrics().getDutyCycleFiltered() + scaler.getMetrics().getDutyCycleFiltered();
+	ofDrawBitmapStringHighlight(ofToString(videoLoad*100.f, 1) + " %", x + 220, y + 20, videoLoad > 0.9 ? ofColor::red : ofColor::black);
 }
 
 //--------------------------------------------------------------
@@ -285,6 +343,8 @@ ofPixelFormat ofxFFmpegPlayer::getPixelFormat() const {
 		return OF_PIXELS_RGB;
 	case OFX_FFMPEG_FORMAT_RGBA:
 		return OF_PIXELS_RGBA;
+	case OFX_FFMPEG_FORMAT_NV12:
+		return OF_PIXELS_NV12;
 	default:
 		return OF_PIXELS_UNKNOWN;
 	}
@@ -376,18 +436,49 @@ void ofxFFmpegPlayer::setLoopState(ofLoopType state) {
 
 //--------------------------------------------------------------
 ofPixels & ofxFFmpegPlayer::getPixels() {
-	return pixels;
+	return pixelPlanes[0];
 }
 
 //--------------------------------------------------------------
 const ofPixels & ofxFFmpegPlayer::getPixels() const {
-	return pixels;
+	return pixelPlanes[0];
+}
+
+//--------------------------------------------------------------
+ofTexture & ofxFFmpegPlayer::getTexture() {
+	return texturePlanes[0];
+}
+
+//--------------------------------------------------------------
+const ofTexture & ofxFFmpegPlayer::getTexture() const {
+	return texturePlanes[0];
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::setUseTexture(bool bUseTex) {}
+
+//--------------------------------------------------------------
+bool ofxFFmpegPlayer::isUsingTexture() const {
+	return true;
+}
+
+//--------------------------------------------------------------
+std::vector<ofTexture>& ofxFFmpegPlayer::getTexturePlanes() {
+	return texturePlanes;
+}
+
+//--------------------------------------------------------------
+const std::vector<ofTexture>& ofxFFmpegPlayer::getTexturePlanes() const {
+	return texturePlanes;
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 
-	audioBuffer.read(buffer.getBuffer().data(), buffer.size());
+	int samples = audioBuffer.read(buffer.getBuffer().data(), buffer.size());
+	if (samples < buffer.size()) {
+		//ofLogWarning() << "Audio buffer under-run!";
+	}
 
 	uint64_t duration = buffer.getDurationMicros();
 	//clock.tick(duration);

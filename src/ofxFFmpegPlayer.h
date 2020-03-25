@@ -3,7 +3,7 @@
 #include "ofMain.h"
 #include "ofxFFmpeg.h"
 
-class ofxFFmpegPlayer : public ofxFFmpeg::PacketReceiver, public ofxFFmpeg::FrameReceiver, public ofBaseVideoPlayer {
+class ofxFFmpegPlayer : public ofxFFmpeg::PacketReceiver, public ofxFFmpeg::FrameReceiver, public ofBaseVideoPlayer, public ofBaseVideoDraws {
 public:
 	ofxFFmpegPlayer();
 	~ofxFFmpegPlayer();
@@ -28,6 +28,7 @@ public:
 
     void draw(float x, float y, float w, float h) const;
     void draw(float x, float y) const;
+	void drawDebug(float x, float y) const;
 
     float getWidth() const;
     float getHeight() const;
@@ -48,6 +49,13 @@ public:
 	void setFrame(int frame);
 	void setPosition(float pct);
 
+	ofTexture & getTexture();
+	const ofTexture & getTexture() const;
+	void setUseTexture(bool bUseTex);
+	bool isUsingTexture() const;
+	std::vector<ofTexture> & getTexturePlanes();
+	const std::vector<ofTexture> & getTexturePlanes() const;
+
 	void audioOut(ofSoundBuffer & buffer);
 
 protected:
@@ -60,16 +68,16 @@ protected:
 	virtual void receive(AVFrame * frame, int stream_index);
 	virtual void terminateFrameReceiver();
 	virtual void resumeFrameReceiver();
-	virtual void receive(uint64_t pts, uint64_t duration, const std::shared_ptr<uint8_t> imageData);
 
 	string filePath;
 
 	ofxFFmpeg::Reader reader;
 	ofxFFmpeg::Clock clock;
     
-    ofxFFmpeg::VideoDecoder video;
+	static ofxFFmpeg::HardwareDecoder videoHardware;
+	ofxFFmpeg::VideoDecoder video;
 	ofxFFmpeg::PacketQueue videoPackets;
-	ofxFFmpeg::FrameCache videoFrames;
+	ofxFFmpeg::FrameQueue videoFrames;
 	ofxFFmpeg::VideoScaler scaler;
 
     ofxFFmpeg::AudioDecoder audio;
@@ -100,6 +108,6 @@ protected:
     ofLoopType loopState = OF_LOOP_NORMAL;
 	bool loopRequest = false;
 
-    ofPixels pixels;
-    ofTexture texture;
+    std::vector<ofPixels> pixelPlanes;
+	std::vector<ofTexture> texturePlanes;
 };

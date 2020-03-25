@@ -42,7 +42,9 @@ void Reader::close() {
 
 //--------------------------------------------------------------
 bool Reader::read(AVPacket * packet) {
+	metrics.begin();
     error = av_read_frame(format_context, packet);
+	metrics.end();
     return error == 0;
 }
 
@@ -174,4 +176,9 @@ uint64_t Reader::getBitRate() const {
 //--------------------------------------------------------------
 double Reader::getTimeBase() const {
     return av_q2d({ 1, AV_TIME_BASE });
+}
+
+//--------------------------------------------------------------
+const Metrics & ofxFFmpeg::Reader::getMetrics() const {
+	return metrics;
 }

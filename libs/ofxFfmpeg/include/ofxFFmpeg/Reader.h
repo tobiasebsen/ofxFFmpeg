@@ -6,6 +6,7 @@
 
 #include "AvTypes.h"
 #include "Flow.h"
+#include "Metrics.h"
 
 namespace ofxFFmpeg {
     
@@ -61,15 +62,17 @@ namespace ofxFFmpeg {
         uint64_t getBitRate() const;
         double getTimeBase() const;
 
+		const Metrics & getMetrics() const;
+
 	protected:
         int error;
 
         AVFormatContext * format_context = NULL;
         
         std::thread * thread_obj = NULL;
-        std::mutex mutex;
-        std::condition_variable condition;
         bool running = false;
 		PacketReceiver * receiver;
+
+		Metrics metrics;
 	};
 }

@@ -10,7 +10,7 @@ namespace ofxFFmpeg {
     template<typename T>
 	class AudioBuffer {
 	public:
-        void setup(size_t size) {
+        void allocate(size_t size) {
             buffer.resize(size);
             reset();
         }

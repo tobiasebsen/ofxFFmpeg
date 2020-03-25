@@ -13,7 +13,8 @@ namespace ofxFFmpeg {
 
     class Queue {
     public:
-        Queue(size_t size = 2) : max_size(size), terminated(false){}
+        Queue(size_t size = 4) : max_size(size), terminated(false){}
+		~Queue() { flush(); }
 
         bool push(T * t);
         T * pop();
@@ -85,6 +86,7 @@ namespace ofxFFmpeg {
 			free(queue.front());
 			queue.pop();
 		}
+		cond_pop.notify_all();
 	}
 
 
@@ -103,8 +105,10 @@ namespace ofxFFmpeg {
     };
 
 
-    class FrameQueue : public Queue<AVFrame> {
+    class FrameQueue : public Queue<AVFrame>, public FrameReceiver {
     public:
+		void receive(AVFrame * frame, int stream_index) { push(clone(frame)); }
+
         AVFrame * clone(AVFrame * f);
         virtual void free(AVFrame * f);
     };

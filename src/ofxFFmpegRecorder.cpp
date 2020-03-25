@@ -57,7 +57,7 @@ bool ofxFFmpegRecorder::start() {
 
     frame_count = 0;
     
-	scaler.setup(video);
+	scaler.allocate(video);
     
     return true;
 }

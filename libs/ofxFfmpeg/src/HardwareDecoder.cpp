@@ -12,92 +12,108 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool HardwareDecoder::open(Reader & reader) {
+ofxFFmpeg::HardwareDecoder::HardwareDecoder() {
+	device_type = AV_HWDEVICE_TYPE_NONE;
+}
 
-	if (!VideoDecoder::open(reader))
-		return false;
+//--------------------------------------------------------------
+bool HardwareDecoder::open(int device_type) {
 
-	hw_format = -1;
-	sw_format = -1;
+	close();
 
-#if defined _WIN32
-	AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_DXVA2;
-#elif defined __APPLE__
-	AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
-#else
-	AVHWDeviceType hw_type = AV_HWDEVICE_TYPE_NONE;
-#endif
+	if (device_type < 0)
+		device_type = getDefaultDeviceType();
 
-	int i = 0;
-	const AVCodecHWConfig *config = NULL;
-	do {
-		config = avcodec_get_hw_config(codec_context->codec, i);
-		if (config && config->device_type == hw_type) {
-			hw_format = config->pix_fmt;
-		}
-		i++;
-	} while (config != NULL);
-
-	error = av_hwdevice_ctx_create(&hardware_context, hw_type, NULL, NULL, 0);
+	error = av_hwdevice_ctx_create(&hw_context, (AVHWDeviceType)device_type, NULL, NULL, 0);
 	if (error < 0) {
 		av_log(NULL, AV_LOG_ERROR, "Cannot create hardware context\n");
-	}
-	else {
-		codec_context->hw_device_ctx = av_buffer_ref(hardware_context);
+		return false;
 	}
 
-	/*if (hardwareAccel) {
-		AVPixelFormat * formats = NULL;
-		codec_context->hw_frames_ctx = av_hwframe_ctx_alloc(hardware_context);
-		av_hwframe_ctx_init(codec_context->hw_frames_ctx);
-		error = av_hwframe_transfer_get_formats(codec_context->hw_frames_ctx, AV_HWFRAME_TRANSFER_DIRECTION_TO, &formats, 0);
-		if (error >= 0) {
-			while (*formats != AV_PIX_FMT_NONE) {
-				sw_format = *formats;
-				formats++;
-			}
-			av_freep(&formats);
-		}
-	}*/
+	this->device_type = device_type;
+	
 	return true;
 }
 
 //--------------------------------------------------------------
 void HardwareDecoder::close() {
-	VideoDecoder::close();
-
-	if (hardware_context) {
-		av_buffer_unref(&hardware_context);
+	if (hw_context) {
+		av_buffer_unref(&hw_context);
 	}
 }
 
 //--------------------------------------------------------------
-bool HardwareDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
-	if (send(packet)) {
-
-		AVFrame * frame = NULL;
-		while ((frame = receive()) != NULL) {
-
-			if (frame->format == hw_format) {
-				AVFrame * sw_frame = av_frame_alloc();
-				error = av_hwframe_transfer_data(sw_frame, frame, 0);
-				receiver->receive(sw_frame, stream->index);
-				av_frame_free(&sw_frame);
-			}
-			else {
-				receiver->receive(frame, stream->index);
-			}
-
-			free(frame);
-		}
-		return true;
-	}
-	return false;
+bool ofxFFmpeg::HardwareDecoder::isOpen() {
+	return hw_context != NULL;
 }
 
 //--------------------------------------------------------------
-int HardwareDecoder::getPixelFormat() const {
-	return AV_PIX_FMT_NV12;
+std::string ofxFFmpeg::HardwareDecoder::getDeviceName() {
+	return getDeviceName(device_type);
+}
+
+//--------------------------------------------------------------
+int ofxFFmpeg::HardwareDecoder::getPixelFormat(const AVCodec * codec) {
+	const AVCodecHWConfig *config = getConfig(codec);
+	return config != NULL ? config->pix_fmt : AV_PIX_FMT_NONE;
+}
+
+//--------------------------------------------------------------
+const AVCodecHWConfig * HardwareDecoder::getConfig(const AVCodec * codec) const {
+	const AVCodecHWConfig *config = NULL;
+	for (int i = 0; ; i++) {
+		config = avcodec_get_hw_config(codec, i);
+		if (config == NULL) break;
+		if (config->device_type == device_type)
+			return config;
+	}
+	return NULL;
+}
+
+
+//--------------------------------------------------------------
+AVBufferRef * ofxFFmpeg::HardwareDecoder::getContext() const {
+	return hw_context;
+}
+
+//--------------------------------------------------------------
+std::vector<int> HardwareDecoder::getFormats() {
+	std::vector<int> formats;
+	AVPixelFormat * pfmts = NULL;
+	error = av_hwframe_transfer_get_formats(hw_context, AV_HWFRAME_TRANSFER_DIRECTION_TO, &pfmts, 0);
+	if (error < 0) {
+		return formats;
+	}
+	AVPixelFormat * p = pfmts;
+
+	while (*pfmts != AV_PIX_FMT_NONE) {
+		formats.push_back(*pfmts);
+		pfmts++;
+	}
+	av_freep(&p);
+
+	return formats;
+}
+
+//--------------------------------------------------------------
+bool HardwareDecoder::transfer(AVFrame * hw_frame, AVFrame * sw_frame) {
+	int error = av_hwframe_transfer_data(sw_frame, hw_frame, 0);
+	return error >= 0;
+}
+
+//--------------------------------------------------------------
+AVFrame * HardwareDecoder::transfer(AVFrame * hw_frame) {
+	AVFrame * sw_frame = av_frame_alloc();
+	if (!transfer(hw_frame, sw_frame)) {
+		free(sw_frame);
+		return NULL;
+	}
+	return sw_frame;
+}
+
+//--------------------------------------------------------------
+void HardwareDecoder::free(AVFrame * frame) {
+	av_frame_unref(frame);
 }
 
 //--------------------------------------------------------------
@@ -116,11 +132,32 @@ std::vector<int> HardwareDecoder::getDeviceTypes() {
 }
 
 //--------------------------------------------------------------
-int ofxFFmpeg::HardwareDecoder::getNumHardwareConfig(const AVCodec * codec) {
+int HardwareDecoder::getNumHardwareConfig(const AVCodec * codec) {
 	const AVCodecHWConfig *config = NULL;
 	for (int i=0; ; i++) {
 		config = avcodec_get_hw_config(codec, i);
 		if (config == NULL) return i;
 	}
 	return 0;
+}
+
+//--------------------------------------------------------------
+int HardwareDecoder::getDefaultDeviceType() {
+#if defined _WIN32
+	//return AV_HWDEVICE_TYPE_D3D11VA;
+	return AV_HWDEVICE_TYPE_DXVA2;
+#elif defined __APPLE__
+	return AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
+#elif defined __linux__
+	return AV_HWDEVICE_TYPE_OPENCL;
+#else
+	return AV_HWDEVICE_TYPE_NONE;
+#endif
+}
+
+//--------------------------------------------------------------
+std::string HardwareDecoder::getDeviceName(int device_type) {
+	if (device_type <= 0)
+		device_type = getDefaultDeviceType();
+	return av_hwdevice_get_type_name((AVHWDeviceType)device_type);
 }

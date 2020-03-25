@@ -6,7 +6,7 @@ void ofApp::setup(){
     ofSetLogLevel(OF_LOG_VERBOSE);
 
     ofSetVerticalSync(false);
-	ofSetFrameRate(60);
+	ofSetFrameRate(0);
 }
 
 //--------------------------------------------------------------
@@ -28,6 +28,7 @@ void ofApp::draw(){
     
     ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
+	player.drawDebug(20, 60);
 }
 
 //--------------------------------------------------------------

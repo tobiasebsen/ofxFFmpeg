@@ -46,6 +46,9 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\AudioResampler.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Metrics.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -505,6 +508,9 @@
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\include\AvTypes.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Metrics.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include\ofxFFmpeg</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -14,3 +14,11 @@ AVPacket * PacketQueue::clone(AVPacket *p) {
 void PacketQueue::free(AVPacket *p) {
     av_packet_unref(p);
 }
+
+AVFrame * ofxFFmpeg::FrameQueue::clone(AVFrame * f) {
+	return av_frame_clone(f);
+}
+
+void ofxFFmpeg::FrameQueue::free(AVFrame * f) {
+	av_frame_unref(f);
+}
