@@ -5,13 +5,15 @@
 #include <vector>
 
 #include "AvTypes.h"
+#include "Decoder.h"
+#include "Metrics.h"
 
 namespace ofxFFmpeg {
 
-	class HardwareDecoder {
+	class HardwareDevice {
 	public:
-		HardwareDecoder();
-		~HardwareDecoder() {
+		HardwareDevice();
+		~HardwareDevice() {
 			close();
 		}
 
@@ -19,7 +21,8 @@ namespace ofxFFmpeg {
 		void close();
 		bool isOpen();
 
-		std::string getDeviceName();
+		int getType() const;
+		std::string getName();
 		int getPixelFormat(const AVCodec * codec);
 		const AVCodecHWConfig * getConfig(const AVCodec * codec) const;
 		AVBufferRef * getContext() const;
@@ -29,16 +32,30 @@ namespace ofxFFmpeg {
 		static AVFrame * transfer(AVFrame * hw_frame);
 		static void free(AVFrame * frame);
 
-        static std::vector<int> getDeviceTypes();
 		static int getNumHardwareConfig(const AVCodec * codec);
-		static int getDeviceType(const AVCodec * codec, int config_index);
-		static int getDefaultDeviceType();
-		static std::string getDeviceName(int device_type);
+
+		static std::vector<int> getTypes();
+		static int getType(const AVCodec * codec, int config_index);
+		static int getDefaultType();
+		static std::string getName(int device_type);
 
 	protected:
 		int error = 0;
 		int device_type;
-		AVBufferRef * hw_context = NULL;
-		//AVCodecHWConfig * hw_config;
+		AVBufferRef * hwdevice_context = NULL;
+	};
+
+	/////////////////////////////////////////////////////
+
+	class HardwareDecoder : public VideoDecoder {
+	public:
+		bool open(Reader & reader, HardwareDevice & device);
+
+		bool isHardwareFrame(AVFrame * frame);
+		bool hasHardwareDecoder();
+
+	protected:
+		const AVCodecHWConfig * hw_config = NULL;
+		AVBufferRef * hwframes_context = NULL;
 	};
 }

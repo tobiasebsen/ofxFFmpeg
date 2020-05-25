@@ -28,7 +28,7 @@ void ofApp::draw(){
     
     ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
-	player.drawDebug(20, 60);
+	//player.drawDebug(20, 60);
 }
 
 //--------------------------------------------------------------
@@ -37,10 +37,16 @@ void ofApp::keyPressed(int key) {
 }
 
 //--------------------------------------------------------------
+void ofApp::mousePressed(int x, int y, int button) {
+	player.setPosition((float)x / (float)ofGetWidth());
+}
+
+//--------------------------------------------------------------
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 	if (dragInfo.files.size() > 0) {
 		player.load(dragInfo.files[0]);
 		player.play();
+		//player.setPaused(true);
 	}
 }
 

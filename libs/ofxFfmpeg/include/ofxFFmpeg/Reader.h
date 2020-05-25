@@ -70,8 +70,10 @@ namespace ofxFFmpeg {
         AVFormatContext * format_context = NULL;
         
         std::thread * thread_obj = NULL;
+		std::mutex mutex;
         bool running = false;
 		PacketReceiver * receiver;
+		int64_t seek_pts = FFMPEG_NOPTS_VALUE;
 
 		Metrics metrics;
 	};

@@ -6,7 +6,6 @@
 #include "AvTypes.h"
 #include "Flow.h"
 #include "Reader.h"
-#include "HardwareDecoder.h"
 #include "Queue.h"
 #include "Metrics.h"
 
@@ -20,7 +19,7 @@ namespace ofxFFmpeg {
 
 		bool open(AVStream * stream);
         void close();
-		bool isOpen();
+		bool isOpen() const;
         
         /////////////////////////////////////////////////
 		// DECODING
@@ -29,9 +28,7 @@ namespace ofxFFmpeg {
         
         virtual bool decode(AVPacket * packet, FrameReceiver * receiver);
 		bool flush(FrameReceiver * receiver);
-
-		void copy(AVFrame * src_frame, uint8_t * dst_data, int dst_size, int align = 1);
-		void copyPlane(AVFrame * src_frame, int plane, uint8_t * dst_data, int dst_linesize, int height);
+		void flush();
 
         /////////////////////////////////////////////////
 		// THREADING
@@ -51,12 +48,20 @@ namespace ofxFFmpeg {
 		int getStreamIndex() const;
         int getTotalNumFrames() const;
         int getBitsPerSample() const;
-        uint64_t getBitRate() const;
+		int64_t getBitRate() const;
+
         double getTimeBase() const;
-		uint64_t getTimeStamp(AVPacket * frame) const;
-		uint64_t getTimeStamp(AVFrame * frame) const;
-		uint64_t getTimeStamp(int frame_num) const;
-		int getFrameNum(uint64_t pts) const;
+		int64_t rescaleTime(int64_t ts) const;
+		int64_t rescaleTimeInv(int64_t ts) const;
+		int64_t rescaleTime(AVPacket * packet) const;
+		int64_t rescaleTime(AVFrame * frame) const;
+		int64_t rescaleDuration(AVFrame * frame) const;
+		int64_t rescaleFrameNum(int frame_num) const;
+		int64_t getTimeStamp(AVFrame * frame) const;
+		int getFrameNum(int64_t pts) const;
+		int getFrameNum(AVFrame * frame) const;
+
+		uint8_t * getFrameData(AVFrame * frame, int plane = 0);
 
 		const Metrics & getMetrics() const;
 
@@ -91,16 +96,17 @@ namespace ofxFFmpeg {
     class VideoDecoder : public Decoder {
     public:
 		//bool open(Reader & reader);
-		bool open(Reader & reader, HardwareDecoder * hw_decoder = NULL);
+		bool open(Reader & reader);
 		bool decode(AVPacket * packet, FrameReceiver * receiver);
         int getWidth() const;
         int getHeight() const;
         int getPixelFormat() const;
+		int getPixelFormat(AVFrame * frame) const;
 		int getNumPlanes() const;
-		bool getIsHardwareFrame(AVFrame * frame);
+		int getLineBytes(AVFrame * frame, int plane) const;
 		double getFrameRate();
-	protected:
-		const AVCodecHWConfig * hw_config = NULL;
+
+		bool isKeyFrame(AVPacket * packet);
     };
     
 	/////////////////////////////////////////////////////

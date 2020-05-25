@@ -73,6 +73,7 @@ bool Encoder::begin(AVStream * stream) {
 
 	codec_context->time_base = av_inv_q(codec_context->framerate);
 	stream->avg_frame_rate = codec_context->framerate;
+	stream->r_frame_rate = codec_context->framerate;
 
 	//if (output_format_context->flags & AVFMT_GLOBALHEADER)
 	codec_context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -149,17 +150,17 @@ void VideoEncoder::setTimeStamp(AVPacket * packet, int64_t pts) {
 }
 
 //--------------------------------------------------------------
-int64_t ofxFFmpeg::VideoEncoder::getTimeStamp(AVFrame * frame) {
+int64_t VideoEncoder::getTimeStamp(AVFrame * frame) {
 	return frame->pts;
 }
 
 //--------------------------------------------------------------
-int64_t ofxFFmpeg::VideoEncoder::getTimeStamp(AVPacket * packet) {
+int64_t VideoEncoder::getTimeStamp(AVPacket * packet) {
 	return packet->pts;
 }
 
 //--------------------------------------------------------------
-int64_t VideoEncoder::getTimeStampFromFrameNum(int64_t frame_num) {
+int64_t VideoEncoder::rescaleFrameNum(int64_t frame_num) {
 	return av_rescale_q(frame_num, codec_context->time_base, stream->time_base);
 }
 

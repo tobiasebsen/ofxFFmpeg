@@ -24,6 +24,7 @@ namespace ofxFFmpeg {
 	class FrameSupplier {
 	public:
 		virtual AVFrame * supply() = 0;
+		virtual void free(AVFrame * frame) = 0;
 		virtual void terminateFrameSupplier() {}
 		virtual void resumeFrameSupplier() {}
 	};

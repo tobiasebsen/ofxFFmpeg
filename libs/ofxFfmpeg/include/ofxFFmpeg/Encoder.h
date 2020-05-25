@@ -48,7 +48,7 @@ namespace ofxFFmpeg {
 		int64_t getTimeStamp(AVFrame * frame);
 		int64_t getTimeStamp(AVPacket * packet);
 
-		int64_t getTimeStampFromFrameNum(int64_t frame_num);
+		int64_t rescaleFrameNum(int64_t frame_num);
 
 		void setWidth(int width);
 		void setHeight(int height);

@@ -18,12 +18,15 @@ namespace ofxFFmpeg {
 
 		bool allocate(int src_width, int src_height, int src_fmt, int dst_width, int dst_height, int dst_fmt);
 		bool allocate(int width, int height, int src_fmt, int dst_fmt);
-        bool allocate(VideoDecoder & decoder);
+        bool allocate(VideoDecoder & decoder, int dst_fmt);
 		bool allocate(VideoEncoder & encoder);
 		bool isAllocated();
 		void free();
 
-		bool scale(AVFrame * frame, const uint8_t * imageData, int line_stride);
+		bool scale(AVFrame * src_frame, AVFrame * dst_frame);
+		AVFrame * scale(AVFrame * frame);
+
+		//bool scale(AVFrame * frame, const uint8_t * imageData, int line_stride);
 		bool scale(const uint8_t * imageData, int line_stride, int height, AVFrame * frame);
 
 		void copy(AVFrame * src_frame, uint8_t * dst_data, int dst_size, int align = 1);
@@ -31,7 +34,7 @@ namespace ofxFFmpeg {
 
 		uint8_t * getData(AVFrame * frame);
 
-        void start();
+        bool start(FrameSupplier * supplier, FrameReceiver * receiver, int stream_index);
         void stop();
         void scaleThread();
 
@@ -44,9 +47,15 @@ namespace ofxFFmpeg {
     private:
 		int error;
         SwsContext * sws_context = NULL;
+		int dst_width;
+		int dst_height;
+		int dst_fmt;
 
 		std::thread * thread_obj = NULL;
 		bool running = false;
+		FrameSupplier * supplier = NULL;
+		FrameReceiver * receiver = NULL;
+		int stream_index = -1;
 
 		Metrics metrics;
     };

@@ -65,8 +65,11 @@ void * AudioResampler::resample(AVFrame *frame, int * out_samples_ptr) {
     uint8_t *out_buffer;
     av_samples_alloc(&out_buffer, NULL, out_channels, out_samples, (AVSampleFormat)out_format, 0);
     
-    *out_samples_ptr = resample(frame, out_buffer, out_samples);
-    
+    int samples = resample(frame, out_buffer, out_samples);
+	if (out_samples_ptr) {
+		*out_samples_ptr = samples >= 0 ? samples : 0;
+	}
+
     return out_buffer;
 }
 

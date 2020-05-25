@@ -15,6 +15,9 @@ using namespace ofxFFmpeg;
 //--------------------------------------------------------------
 bool VideoScaler::allocate(int src_width, int src_height, int src_fmt, int dst_width, int dst_height, int dst_fmt) {
 	free();
+	this->dst_width = dst_width;
+	this->dst_height = dst_height;
+	this->dst_fmt = dst_fmt;
 	sws_context = sws_getContext(src_width, src_height, (enum AVPixelFormat)src_fmt, dst_width, dst_height, (enum AVPixelFormat)dst_fmt, 0, 0, 0, 0);
 	return sws_context != NULL;
 }
@@ -25,8 +28,8 @@ bool VideoScaler::allocate(int width, int height, int src_fmt, int dst_fmt) {
 }
 
 //--------------------------------------------------------------
-bool VideoScaler::allocate(VideoDecoder & decoder) {
-    return allocate(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat(), AV_PIX_FMT_RGB24);
+bool VideoScaler::allocate(VideoDecoder & decoder, int dst_fmt) {
+    return allocate(decoder.getWidth(), decoder.getHeight(), decoder.getPixelFormat(), dst_fmt);
 }
 
 //--------------------------------------------------------------
@@ -48,7 +51,31 @@ void VideoScaler::free() {
 }
 
 //--------------------------------------------------------------
-bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData, int line_stride) {
+bool ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame, AVFrame * dst_frame) {
+	metrics.begin();
+	int out_height = sws_scale(sws_context, src_frame->data, src_frame->linesize, 0, (int)src_frame->height, dst_frame->data, dst_frame->linesize);
+	metrics.end();
+	return out_height > 0;
+}
+
+//--------------------------------------------------------------
+AVFrame * ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame) {
+	AVFrame * dst_frame = av_frame_alloc();
+	av_frame_copy_props(dst_frame, src_frame);
+	dst_frame->width = dst_width;
+	dst_frame->height = dst_height;
+	dst_frame->format = dst_fmt;
+	av_frame_get_buffer(dst_frame, 0);
+
+	if (!scale(src_frame, dst_frame)) {
+		av_frame_free(&dst_frame);
+		return NULL;
+	}
+	return dst_frame;
+}
+
+//--------------------------------------------------------------
+/*bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData, int line_stride) {
 	if (!isAllocated()) {
 		av_log(NULL, AV_LOG_ERROR, "Video scaler not allocated\n");
 		return false;
@@ -59,7 +86,7 @@ bool VideoScaler::scale(AVFrame *frame, const uint8_t *pixelData, int line_strid
      int ret = sws_scale(sws_context, frame->data, frame->linesize, 0, (int)frame->height, (uint8_t * const *)&pixelData, out_linesize);
 	 metrics.end();
      return true;
-}
+}*/
 
 //--------------------------------------------------------------
 bool VideoScaler::scale(const uint8_t * imageData, int line_stride, int height, AVFrame * frame) {
@@ -95,11 +122,35 @@ uint8_t * ofxFFmpeg::VideoScaler::getData(AVFrame * frame) {
 }
 
 //--------------------------------------------------------------
-void VideoScaler::start() {
+bool VideoScaler::start(FrameSupplier * supplier, FrameReceiver * receiver, int stream_index) {
+
+	if (!isAllocated()) {
+		av_log(NULL, AV_LOG_ERROR, "Video scaler not allocated\n");
+		return false;
+	}
+
+	if (running)
+		return false;
+
+	running = true;
+	this->supplier = supplier;
+	this->supplier->resumeFrameSupplier();
+	this->receiver = receiver;
+	this->receiver->resumeFrameReceiver();
+	this->stream_index = stream_index;
+
+	thread_obj = new std::thread(&VideoScaler::scaleThread, this);
 }
 
 //--------------------------------------------------------------
 void VideoScaler::stop() {
+	if (running && thread_obj) {
+		running = false;
+		supplier->terminateFrameSupplier();
+		receiver->terminateFrameReceiver();
+		thread_obj->join();
+		delete thread_obj;
+	}
 }
 
 //--------------------------------------------------------------
@@ -107,6 +158,15 @@ void VideoScaler::scaleThread() {
 
 	while (running) {
 
+		AVFrame * src_frame = supplier->supply();
+		if (src_frame) {
+			AVFrame * dst_frame = scale(src_frame);
+			if (dst_frame) {
+				receiver->receive(dst_frame, stream_index);
+				av_frame_unref(dst_frame);
+			}
+			supplier->free(src_frame);
+		}
 	}
 }
 

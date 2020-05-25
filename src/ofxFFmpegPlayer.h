@@ -35,6 +35,7 @@ public:
 
 	bool setPixelFormat(ofPixelFormat pixelFormat);
 	ofPixelFormat getPixelFormat() const;
+	ofPixelFormat getPixelFormat(int pix_fmt) const;
 
 	float getPosition() const;
 	int getCurrentFrame() const;
@@ -74,36 +75,33 @@ protected:
 	ofxFFmpeg::Reader reader;
 	ofxFFmpeg::Clock clock;
     
-	static ofxFFmpeg::HardwareDecoder videoHardware;
-	ofxFFmpeg::VideoDecoder video;
+	static ofxFFmpeg::OpenGLDevice videoHardware;
+	ofxFFmpeg::HardwareDecoder video;
+	mutable ofxFFmpeg::OpenGLRenderer opengl;
 	ofxFFmpeg::PacketQueue videoPackets;
 	ofxFFmpeg::FrameQueue videoFrames;
+	ofxFFmpeg::FrameQueue videoCache;
 	ofxFFmpeg::VideoScaler scaler;
+	ofxFFmpeg::Metrics transferMetrics;
 
     ofxFFmpeg::AudioDecoder audio;
 	ofxFFmpeg::PacketQueue audioPackets;
 	ofxFFmpeg::AudioResampler resampler;
 	ofxFFmpeg::AudioBuffer<float> audioBuffer;
 
-	int64_t lastVideoPts;
-	int64_t lastAudioPts;
-	int64_t lastUpdatePts;
-	int64_t seekPts = -1;
-        
-    std::mutex mutex;
-    std::condition_variable frame_receive_cond;
-	std::condition_variable frame_ready_cond;
-	std::atomic<bool> terminated;
-
 	ofSoundStream audioStream;
 
-	bool pixelsDirty = false;
+	bool isBuffering = false;
+	bool isLooping = false;
+	bool isResyncingVideo = false;
 	bool frameNew = false;
 	bool isMovieDone = false;
 
-	double timeSeconds;
-	uint64_t pts;
+	double videoTimeSeconds;
+	double audioTimeSeconds;
+	uint64_t last_frame_pts;
     bool paused = false;
+	uint64_t audio_samples_loop;
 
     ofLoopType loopState = OF_LOOP_NORMAL;
 	bool loopRequest = false;

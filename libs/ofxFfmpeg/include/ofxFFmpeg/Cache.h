@@ -1,39 +1,24 @@
 #pragma once
 
-#include <map>
+#include <list>
 #include <mutex>
+#include <atomic>
 
 #include "AvTypes.h"
+#include "Queue.h"
 
 namespace ofxFFmpeg {
     
-    template<typename T>
-
-    class Cache {
+    class FrameCache : public FrameQueue {
     public:
+		void receive(AVFrame * frame) { push(clone(frame)); }
+		void terminateFrameReceiver() { terminate();  flush(); }
+		void resumeFrameReceiver() { resume(); }
 
-        void store(uint64_t pts, T * t);
-        T * fetch(uint64_t pts);
+		AVFrame * supply(int64_t pts) { AVFrame * f = fetch(pts); flush(pts); return f; }
 
-    protected:
-        std::map<uint64_t, T*> cache;
-        std::mutex mutex;
-        std::condition_variable condition;
-    };
-    
-    template<typename T>
-    void Cache<T>::store(uint64_t pts, T * t) {
-        std::lock_guard<std::mutex> lock(mutex);
-        cache.emplace(std::pair<uint64_t, T*>(pts, t));
-    }
-    
-    template<typename T>
-    T * Cache<T>::fetch(uint64_t pts) {
-        std::lock_guard<std::mutex> lock(mutex);
-    }
-    
-
-    class FrameCache : public Cache<AVFrame> {
-    public:
+		AVFrame * fetch(int64_t pts);
+		void flush(int64_t pts);
+		void flush() { Queue<AVFrame>::flush(); }
     };
 }

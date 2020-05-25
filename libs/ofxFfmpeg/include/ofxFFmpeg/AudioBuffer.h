@@ -15,6 +15,8 @@ namespace ofxFFmpeg {
             reset();
         }
 
+		size_t size() const { return buffer.size(); }
+
         void reset() {
             read_total = 0;
             write_total = 0;
@@ -24,15 +26,18 @@ namespace ofxFFmpeg {
 		int read(T * dst, int samples);
         int write(T * src, int samples);
 
-        int get_read_available() {
+		size_t getTotalRead() const { return read_total; }
+		size_t getTotalWrite() const { return write_total; }
+
+        int getAvailableRead() const {
             return (write_total - read_total);
         }
-        int get_write_available() {
+        int getAvailableWrite() const {
             return buffer.size() - (write_total - read_total);
         }
         
         void wait(size_t write_samples = 0) {
-            while (write_samples > get_write_available() && !terminated) {
+            while (write_samples > getAvailableWrite() && !terminated) {
                 std::unique_lock<std::mutex> lock(mutex);
                 condition.wait(lock);
             }
@@ -61,7 +66,7 @@ namespace ofxFFmpeg {
     template<typename T>
     int AudioBuffer<T>::write(T * src, int samples) {
         
-        samples = std::min(samples, get_write_available());
+        samples = std::min(samples, getAvailableWrite());
         int write_point = write_total % buffer.size();
         int head_samples = std::min(samples, (int)buffer.size() - write_point);
         memcpy(buffer.data() + write_point, src, head_samples * sizeof(T));
@@ -76,7 +81,7 @@ namespace ofxFFmpeg {
     template<typename T>
     int AudioBuffer<T>::read(T * dst, int samples) {
 
-        samples = std::min(samples, get_read_available());
+        samples = std::min(samples, getAvailableRead());
         int read_point = read_total % buffer.size();
         int head_samples = std::min(samples, (int)buffer.size() - read_point);
         memcpy(dst, buffer.data() + read_point, head_samples * sizeof(T));

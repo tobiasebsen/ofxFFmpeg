@@ -13,6 +13,7 @@ using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
 bool Reader::open(std::string filename) {
+	std::lock_guard<std::mutex> lock(mutex);
 
     if ((error = avformat_open_input(&format_context, filename.c_str(), NULL, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot open input file\n");
@@ -42,10 +43,13 @@ void Reader::close() {
 
 //--------------------------------------------------------------
 bool Reader::read(AVPacket * packet) {
+	std::lock_guard<std::mutex> lock(mutex);
+
 	metrics.begin();
     error = av_read_frame(format_context, packet);
 	metrics.end();
-    return error == 0;
+
+	return error == 0;
 }
 
 //--------------------------------------------------------------
@@ -72,8 +76,13 @@ AVPacket * Reader::read() {
 
 //--------------------------------------------------------------
 void Reader::seek(uint64_t pts) {
-    //int video_stream_index = getVideoStreamIndex();
-    av_seek_frame(format_context, -1, pts, 0);
+	if (isRunning()) {
+		seek_pts = pts;
+	}
+	else {
+		std::lock_guard<std::mutex> lock(mutex);
+		error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
+	}
 }
 
 //--------------------------------------------------------------
@@ -149,6 +158,11 @@ void Reader::readThread() {
         }
 		else if (error == AVERROR_EOF) {
 			receiver->notifyEndPacket();
+		}
+
+		if (seek_pts != -1) {
+			error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
+			seek_pts = -1;
 		}
     }
 }

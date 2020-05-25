@@ -1,6 +1,6 @@
 #pragma once
 
-#include <queue>
+#include <list>
 #include <mutex>
 #include <atomic>
 
@@ -19,17 +19,24 @@ namespace ofxFFmpeg {
         bool push(T * t);
         T * pop();
 
-        size_t size() { return queue.size(); }
+        size_t size() const { return queue.size(); }
+		size_t capacity() const { return max_size; }
+		void resize(size_t s) { max_size = s; }
 
 		void terminate();
 		void resume();
 
-		virtual void free(T *) = 0;
 		void flush();
 
+		void lock() { mutex.lock(); }
+		T * operator[](size_t index) { return queue[index]; }
+		void unlock() { mutex.unlock(); }
+
     protected:
-        size_t max_size;
-        std::queue<T*> queue;
+		virtual void free(T *) = 0;
+
+		size_t max_size;
+        std::list<T*> queue;
         std::mutex mutex;
         std::condition_variable cond_push;
         std::condition_variable cond_pop;
@@ -44,7 +51,7 @@ namespace ofxFFmpeg {
         }
         if (!terminated) {
             std::lock_guard<std::mutex> lock(mutex);
-            queue.push(t);
+            queue.push_back(t);
             cond_push.notify_one();
 			return true;
         }
@@ -59,10 +66,12 @@ namespace ofxFFmpeg {
         }
         if (!terminated) {
             std::lock_guard<std::mutex> lock(mutex);
-			T * front = queue.front();
-            queue.pop();
-            cond_pop.notify_one();
-            return front;
+			if (queue.size() > 0) {
+				T * front = queue.front();
+				queue.pop_front();
+				cond_pop.notify_one();
+				return front;
+			}
         }
 		return nullptr;
     }
@@ -84,11 +93,36 @@ namespace ofxFFmpeg {
 		std::lock_guard<std::mutex> lock(mutex);
 		while (queue.size() > 0) {
 			free(queue.front());
-			queue.pop();
+			queue.pop_front();
 		}
 		cond_pop.notify_all();
 	}
 
+	template<typename T>
+	class TimeQueue : public Queue<T> {
+	public:
+
+		void receive(T * t, int stream_index) {
+			if (push(clone(t))) {
+				head_pts = get_head(t);
+			}
+		}
+
+		T * supply() {
+			T * t = pop();
+			return t;
+		}
+
+		int64_t get_head() const { return head_pts; }
+		int64_t get_tail() const { return tail_pts; }
+
+	protected:
+		virtual T * clone(T * t) = 0;
+		virtual int64_t get_head(T*) = 0;
+		virtual int64_t get_tail(T*) = 0;
+		int64_t head_pts;
+		int64_t tail_pts;
+	};
 
     class PacketQueue : public Queue<AVPacket>, public PacketReceiver, public PacketSupplier {
     public:
@@ -105,11 +139,30 @@ namespace ofxFFmpeg {
     };
 
 
-    class FrameQueue : public Queue<AVFrame>, public FrameReceiver {
+    class FrameQueue : public TimeQueue<AVFrame>, public FrameReceiver, public FrameSupplier {
     public:
-		void receive(AVFrame * frame, int stream_index) { push(clone(frame)); }
+		void receive(AVFrame * frame, int stream_index) { TimeQueue::receive(frame, stream_index); }
+		void terminateFrameReceiver() { terminate(); Queue::flush(); }
+		void resumeFrameReceiver() { resume(); }
 
-        AVFrame * clone(AVFrame * f);
-        virtual void free(AVFrame * f);
-    };
+		AVFrame * supply() { return Queue::pop(); }
+		AVFrame * supply(int64_t pts);
+		void terminateFrameSupplier() { terminate(); Queue::flush(); }
+		void resumeFrameSupplier() { resume(); }
+
+		bool pop(int64_t min_pts, int64_t max_pts);
+		size_t flush(int64_t min_pts, int64_t max_pts);
+
+		virtual void free(AVFrame * f);
+
+		using Queue::flush;
+		using TimeQueue::get_head;
+		using TimeQueue::get_tail;
+	
+	protected:
+
+		AVFrame * clone(AVFrame * f);
+		virtual int64_t get_head(AVFrame * frame);
+		virtual int64_t get_tail(AVFrame * frame);
+	};
 }
