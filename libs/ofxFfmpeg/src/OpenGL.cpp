@@ -28,6 +28,7 @@ typedef struct {
 
 #elif defined __APPLE__
 #include "libavcodec/videotoolbox.h"
+#include "libavutil/hwcontext_videotoolbox.h"
 #elif defined __linux__
 #include "libavcodec/vaapi.h"
 #endif
@@ -63,6 +64,9 @@ bool OpenGLDevice::open() {
 
 		return true;
 	}
+#elif defined __APPLE__
+    if (device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+    }
 #endif
 
 	return false;
@@ -171,14 +175,14 @@ void OpenGLRenderer::close() {
 			renderer->renderTarget->Release();
 			delete renderer;
 		}
+
+        if (texture) {
+            glDeleteTextures(1, &texture);
+            texture = 0;
+        }
 #endif
 
 		data = NULL;
-	}
-
-	if (texture) {
-		glDeleteTextures(1, &texture);
-		texture = 0;
 	}
 
 	hardware = NULL;
@@ -202,6 +206,16 @@ void OpenGLRenderer::render(AVFrame * frame) {
 			hr = device->pDevice->EndScene();
 		}
 	}
+#elif defined __APPLE__
+    if (frames_ctx->device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+        CVPixelBufferRef pixbuf = (CVPixelBufferRef)frame->data[3];
+        size_t w = CVPixelBufferGetWidth(pixbuf);
+        size_t h = CVPixelBufferGetWidth(pixbuf);
+        size_t planes = CVPixelBufferGetPlaneCount(pixbuf);
+        OSType pixel_format = CVPixelBufferGetPixelFormatType(pixbuf);
+        //enum AVPixelFormat format = av_map_videotoolbox_format_to_pixfmt(pixel_format);
+        //CVOpenGLTextureCacheCreate(<#CFAllocatorRef  _Nullable allocator#>, <#CFDictionaryRef  _Nullable cacheAttributes#>, <#CGLContextObj  _Nonnull cglContext#>, <#CGLPixelFormatObj  _Nonnull cglPixelFormat#>, <#CFDictionaryRef  _Nullable textureAttributes#>, <#CVOpenGLTextureCacheRef  _Nullable * _Nonnull cacheOut#>)
+    }
 #endif
 }
 

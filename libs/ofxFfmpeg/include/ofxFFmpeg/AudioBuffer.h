@@ -10,6 +10,8 @@ namespace ofxFFmpeg {
     template<typename T>
 	class AudioBuffer {
 	public:
+        AudioBuffer() : terminated(false) {}
+
         void allocate(size_t size) {
             buffer.resize(size);
             reset();
@@ -60,7 +62,7 @@ namespace ofxFFmpeg {
 
         std::mutex mutex;
         std::condition_variable condition;
-		std::atomic<bool> terminated = false;
+		std::atomic<bool> terminated;
 	};
     
     template<typename T>

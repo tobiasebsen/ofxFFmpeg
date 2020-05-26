@@ -103,13 +103,13 @@ namespace ofxFFmpeg {
 	public:
 
 		void receive(T * t, int stream_index) {
-			if (push(clone(t))) {
+            if (Queue<T>::push(clone(t))) {
 				head_pts = get_head(t);
 			}
 		}
 
 		T * supply() {
-			T * t = pop();
+			T * t = Queue<T>::pop();
 			return t;
 		}
 

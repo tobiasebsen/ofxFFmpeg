@@ -225,8 +225,8 @@ bool HardwareDecoder::open(Reader & reader, HardwareDevice & device) {
 	if (hw_config) {
 		if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 			codec_context->hw_device_ctx = av_buffer_ref(device.getContext());
-		if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
-			codec_context->get_format = get_format;
+		//if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
+		//	codec_context->get_format = get_format;
 	}
 
 	if (!Decoder::open(codec))
