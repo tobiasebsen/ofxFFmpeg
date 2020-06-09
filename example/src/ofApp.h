@@ -16,4 +16,5 @@ public:
     ofxFFmpegPlayer player;
     
     ofFpsCounter fps;
+	bool showDebug;
 };

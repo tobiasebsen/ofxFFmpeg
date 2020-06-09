@@ -4,14 +4,20 @@
 
 namespace ofxFFmpeg {
 
-	class OpenGLDevice : public HardwareDevice {
+	class OpenGLDevice {
 	public:
 		~OpenGLDevice() { close(); }
 
-		bool open();
+		bool open(HardwareDevice & hardware);
+		bool isOpen() const;
 		void close();
 
+		int getHardwareType();
+		AVBufferRef * getContextRef();
+
 	protected:
+		AVBufferRef * hwdevice_context_ref = NULL;
+		AVHWDeviceContext * hwdevice_context = NULL;
 	};
 
 
@@ -19,7 +25,8 @@ namespace ofxFFmpeg {
 	public:
 		~OpenGLRenderer() { close(); }
 
-		bool open(OpenGLDevice & hardware, int width, int height);
+		bool open(OpenGLDevice & device, int width, int height);
+		bool isOpen() const;
 		void close();
 
 		unsigned int getTexture() { return texture; }
@@ -32,11 +39,12 @@ namespace ofxFFmpeg {
 		void unlock();
 
 	protected:
-		OpenGLDevice * hardware = NULL;
+		AVBufferRef * hwdevice_context_ref = NULL;
+		AVHWDeviceContext * hwdevice_context = NULL;
 		unsigned int texture = 0;
 		int target;
 		int width;
 		int height;
-		void * data = NULL;
+		void * opaque = NULL;
 	};
 }

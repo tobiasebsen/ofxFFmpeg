@@ -16,8 +16,16 @@ namespace ofxFFmpeg {
             buffer.resize(size);
             reset();
         }
+		void free() {
+			buffer.clear();
+			reset();
+		}
 
 		size_t size() const { return buffer.size(); }
+
+		void resize(size_t size) {
+			buffer.resize(size);
+		}
 
         void reset() {
             read_total = 0;

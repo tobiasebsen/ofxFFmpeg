@@ -71,13 +71,15 @@ void ofxFFmpegRecorder::stop() {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegRecorder::receive(AVPacket * packet) {
+bool ofxFFmpegRecorder::receive(AVPacket * packet) {
 
 	int64_t frame_num = video.getTimeStamp(packet);
 	int64_t pts = video.rescaleFrameNum(frame_num);
 	video.setTimeStamp(packet, pts);
 
 	writer.write(packet);
+
+	return true;
 }
 
 //--------------------------------------------------------------

@@ -26,6 +26,10 @@ typedef struct {
 	HANDLE gl_texture;
 } DXVA2_OPENGL_RENDERER;
 
+typedef struct {
+	HANDLE gl_device;
+} D3D11_OPENGL_DEVICE;
+
 #elif defined __APPLE__
 #include "libavcodec/videotoolbox.h"
 #include "libavutil/hwcontext_videotoolbox.h"
@@ -36,90 +40,126 @@ typedef struct {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-bool OpenGLDevice::open() {
+bool OpenGLDevice::open(HardwareDevice & hardware) {
 
-	if (!HardwareDevice::open())
+	if (!hardware.isOpen())
 		return false;
 
-	AVHWDeviceContext * device_ctx = (AVHWDeviceContext*)hwdevice_context->data;
+	hwdevice_context_ref = av_buffer_ref(hardware.getContextRef());
+	hwdevice_context = (AVHWDeviceContext*)hwdevice_context_ref->data;
 
 #if defined _WIN32
-	if (device_ctx->type == AV_HWDEVICE_TYPE_DXVA2) {
-		AVDXVA2DeviceContext * dxva2_ctx = (AVDXVA2DeviceContext*)device_ctx->hwctx;
+	if (hwdevice_context->type == AV_HWDEVICE_TYPE_DXVA2) {
+		AVDXVA2DeviceContext * dxva2_ctx = (AVDXVA2DeviceContext*)hwdevice_context->hwctx;
 		HRESULT hr;
 		DXVA2_OPENGL_DEVICE * device = new DXVA2_OPENGL_DEVICE();
-		device_ctx->user_opaque = device;
+		hwdevice_context->user_opaque = device;
 
 		hr = dxva2_ctx->devmgr->OpenDeviceHandle(&device->hDevice);
-		if (hr != D3D_OK)
+		if (hr != D3D_OK) {
+			close();
 			return false;
+		}
 
 		hr = dxva2_ctx->devmgr->LockDevice(device->hDevice, &device->pDevice, FALSE);
-		if (hr != D3D_OK)
+		if (hr != D3D_OK) {
+			close();
 			return false;
+		}
 
 		device->gl_device = wglDXOpenDeviceNV(device->pDevice);
+		if (device->gl_device == 0) {
+			close();
+			return false;
+		}
+
+		return true;
+	}
+	if (hwdevice_context->type == AV_HWDEVICE_TYPE_D3D11VA) {
+		/*AVD3D11VADeviceContext * d3d11_ctx = (AVD3D11VADeviceContext*)hwdevice_context->hwctx;
+		D3D11_OPENGL_DEVICE * device = new D3D11_OPENGL_DEVICE();
+		hwdevice_context->user_opaque = device;
+
+		device->gl_device = wglDXOpenDeviceNV(d3d11_ctx->device);
 		if (device->gl_device == 0)
 			return false;
 
-		return true;
+		return true;*/
 	}
 #elif defined __APPLE__
     if (device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
     }
 #endif
 
+	av_buffer_unref(&hwdevice_context_ref);
+	hwdevice_context = NULL;
+
 	return false;
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::OpenGLDevice::close() {
-
-	if (hwdevice_context) {
-		AVHWDeviceContext * device_ctx = (AVHWDeviceContext*)hwdevice_context->data;
-
-		if (device_ctx) {
-
-#if defined _WIN32
-			if (device_ctx->type == AV_HWDEVICE_TYPE_DXVA2) {
-				DXVA2_OPENGL_DEVICE * device = (DXVA2_OPENGL_DEVICE*)device_ctx->user_opaque;
-
-				wglDXCloseDeviceNV(device->gl_device);
-
-				AVDXVA2DeviceContext * dxva2_ctx = (AVDXVA2DeviceContext*)device_ctx->hwctx;
-				dxva2_ctx->devmgr->UnlockDevice(device->hDevice, FALSE);
-
-				dxva2_ctx->devmgr->CloseDeviceHandle(device->hDevice);
-
-				delete device;
-				device_ctx->user_opaque = NULL;
-			}
-#endif
-		}
-	}
-
-	HardwareDevice::close();
+bool OpenGLDevice::isOpen() const {
+	return hwdevice_context_ref != NULL;
 }
 
 //--------------------------------------------------------------
-bool OpenGLRenderer::open(OpenGLDevice & hardware, int width, int height) {
+void OpenGLDevice::close() {
+
+	if (hwdevice_context_ref) {
+
+#if defined _WIN32
+		if (hwdevice_context->type == AV_HWDEVICE_TYPE_DXVA2) {
+			DXVA2_OPENGL_DEVICE * device = (DXVA2_OPENGL_DEVICE*)hwdevice_context->user_opaque;
+
+			wglDXCloseDeviceNV(device->gl_device);
+
+			AVDXVA2DeviceContext * dxva2_ctx = (AVDXVA2DeviceContext*)hwdevice_context->hwctx;
+			dxva2_ctx->devmgr->UnlockDevice(device->hDevice, FALSE);
+
+			dxva2_ctx->devmgr->CloseDeviceHandle(device->hDevice);
+
+			delete device;
+			hwdevice_context->user_opaque = NULL;
+		}
+		if (hwdevice_context->type == AV_HWDEVICE_TYPE_D3D11VA) {
+			D3D11_OPENGL_DEVICE * device = (D3D11_OPENGL_DEVICE*)hwdevice_context->user_opaque;
+
+			wglDXCloseDeviceNV(device->gl_device);
+
+			delete device;
+			hwdevice_context->user_opaque = NULL;
+		}
+#endif
+		av_buffer_unref(&hwdevice_context_ref);
+		hwdevice_context = NULL;
+	}
+}
+
+//--------------------------------------------------------------
+int OpenGLDevice::getHardwareType() {
+	return hwdevice_context ? hwdevice_context->type : AV_HWDEVICE_TYPE_NONE;
+}
+
+//--------------------------------------------------------------
+AVBufferRef * OpenGLDevice::getContextRef() {
+	return hwdevice_context_ref;
+}
+
+//--------------------------------------------------------------
+bool OpenGLRenderer::open(OpenGLDevice & opengl, int width, int height) {
 
 	close();
 
-	this->hardware = &hardware;
-
-	AVBufferRef * device_ctx_ref = hardware.getContext();
-	if (!device_ctx_ref)
+	if (!opengl.isOpen())
 		return false;
 
-	AVHWDeviceContext * device_ctx = (AVHWDeviceContext*)device_ctx_ref->data;
-	if (!device_ctx)
-		return false;
+	hwdevice_context_ref = av_buffer_ref(opengl.getContextRef());
+	hwdevice_context = (AVHWDeviceContext*)hwdevice_context_ref->data;
 
 #if defined _WIN32
-	if (device_ctx->type == AV_HWDEVICE_TYPE_DXVA2) {
+	if (opengl.getHardwareType() == AV_HWDEVICE_TYPE_DXVA2) {
 
-		DXVA2_OPENGL_DEVICE * device = (DXVA2_OPENGL_DEVICE*)device_ctx->user_opaque;
+		DXVA2_OPENGL_DEVICE * device = (DXVA2_OPENGL_DEVICE*)hwdevice_context->user_opaque;
 		if (!device)
 			return false;
 
@@ -127,21 +167,28 @@ bool OpenGLRenderer::open(OpenGLDevice & hardware, int width, int height) {
 		IDirect3D9 * d3d;
 		hr = device->pDevice->GetDirect3D(&d3d);
 		hr = d3d->CheckDeviceFormatConversion(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'), D3DFMT_A8R8G8B8);
-		if (hr != D3D_OK)
+		if (hr != D3D_OK) {
 			return false;
+		}
 
 		DXVA2_OPENGL_RENDERER * renderer = new DXVA2_OPENGL_RENDERER();
+		this->opaque = renderer;
 		renderer->device = device;
+		HANDLE shareHandle = NULL;
 		hr = device->pDevice->CreateRenderTarget(
 			width, height,
 			D3DFMT_A8R8G8B8,
 			D3DMULTISAMPLE_NONE,
 			0, FALSE,
 			&renderer->renderTarget,
-			NULL
+			&shareHandle
 		);
-		if (hr != D3D_OK)
+		if (hr != D3D_OK) {
+			close();
 			return false;
+		}
+
+		BOOL ret = wglDXSetResourceShareHandleNV(renderer->renderTarget, shareHandle);
 
 		this->target = GL_TEXTURE_RECTANGLE;
 		this->width = width;
@@ -149,12 +196,46 @@ bool OpenGLRenderer::open(OpenGLDevice & hardware, int width, int height) {
 
 		glGenTextures(1, &texture);
 
-		renderer->gl_texture = wglDXRegisterObjectNV(device->gl_device, renderer->renderTarget, texture, target, WGL_ACCESS_READ_ONLY_NV);
-		if (!renderer->gl_texture)
+		renderer->gl_texture = wglDXRegisterObjectNV(device->gl_device, renderer->renderTarget, texture, target, WGL_ACCESS_READ_WRITE_NV);
+		if (renderer->gl_texture == NULL) {
+			DWORD error = GetLastError();
+			close();
+			return false;
+		}
+
+		return true;
+	}
+	if (opengl.getHardwareType() == AV_HWDEVICE_TYPE_D3D11VA) {
+
+		D3D11_OPENGL_DEVICE * device = (D3D11_OPENGL_DEVICE*)hwdevice_context->user_opaque;
+		AVD3D11VADeviceContext * d3d11_ctx = (AVD3D11VADeviceContext*)hwdevice_context->hwctx;
+		HRESULT hr;
+
+		D3D11_TEXTURE2D_DESC desc;
+		desc.Width = width;
+		desc.Height = height;
+		desc.MipLevels = desc.ArraySize = 1;
+		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+
+		ID3D11Texture2D * texture = NULL;
+		hr = d3d11_ctx->device->CreateTexture2D(&desc, NULL, &texture);
+		if (hr != S_OK)
 			return false;
 
-		data = renderer;
-		return true;
+		D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+		renderTargetViewDesc.Format = desc.Format;
+		renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+		renderTargetViewDesc.Texture2D.MipSlice = 0;
+
+		ID3D11Texture2D* renderTargetTextureMap;
+		ID3D11RenderTargetView* renderTargetViewMap;
+		d3d11_ctx->device->CreateRenderTargetView(renderTargetTextureMap, &renderTargetViewDesc, &renderTargetViewMap);
 	}
 #endif
 
@@ -162,13 +243,18 @@ bool OpenGLRenderer::open(OpenGLDevice & hardware, int width, int height) {
 }
 
 //--------------------------------------------------------------
+bool OpenGLRenderer::isOpen() const {
+	return hwdevice_context_ref != NULL && opaque != NULL;
+}
+
+//--------------------------------------------------------------
 void OpenGLRenderer::close() {
 
-	if (data && hardware) {
+	if (hwdevice_context && opaque) {
 
 #if defined _WIN32
-		if (hardware->getType() == AV_HWDEVICE_TYPE_DXVA2) {
-			DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)data;
+		if (hwdevice_context->type == AV_HWDEVICE_TYPE_DXVA2) {
+			DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)opaque;
 
 			wglDXUnregisterObjectNV(renderer->device->gl_device, renderer->gl_texture);
 
@@ -182,10 +268,10 @@ void OpenGLRenderer::close() {
         }
 #endif
 
-		data = NULL;
+		av_buffer_unref(&hwdevice_context_ref);
+		hwdevice_context = NULL;
+		opaque = NULL;
 	}
-
-	hardware = NULL;
 }
 
 //--------------------------------------------------------------
@@ -196,7 +282,10 @@ void OpenGLRenderer::render(AVFrame * frame) {
 	if (frames_ctx->device_ctx->type == AV_HWDEVICE_TYPE_DXVA2) {
 
 		DXVA2_OPENGL_DEVICE * device = (DXVA2_OPENGL_DEVICE*)frames_ctx->device_ctx->user_opaque;
-		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)data;
+		if (!device)
+			return;
+
+		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)opaque;
 
 		if (frame->format == AV_PIX_FMT_DXVA2_VLD) {
 			IDirect3DSurface9 * surface = (IDirect3DSurface9*)frame->data[3];
@@ -204,6 +293,17 @@ void OpenGLRenderer::render(AVFrame * frame) {
 			hr = device->pDevice->BeginScene();
 			hr = device->pDevice->StretchRect(surface, NULL, renderer->renderTarget, NULL, D3DTEXF_NONE);
 			hr = device->pDevice->EndScene();
+		}
+	}
+	if (frames_ctx->device_ctx->type == AV_HWDEVICE_TYPE_D3D11VA) {
+
+		if (frame->format == AV_PIX_FMT_D3D11VA_VLD) {
+			ID3D11VideoDecoderOutputView * outputView = (ID3D11VideoDecoderOutputView*)frame->data[3];
+		}
+		if (frame->format == AV_PIX_FMT_D3D11) {
+			ID3D11Texture2D * texture = (ID3D11Texture2D*)frame->data[0];
+			intptr_t arrayIndex = (intptr_t)frame->data[1];
+
 		}
 	}
 #elif defined __APPLE__
@@ -220,10 +320,10 @@ void OpenGLRenderer::render(AVFrame * frame) {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::OpenGLRenderer::lock() {
+void OpenGLRenderer::lock() {
 #if defined _WIN32
-	if (hardware && hardware->getType() == AV_HWDEVICE_TYPE_DXVA2) {
-		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)data;
+	if (hwdevice_context && hwdevice_context->type == AV_HWDEVICE_TYPE_DXVA2) {
+		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)opaque;
 		if (renderer) {
 			wglDXLockObjectsNV(renderer->device->gl_device, 1, &renderer->gl_texture);
 		}
@@ -232,10 +332,10 @@ void ofxFFmpeg::OpenGLRenderer::lock() {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::OpenGLRenderer::unlock() {
+void OpenGLRenderer::unlock() {
 #if defined _WIN32
-	if (hardware && hardware->getType() == AV_HWDEVICE_TYPE_DXVA2) {
-		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)data;
+	if (hwdevice_context && hwdevice_context->type == AV_HWDEVICE_TYPE_DXVA2) {
+		DXVA2_OPENGL_RENDERER * renderer = (DXVA2_OPENGL_RENDERER*)opaque;
 		if (renderer) {
 			wglDXUnlockObjectsNV(renderer->device->gl_device, 1, &renderer->gl_texture);
 		}

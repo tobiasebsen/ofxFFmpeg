@@ -25,11 +25,6 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-HardwareDevice::HardwareDevice() {
-	device_type = AV_HWDEVICE_TYPE_NONE;
-}
-
-//--------------------------------------------------------------
 bool HardwareDevice::open(int device_type) {
 
 	close();
@@ -37,37 +32,46 @@ bool HardwareDevice::open(int device_type) {
 	if (device_type < 0)
 		device_type = getDefaultType();
 
-	error = av_hwdevice_ctx_create(&hwdevice_context, (AVHWDeviceType)device_type, NULL, NULL, 0);
+	error = av_hwdevice_ctx_create(&hwdevice_context_ref, (AVHWDeviceType)device_type, NULL, NULL, 0);
 	if (error < 0) {
 		av_log(NULL, AV_LOG_ERROR, "Cannot create hardware context\n");
 		return false;
 	}
-
-	this->device_type = device_type;
+	this->hwdevice_context = (AVHWDeviceContext*)hwdevice_context_ref->data;
 
 	return true;
 }
 
 //--------------------------------------------------------------
+bool HardwareDevice::open(std::string device_name) {
+	AVHWDeviceType type = av_hwdevice_find_type_by_name(device_name.c_str());
+	if (type == AV_HWDEVICE_TYPE_NONE) {
+		return false;
+	}
+	return open(type);
+}
+
+//--------------------------------------------------------------
 void HardwareDevice::close() {
-	if (hwdevice_context) {
-		av_buffer_unref(&hwdevice_context);
+	if (hwdevice_context_ref) {
+		//av_buffer_unref(&hwdevice_context);
+		hwdevice_context_ref = NULL;
 	}
 }
 
 //--------------------------------------------------------------
 bool HardwareDevice::isOpen() {
-	return hwdevice_context != NULL;
+	return hwdevice_context_ref != NULL;
 }
 
 //--------------------------------------------------------------
-int ofxFFmpeg::HardwareDevice::getType() const {
-	return device_type;
+int HardwareDevice::getType() const {
+	return hwdevice_context ? hwdevice_context->type : AV_HWDEVICE_TYPE_NONE;
 }
 
 //--------------------------------------------------------------
 std::string HardwareDevice::getName() {
-	return getName(device_type);
+	return getName(getType());
 }
 
 //--------------------------------------------------------------
@@ -78,25 +82,26 @@ int HardwareDevice::getPixelFormat(const AVCodec * codec) {
 
 //--------------------------------------------------------------
 const AVCodecHWConfig * HardwareDevice::getConfig(const AVCodec * codec) const {
+	AVHWDeviceType type = hwdevice_context ? hwdevice_context->type : AV_HWDEVICE_TYPE_NONE;
 	const AVCodecHWConfig *config = NULL;
 	for (int i = 0; ; i++) {
 		config = avcodec_get_hw_config(codec, i);
 		if (config == NULL) break;
-		if (config->device_type == device_type)
+		if (config->device_type == type)
 			return config;
 	}
 	return NULL;
 }
 
 //--------------------------------------------------------------
-AVBufferRef * HardwareDevice::getContext() const {
-	return hwdevice_context;
+AVBufferRef * HardwareDevice::getContextRef() const {
+	return hwdevice_context_ref;
 }
 
 //--------------------------------------------------------------
 std::vector<int> HardwareDevice::getFormats() {
 	std::vector<int> formats;
-	AVHWFramesConstraints * constraints = av_hwdevice_get_hwframe_constraints(hwdevice_context, NULL);
+	AVHWFramesConstraints * constraints = av_hwdevice_get_hwframe_constraints(hwdevice_context_ref, NULL);
 	if (constraints != NULL) {
 		for (int i = 0; constraints->valid_sw_formats[i] != AV_PIX_FMT_NONE; i++) {
 			formats.push_back(constraints->valid_sw_formats[i]);
@@ -137,17 +142,29 @@ void HardwareDevice::free(AVFrame * frame) {
 
 //--------------------------------------------------------------
 std::vector<int> HardwareDevice::getTypes() {
-    std::vector<int> deviceTypes;
+    std::vector<int> types;
 
-    AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;
+    AVHWDeviceType t = AV_HWDEVICE_TYPE_NONE;
     do {
-        type = av_hwdevice_iterate_types(type);
-        if (type != AV_HWDEVICE_TYPE_NONE) {
-			deviceTypes.push_back(type);
+        t = av_hwdevice_iterate_types(t);
+        if (t != AV_HWDEVICE_TYPE_NONE) {
+			types.push_back(t);
         }
-    } while (type != AV_HWDEVICE_TYPE_NONE);
+    } while (t != AV_HWDEVICE_TYPE_NONE);
 
-    return deviceTypes;
+    return types;
+}
+
+//--------------------------------------------------------------
+std::vector<std::string> HardwareDevice::getTypeNames() {
+	std::vector<std::string> names;
+	std::vector<int> types = getTypes();
+
+	for (int t : types) {
+		std::string n = av_hwdevice_get_type_name((AVHWDeviceType)t);
+		names.push_back(n);
+	}
+	return names;
 }
 
 //--------------------------------------------------------------
@@ -165,6 +182,7 @@ int HardwareDevice::getDefaultType() {
 #if defined _WIN32
 	return AV_HWDEVICE_TYPE_DXVA2;
 	//return AV_HWDEVICE_TYPE_D3D11VA;
+	//return AV_HWDEVICE_TYPE_CUDA;
 #elif defined __APPLE__
 	return AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
 #elif defined __linux__
@@ -208,39 +226,3 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
 	return AV_PIX_FMT_NONE;
 }
 
-//--------------------------------------------------------------
-bool HardwareDecoder::open(Reader & reader, HardwareDevice & device) {
-
-	int stream_index = reader.getVideoStreamIndex();
-	if (stream_index < 0)
-		return false;
-
-	AVCodec * codec = reader.getVideoCodec();
-	AVStream * stream = reader.getStream(stream_index);
-
-	if (!Decoder::allocate(codec, stream))
-		return false;
-
-	hw_config = device.getConfig(codec);
-	if (hw_config) {
-		if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
-			codec_context->hw_device_ctx = av_buffer_ref(device.getContext());
-		//if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
-		//	codec_context->get_format = get_format;
-	}
-
-	if (!Decoder::open(codec))
-		return false;
-
-	return true;
-}
-
-//--------------------------------------------------------------
-bool HardwareDecoder::isHardwareFrame(AVFrame * frame) {
-	return hw_config && (frame->format == hw_config->pix_fmt);
-}
-
-//--------------------------------------------------------------
-bool HardwareDecoder::hasHardwareDecoder() {
-	return codec_context && (codec_context->hw_device_ctx != NULL);
-}

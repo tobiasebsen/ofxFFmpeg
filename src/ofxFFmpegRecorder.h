@@ -30,7 +30,7 @@ public:
 
 protected:
 
-	void receive(AVPacket * packet);
+	bool receive(AVPacket * packet);
 
 	int error = 0;
 
