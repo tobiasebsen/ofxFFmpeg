@@ -68,6 +68,7 @@ AVFrame * ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame) {
 	av_frame_get_buffer(dst_frame, 0);
 
 	if (!scale(src_frame, dst_frame)) {
+        av_frame_unref(dst_frame);
 		av_frame_free(&dst_frame);
 		return NULL;
 	}
@@ -164,6 +165,7 @@ void VideoScaler::scaleThread() {
 			if (dst_frame) {
 				receiver->receive(dst_frame, stream_index);
 				av_frame_unref(dst_frame);
+                av_frame_free(&dst_frame);
 			}
 			supplier->free(src_frame);
 		}
