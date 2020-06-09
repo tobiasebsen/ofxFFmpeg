@@ -116,7 +116,7 @@ namespace ofxFFmpeg {
 		}
 
 		T * supply() {
-			T * t = pop();
+			T * t = Queue<T>::pop();
 			return t;
 		}
 
