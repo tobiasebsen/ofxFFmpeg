@@ -19,3 +19,4 @@ struct AVBufferRef;
 struct SwsContext;
 struct SwrContext;
 struct AVCodecHWConfig;
+struct AVHWDeviceContext;

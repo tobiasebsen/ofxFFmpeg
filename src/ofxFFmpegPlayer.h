@@ -61,26 +61,31 @@ public:
 
 protected:
 
-	virtual void receive(AVPacket * packet);
+	virtual bool receive(AVPacket * packet);
 	virtual void notifyEndPacket();
 	virtual void terminatePacketReceiver();
 	virtual void resumePacketReceiver();
 
-	virtual void receive(AVFrame * frame, int stream_index);
+	virtual bool receive(AVFrame * frame, int stream_index);
 	virtual void terminateFrameReceiver();
 	virtual void resumeFrameReceiver();
+
+	void updateFrame(AVFrame * frame);
+	void updateFormat(ofPixelFormat format, int width, int height, int planes = 1);
 
 	string filePath;
 
 	ofxFFmpeg::Reader reader;
 	ofxFFmpeg::Clock clock;
     
-	static ofxFFmpeg::OpenGLDevice videoHardware;
-	ofxFFmpeg::HardwareDecoder video;
-	mutable ofxFFmpeg::OpenGLRenderer opengl;
+	static ofxFFmpeg::HardwareDevice videoHardware;
+	ofxFFmpeg::OpenGLDevice openglDevice;
+	mutable ofxFFmpeg::OpenGLRenderer openglRenderer;
+
+	ofxFFmpeg::VideoDecoder video;
 	ofxFFmpeg::PacketQueue videoPackets;
 	ofxFFmpeg::FrameQueue videoFrames;
-	ofxFFmpeg::FrameQueue videoCache;
+	mutable ofxFFmpeg::FrameQueue videoCache;
 	ofxFFmpeg::VideoScaler scaler;
 	ofxFFmpeg::Metrics transferMetrics;
 
@@ -91,6 +96,7 @@ protected:
 
 	ofSoundStream audioStream;
 
+	bool _isPlaying = false;
 	bool isBuffering = false;
 	bool isLooping = false;
 	bool isResyncingVideo = false;

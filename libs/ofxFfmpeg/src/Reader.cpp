@@ -29,7 +29,7 @@ bool Reader::open(std::string filename) {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::Reader::isOpen() const {
+bool Reader::isOpen() const {
 	return format_context != NULL;
 }
 
@@ -37,6 +37,9 @@ bool ofxFFmpeg::Reader::isOpen() const {
 void Reader::close() {
     stop();
     if (format_context) {
+		for (int i = 0; i < format_context->nb_streams; i++) {
+			avcodec_close(format_context->streams[i]->codec);
+		}
         avformat_close_input(&format_context);
     }
 }
@@ -53,17 +56,6 @@ bool Reader::read(AVPacket * packet) {
 }
 
 //--------------------------------------------------------------
-bool Reader::read(PacketReceiver * receiver) {
-	AVPacket * packet = read();
-	if (packet) {
-		receiver->receive(packet);
-		av_packet_unref(packet);
-		return true;
-	}
-	return false;
-}
-
-//--------------------------------------------------------------
 AVPacket * Reader::read() {
     AVPacket * packet = av_packet_alloc();
     av_init_packet(packet);
@@ -72,6 +64,24 @@ AVPacket * Reader::read() {
         return NULL;
     }
     return packet;
+}
+
+//--------------------------------------------------------------
+void Reader::free(AVPacket * packet) {
+	av_packet_unref(packet);
+	av_packet_free(&packet);
+}
+
+//--------------------------------------------------------------
+bool Reader::read(PacketReceiver * receiver) {
+	AVPacket * packet = read();
+	if (packet) {
+		receiver->receive(packet);
+		av_packet_unref(packet);
+		av_packet_free(&packet);
+		return true;
+	}
+	return false;
 }
 
 //--------------------------------------------------------------
@@ -86,40 +96,6 @@ void Reader::seek(uint64_t pts) {
 }
 
 //--------------------------------------------------------------
-unsigned int Reader::getNumStreams() const {
-    return format_context->nb_streams;
-}
-
-//--------------------------------------------------------------
-AVStream * Reader::getStream(int stream_index) const {
-    return format_context->streams[stream_index];
-}
-
-//--------------------------------------------------------------
-AVCodec * ofxFFmpeg::Reader::getVideoCodec() {
-	AVCodec * codec = NULL;
-	error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
-	return codec;
-}
-
-//--------------------------------------------------------------
-int Reader::getStreamIndex(AVPacket * packet) {
-    return packet->stream_index;
-}
-
-//--------------------------------------------------------------
-int Reader::getVideoStreamIndex() {
-	AVCodec * codec;
-	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0));
-}
-
-//--------------------------------------------------------------
-int Reader::getAudioStreamIndex() {
-	AVCodec * codec;
-	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0));
-}
-
-//--------------------------------------------------------------
 bool Reader::start(PacketReceiver * receiver) {
     if (running)
         return false;
@@ -129,6 +105,7 @@ bool Reader::start(PacketReceiver * receiver) {
 	this->receiver->resumePacketReceiver();
 
 	seek(0);
+	if (thread_obj) delete thread_obj;
     thread_obj = new std::thread(&Reader::readThread, this);
 
     return true;
@@ -136,14 +113,15 @@ bool Reader::start(PacketReceiver * receiver) {
 
 //--------------------------------------------------------------
 void Reader::stop() {
-    if (running && thread_obj) {
-        running = false;
+	if (running) {
+		running = false;
+	}
+	if (thread_obj && thread_obj->joinable() && thread_obj->get_id() != std::this_thread::get_id()) {
 		receiver->terminatePacketReceiver();
-		if (thread_obj->joinable() && std::this_thread::get_id() != thread_obj->get_id())
-	        thread_obj->join();
+		thread_obj->join();
 		delete thread_obj;
 		thread_obj = NULL;
-    }
+	}
 }
 
 //--------------------------------------------------------------
@@ -153,8 +131,10 @@ void Reader::readThread() {
         
         AVPacket * packet = read();
         if (packet) {
-            receiver->receive(packet);
-            av_packet_unref(packet);
+			receiver->receive(packet);
+
+			av_packet_unref(packet);
+			av_packet_free(&packet);
         }
 		else if (error == AVERROR_EOF) {
 			receiver->notifyEndPacket();
@@ -162,9 +142,75 @@ void Reader::readThread() {
 
 		if (seek_pts != -1) {
 			error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
+
+			int64_t ts = 0;
+			AVPacket * packet = read();
+			while (packet && ts < seek_pts) {
+				int i = packet->stream_index;
+				AVStream * stream = format_context->streams[i];
+				ts = av_rescale_q(packet->pts, stream->time_base, { 1, AV_TIME_BASE });
+				if (ts >= seek_pts) {
+					packet->flags |= AV_PKT_FLAG_DISCARD;
+				}
+				receiver->receive(packet);
+				av_packet_unref(packet);
+				av_packet_free(&packet);
+				packet = read();
+			}
 			seek_pts = -1;
 		}
     }
+}
+
+//--------------------------------------------------------------
+unsigned int Reader::getNumStreams() const {
+	return format_context->nb_streams;
+}
+
+//--------------------------------------------------------------
+AVStream * Reader::getStream(int stream_index) const {
+	return format_context->streams[stream_index];
+}
+
+//--------------------------------------------------------------
+AVStream * Reader::getVideoStream() {
+	int stream_index = getVideoStreamIndex();
+	return stream_index >= 0 ? getStream(stream_index) : NULL;
+}
+
+//--------------------------------------------------------------
+AVStream * Reader::getAudioStream() {
+	int stream_index = getAudioStreamIndex();
+	return stream_index >= 0 ? getStream(stream_index) : NULL;
+}
+
+//--------------------------------------------------------------
+AVCodec * Reader::getVideoCodec() {
+	AVCodec * codec = NULL;
+	error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, &codec, 0);
+	return codec;
+}
+
+//--------------------------------------------------------------
+AVCodec * Reader::getAudioCodec() {
+	AVCodec * codec = NULL;
+	error = av_find_best_stream(format_context, AVMEDIA_TYPE_AUDIO, -1, -1, &codec, 0);
+	return codec;
+}
+
+//--------------------------------------------------------------
+int Reader::getStreamIndex(AVPacket * packet) {
+	return packet->stream_index;
+}
+
+//--------------------------------------------------------------
+int Reader::getVideoStreamIndex() {
+	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_VIDEO, -1, -1, NULL, 0));
+}
+
+//--------------------------------------------------------------
+int Reader::getAudioStreamIndex() {
+	return (error = av_find_best_stream(format_context, AVMEDIA_TYPE_AUDIO, -1, -1, NULL, 0));
 }
 
 //--------------------------------------------------------------

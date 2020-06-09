@@ -7,6 +7,8 @@ void ofApp::setup(){
 
     ofSetVerticalSync(false);
 	ofSetFrameRate(0);
+
+	showDebug = false;
 }
 
 //--------------------------------------------------------------
@@ -28,12 +30,17 @@ void ofApp::draw(){
     
     ofDrawBitmapStringHighlight(ofToString(ofGetFrameRate(),1) + " fps", 20, 20);
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
-	//player.drawDebug(20, 60);
+
+	if (showDebug) {
+		player.drawDebug(20, 60);
+	}
 }
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key) {
 	if (key == ' ') player.stop();
+	if (key == 'c') player.close();
+	if (key == 'd') showDebug = !showDebug;
 }
 
 //--------------------------------------------------------------
@@ -45,6 +52,7 @@ void ofApp::mousePressed(int x, int y, int button) {
 void ofApp::dragEvent(ofDragInfo dragInfo) {
 	if (dragInfo.files.size() > 0) {
 		player.load(dragInfo.files[0]);
+		//player.setLoopState(OF_LOOP_NONE);
 		player.play();
 		//player.setPaused(true);
 	}

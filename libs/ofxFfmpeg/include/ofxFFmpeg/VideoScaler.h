@@ -20,7 +20,7 @@ namespace ofxFFmpeg {
 		bool allocate(int width, int height, int src_fmt, int dst_fmt);
         bool allocate(VideoDecoder & decoder, int dst_fmt);
 		bool allocate(VideoEncoder & encoder);
-		bool isAllocated();
+		bool isAllocated() const;
 		void free();
 
 		bool scale(AVFrame * src_frame, AVFrame * dst_frame);
@@ -37,6 +37,9 @@ namespace ofxFFmpeg {
         bool start(FrameSupplier * supplier, FrameReceiver * receiver, int stream_index);
         void stop();
         void scaleThread();
+		bool isRunning() const {
+			return running && thread_obj;
+		}
 
 		static bool supportsInput(int src_format);
 		static bool supportsOutput(int dst_format);

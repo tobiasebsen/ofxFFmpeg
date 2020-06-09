@@ -29,19 +29,9 @@ namespace ofxFFmpeg {
 		bool read(AVPacket * packet);
 		bool read(PacketReceiver * receiver);
 		AVPacket * read();
-        int getStreamIndex(AVPacket * packet);
+		void free(AVPacket * packet);
 
         void seek(uint64_t pts);
-
-		/////////////////////////////////////////////////
-        // STREAMS
-
-        unsigned int getNumStreams() const;
-        int getVideoStreamIndex();
-        int getAudioStreamIndex();
-        AVStream * getStream(int stream_index) const;
-		AVCodec * getVideoCodec();
-		AVCodec * getAudioCodec();
 
 		/////////////////////////////////////////////////
         // THREADING
@@ -50,8 +40,22 @@ namespace ofxFFmpeg {
         void stop();
 		void readThread();
         bool isRunning() const {
-            return running;
+            return running && thread_obj;
         }
+
+		/////////////////////////////////////////////////
+		// STREAMS
+
+		unsigned int getNumStreams() const;
+		int getVideoStreamIndex();
+		int getAudioStreamIndex();
+		int getStreamIndex(AVPacket * packet);
+		AVStream * getStream(int stream_index) const;
+		AVStream * getVideoStream();
+		AVStream * getAudioStream();
+
+		AVCodec * getVideoCodec();
+		AVCodec * getAudioCodec();
 
 		/////////////////////////////////////////////////
 		// ACCESSORS

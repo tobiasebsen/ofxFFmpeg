@@ -13,7 +13,7 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
-static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
+/*static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelFormat *pix_fmts) {
 
 	for (auto p = pix_fmts; *p != AV_PIX_FMT_NONE; p++) {
 		av_log(NULL, AV_LOG_INFO, "%d\n", *p);
@@ -21,10 +21,13 @@ static enum AVPixelFormat get_format(AVCodecContext *ctx, const enum AVPixelForm
 			return *p;
 	}
 	return AV_PIX_FMT_NONE;
-}
+}*/
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::Decoder::allocate(AVCodec * codec, AVStream * stream) {
+bool Decoder::allocate(AVCodec * codec, AVStream * stream) {
+
+	if (!codec || !stream)
+		return false;
 
 	this->codec = codec;
 	this->stream = stream;
@@ -45,7 +48,10 @@ bool ofxFFmpeg::Decoder::allocate(AVCodec * codec, AVStream * stream) {
 bool Decoder::open(AVStream * stream) {
 
 	close();
-   
+
+	if (!stream)
+		return false;
+  
     codec = avcodec_find_decoder(stream->codecpar->codec_id);
     if (codec == NULL) {
         av_log(NULL, AV_LOG_ERROR, "Codec not found\n");
@@ -80,24 +86,30 @@ bool Decoder::open(AVCodec * codec) {
 void Decoder::close() {
     stop();
     if (codec_context) {
+
+		if (codec_context->hw_frames_ctx) {
+			av_buffer_unref(&codec_context->hw_frames_ctx);
+		}
 		if (codec_context->hw_device_ctx) {
 			av_buffer_unref(&codec_context->hw_device_ctx);
 		}
-        avcodec_close(codec_context);
+		//avcodec_close(codec_context);
+		avcodec_free_context(&codec_context);
         codec_context = NULL;
     }
+	codec = NULL;
 	stream = NULL;
 	stream_index = -1;
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::Decoder::isOpen() const {
+bool Decoder::isOpen() const {
 	return codec_context != NULL;
 }
 
 //--------------------------------------------------------------
 bool Decoder::match(AVPacket * packet) {
-    return packet->stream_index == stream_index;
+    return packet && packet->stream_index == stream_index;
 }
 
 //--------------------------------------------------------------
@@ -161,7 +173,7 @@ bool Decoder::flush(FrameReceiver * receiver) {
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::Decoder::flush() {
+void Decoder::flush() {
 	if (isOpen()) {
 		avcodec_flush_buffers(codec_context);
 	}
@@ -185,11 +197,14 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 
 //--------------------------------------------------------------
 void Decoder::stop() {
-    if (running && thread_obj) {
-        running = false;
+	if (running) {
+		running = false;
+	}
+	if (thread_obj) {
 		receiver->terminateFrameReceiver();
 		supplier->terminatePacketSupplier();
-        if (thread_obj->joinable()) thread_obj->join();
+		if (thread_obj->joinable())
+			thread_obj->join();
 		delete thread_obj;
 		thread_obj = NULL;
     }
@@ -298,19 +313,20 @@ uint8_t * Decoder::getFrameData(AVFrame * frame, int plane) {
 }
 
 //--------------------------------------------------------------
-const Metrics & ofxFFmpeg::Decoder::getMetrics() const {
+bool Decoder::hasHardwareDecoder() {
+	return codec_context && (codec_context->hw_device_ctx != NULL);
+}
+
+//--------------------------------------------------------------
+const Metrics & Decoder::getMetrics() const {
 	return metrics;
 }
 
 //--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader) {
 	
-	int stream_index = reader.getVideoStreamIndex();
-	if (stream_index < 0)
-		return false;
-
 	AVCodec * codec = reader.getVideoCodec();
-	AVStream * stream = reader.getStream(stream_index);
+	AVStream * stream = reader.getVideoStream();
 
 	if (!Decoder::allocate(codec, stream))
 		return false;
@@ -322,24 +338,27 @@ bool VideoDecoder::open(Reader & reader) {
 }
 
 //--------------------------------------------------------------
-bool VideoDecoder::decode(AVPacket * packet, FrameReceiver * receiver) {
-	std::lock_guard<std::mutex> lock(mutex);
+bool VideoDecoder::open(Reader & reader, HardwareDevice & hardware) {
 
-	if (!isOpen())
+	AVCodec * codec = reader.getVideoCodec();
+	AVStream * stream = reader.getVideoStream();
+
+	if (!Decoder::allocate(codec, stream))
 		return false;
 
-	metrics.begin();
-
-	if (!send(packet))
-		return false;
-
-	AVFrame * frame = NULL;
-	while ((frame = receive()) != NULL) {
-
-		metrics.end();
-		receiver->receive(frame, stream_index);
-		free(frame);
+	if (hardware.isOpen()) {
+		hw_config = hardware.getConfig(codec);
+		if (hw_config) {
+			if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
+				codec_context->hw_device_ctx = av_buffer_ref(hardware.getContextRef());
+			//if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
+			//	codec_context->get_format = get_format;
+		}
 	}
+
+	if (!Decoder::open(codec))
+		return false;
+
 	return true;
 }
 
@@ -349,8 +368,18 @@ int VideoDecoder::getWidth() const {
 }
 
 //--------------------------------------------------------------
+int VideoDecoder::getWidth(AVFrame * frame) const {
+	return frame->width;
+}
+
+//--------------------------------------------------------------
 int VideoDecoder::getHeight() const {
 	return codec_context ? codec_context->height : 0;
+}
+
+//--------------------------------------------------------------
+int VideoDecoder::getHeight(AVFrame * frame) const {
+	return frame->height;
 }
 
 //--------------------------------------------------------------
@@ -360,7 +389,7 @@ int VideoDecoder::getPixelFormat() const {
 }
 
 //--------------------------------------------------------------
-int ofxFFmpeg::VideoDecoder::getPixelFormat(AVFrame * frame) const {
+int VideoDecoder::getPixelFormat(AVFrame * frame) const {
 	return frame->format;
 }
 
@@ -370,13 +399,18 @@ int VideoDecoder::getNumPlanes() const {
 }
 
 //--------------------------------------------------------------
-int ofxFFmpeg::VideoDecoder::getLineBytes(AVFrame * frame, int plane) const {
+int VideoDecoder::getLineBytes(AVFrame * frame, int plane) const {
 	return frame->linesize[plane];
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::VideoDecoder::isKeyFrame(AVPacket * packet) {
+bool VideoDecoder::isKeyFrame(AVPacket * packet) {
 	return packet->flags & AV_PKT_FLAG_KEY;
+}
+
+//--------------------------------------------------------------
+bool VideoDecoder::isHardwareFrame(AVFrame * frame) {
+	return hw_config && (hw_config->pix_fmt == frame->format);
 }
 
 //--------------------------------------------------------------
@@ -386,11 +420,8 @@ double VideoDecoder::getFrameRate() {
 
 //--------------------------------------------------------------
 bool AudioDecoder::open(Reader & reader) {
-	int stream_index = reader.getAudioStreamIndex();
-	if (stream_index < 0)
-		return false;
-	AVStream * stream = reader.getStream(stream_index);
-	return Decoder::open(stream);
+	AVStream * stream = reader.getAudioStream();
+	return stream && Decoder::open(stream);
 }
 
 //--------------------------------------------------------------

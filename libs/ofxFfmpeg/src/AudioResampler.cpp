@@ -38,12 +38,12 @@ bool AudioResampler::allocate(AudioDecoder & decoder, int out_sample_rate, int o
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::AudioResampler::isAllocated() {
+bool AudioResampler::isAllocated() const {
 	return swr_context != NULL;
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::AudioResampler::free() {
+void AudioResampler::free() {
 	if (swr_context) {
 		swr_free(&swr_context);
 	}

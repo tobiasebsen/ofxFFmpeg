@@ -10,7 +10,7 @@ namespace ofxFFmpeg {
     public:
         bool allocate(int in_sample_rate, uint64_t in_ch_layout, int in_sample_fmt, int out_sample_rate, uint64_t out_ch_layout, int out_sample_fmt);
         bool allocate(AudioDecoder & decoder, int sample_rate, int channels, int sample_fmt);
-		bool isAllocated();
+		bool isAllocated() const;
 		void free();
 
         template<typename T>

@@ -7,6 +7,7 @@
 #include "Flow.h"
 #include "Reader.h"
 #include "Queue.h"
+#include "Hardware.h"
 #include "Metrics.h"
 
 namespace ofxFFmpeg {
@@ -26,7 +27,7 @@ namespace ofxFFmpeg {
 
         bool match(AVPacket * packet);
         
-        virtual bool decode(AVPacket * packet, FrameReceiver * receiver);
+        bool decode(AVPacket * packet, FrameReceiver * receiver);
 		bool flush(FrameReceiver * receiver);
 		void flush();
 
@@ -37,7 +38,7 @@ namespace ofxFFmpeg {
         void stop();
 		void decodeThread();
         bool isRunning() const {
-            return running;
+            return running && thread_obj;
         }
         
         /////////////////////////////////////////////////
@@ -62,6 +63,8 @@ namespace ofxFFmpeg {
 		int getFrameNum(AVFrame * frame) const;
 
 		uint8_t * getFrameData(AVFrame * frame, int plane = 0);
+
+		bool hasHardwareDecoder();
 
 		const Metrics & getMetrics() const;
 
@@ -95,11 +98,12 @@ namespace ofxFFmpeg {
     
     class VideoDecoder : public Decoder {
     public:
-		//bool open(Reader & reader);
 		bool open(Reader & reader);
-		bool decode(AVPacket * packet, FrameReceiver * receiver);
+		bool open(Reader & reader, HardwareDevice & hardware);
         int getWidth() const;
+		int getWidth(AVFrame * frame) const;
         int getHeight() const;
+		int getHeight(AVFrame * frame) const;
         int getPixelFormat() const;
 		int getPixelFormat(AVFrame * frame) const;
 		int getNumPlanes() const;
@@ -107,6 +111,10 @@ namespace ofxFFmpeg {
 		double getFrameRate();
 
 		bool isKeyFrame(AVPacket * packet);
+		bool isHardwareFrame(AVFrame * frame);
+
+	protected:
+		const AVCodecHWConfig * hw_config = NULL;
     };
     
 	/////////////////////////////////////////////////////

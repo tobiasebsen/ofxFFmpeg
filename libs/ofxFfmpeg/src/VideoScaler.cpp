@@ -38,7 +38,7 @@ bool VideoScaler::allocate(VideoEncoder & encoder) {
 }
 
 //--------------------------------------------------------------
-bool VideoScaler::isAllocated() {
+bool VideoScaler::isAllocated() const {
 	return sws_context != NULL;
 }
 
