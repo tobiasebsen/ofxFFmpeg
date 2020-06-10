@@ -48,6 +48,9 @@ bool ofxFFmpegPlayer::load(string filename) {
 		ofLogVerbose() << "  " << num_hw << " hardware decoder(s) found";
 		ofLogVerbose() << "  " << video.getLongName();
 		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
+
+		ofxFFmpeg::PixelFormat format(video.getPixelFormat());
+		ofLogVerbose() << "  " << format.getName();
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
@@ -76,18 +79,13 @@ bool ofxFFmpegPlayer::load(string filename) {
 		}
 		else {
 
-			ofPixelFormat format = getPixelFormat(video.getPixelFormat());
-			int num_planes = video.getNumPlanes();
+			int format = video.getPixelFormat();
 
 			if (video.hasHardwareDecoder()) {
-				format = OF_PIXELS_NV12;
-				num_planes = 2;
+				format = FFMPEG_FORMAT_NV12;
 			}
 
-			pixelPlanes.clear();
-			texturePlanes.clear();
-
-			updateFormat(format, video.getWidth(), video.getHeight(), num_planes);
+			updateFormat(format, video.getWidth(), video.getHeight());
 		}
     }
     if (audio.open(reader)) {
@@ -190,7 +188,7 @@ bool ofxFFmpegPlayer::receive(AVPacket * packet) {
 		if (video.isRunning()) {
 
 			// Increment video packet queue
-			if (videoPackets.size() == videoPackets.capacity() && audio.isRunning() && audioPackets.size() == 0) {
+			if (videoPackets.size() == videoPackets.capacity() && audio.isRunning() && audioPackets.size() == 0 && audioBuffer.getAvailableRead() == 0) {
 				videoPackets.resize(videoPackets.capacity() + 1);
 			}
 
@@ -407,38 +405,33 @@ void ofxFFmpegPlayer::update() {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
 
-	int num_planes = video.getNumPlanes();
-	if (num_planes == 0) return;
-
-	if (pixelPlanes.size() != num_planes || texturePlanes.size() != num_planes) {
-		pixelPlanes.resize(num_planes);
-		texturePlanes.resize(num_planes);
-	}
-
-	int pix_fmt = video.getPixelFormat(frame);
-	ofPixelFormat format = getPixelFormat(pix_fmt);
-	if (format != pixelPlanes[0].getPixelFormat() || video.getWidth(frame) != pixelPlanes[0].getWidth() || video.getHeight(frame) != pixelPlanes[0].getHeight()) {
-		updateFormat(format, video.getWidth(frame), video.getHeight(frame), num_planes);
+	int av_format = video.getPixelFormat(frame);
+	ofPixelFormat of_format = getPixelFormat(av_format);
+	if (pixelPlanes.size() == 0 || of_format != pixelPlanes[0].getPixelFormat() || video.getWidth(frame) != pixelPlanes[0].getWidth() || video.getHeight(frame) != pixelPlanes[0].getHeight()) {
+		updateFormat(av_format, video.getWidth(frame), video.getHeight(frame));
 	}
 
 	for (size_t i = 0; i < pixelPlanes.size(); i++) {
-		pixelPlanes[i].setFromAlignedPixels(video.getFrameData(frame, i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), video.getLineBytes(frame, i));
+		pixelPlanes[i].setFromAlignedPixels(video.getFrameData(frame, i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), video.getLineSize(frame, i) * pixelPlanes[i].getBytesPerChannel());
 		texturePlanes[i].loadData(pixelPlanes[i]);
 	}
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, int planes) {
+void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 
-	pixelPlanes.resize(planes);
-	texturePlanes.resize(planes);
+	pixelPlanes.clear();
+	texturePlanes.clear();
 
-	if (format == OF_PIXELS_UNKNOWN) {
-		scaler.allocate(width, height, video.getPixelFormat(), FFMPEG_FORMAT_RGB24);
-		pixelPlanes[0].allocate(width, height, OF_PIXELS_RGB);
+	if (av_format == FFMPEG_FORMAT_GRAY8 || av_format == FFMPEG_FORMAT_RGB24 || av_format == FFMPEG_FORMAT_RGBA) {
+		pixelPlanes.resize(1);
+		texturePlanes.resize(1);
+		pixelPlanes[0].allocate(width, height, getPixelFormat(av_format));
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
-	else if (format == OF_PIXELS_NV12) {
+	else if (av_format == FFMPEG_FORMAT_NV12) {
+		pixelPlanes.resize(2);
+		texturePlanes.resize(2);
 		pixelPlanes[0].allocate(width, height, OF_PIXELS_NV12);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 		pixelPlanes[1].allocate(width / 2, height / 2, OF_PIXELS_RG);
@@ -449,7 +442,16 @@ void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, 
 		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_A, GL_ONE);
 	}
 	else {
-		pixelPlanes[0].allocate(width, height, format);
+		ofxFFmpeg::PixelFormat format(av_format);
+		int dst_fmt = format.hasAlpha() ? FFMPEG_FORMAT_RGBA : FFMPEG_FORMAT_RGB24;
+
+		if (!scaler.allocate(width, height, av_format, dst_fmt)) {
+			ofLogError() << "Scaler cannot convert specified format";
+			return;
+		}
+		pixelPlanes.resize(1);
+		texturePlanes.resize(1);
+		pixelPlanes[0].allocate(width, height, getPixelFormat(dst_fmt));
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
 }
@@ -457,12 +459,15 @@ void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
 	if (texturePlanes.size() > 0 && texturePlanes[0].isAllocated()) {
-		openglRenderer.lock();
-		texturePlanes[0].draw(x, y, w, h);
-		openglRenderer.unlock();
+		if (openglRenderer.isOpen()) {
+			openglRenderer.lock();
+			texturePlanes[0].draw(x, y, w, h);
+			openglRenderer.unlock();
+		}
+		else {
+			ofGetCurrentRenderer()->draw(*this, x, y, w, h);
+		}
 	}
-
-	//ofGetCurrentRenderer()->draw(*this, x, y, w, h);
 }
 
 //--------------------------------------------------------------
@@ -575,8 +580,8 @@ ofPixelFormat ofxFFmpegPlayer::getPixelFormat() const {
 }
 
 //--------------------------------------------------------------
-ofPixelFormat ofxFFmpegPlayer::getPixelFormat(int pix_fmt) const {
-	switch (pix_fmt) {
+ofPixelFormat ofxFFmpegPlayer::getPixelFormat(int av_format) const {
+	switch (av_format) {
 	case FFMPEG_FORMAT_GRAY8:
 		return OF_PIXELS_GRAY;
 	case FFMPEG_FORMAT_RGB24:

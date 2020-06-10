@@ -71,7 +71,7 @@ protected:
 	virtual void resumeFrameReceiver();
 
 	void updateFrame(AVFrame * frame);
-	void updateFormat(ofPixelFormat format, int width, int height, int planes = 1);
+	void updateFormat(int av_format, int width, int height);
 
 	string filePath;
 

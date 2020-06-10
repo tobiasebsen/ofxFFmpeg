@@ -337,6 +337,38 @@ bool VideoDecoder::open(Reader & reader) {
 	return true;
 }
 
+#define 	FFALIGN(x, a)   (((x)+(a)-1)&~((a)-1))
+
+//--------------------------------------------------------------
+static enum AVPixelFormat get_format(struct AVCodecContext *s, const enum AVPixelFormat * fmt) {
+	s->hw_frames_ctx = av_hwframe_ctx_alloc(s->hw_device_ctx);
+	AVHWDeviceContext * device_ctx = (AVHWDeviceContext*)s->hw_device_ctx->data;
+	AVHWFramesContext * frames_ctx = (AVHWFramesContext*)s->hw_frames_ctx->data;
+	
+	frames_ctx->sw_format = AV_PIX_FMT_NV12; //s->sw_pix_fmt;
+	frames_ctx->width = FFALIGN(s->coded_width, 32);
+	frames_ctx->height = FFALIGN(s->coded_height, 32);
+	frames_ctx->initial_pool_size = 4;
+
+	if (device_ctx->type == AV_HWDEVICE_TYPE_DXVA2) {
+
+		while (fmt[0] != AV_PIX_FMT_NONE) {
+			fmt++;
+		}
+
+		frames_ctx->format = AV_PIX_FMT_DXVA2_VLD;
+		int ret = av_hwframe_ctx_init(s->hw_frames_ctx);
+		if (ret < 0) {
+			char buf[256];
+			av_strerror(ret, buf, sizeof(buf));
+			av_log(NULL, AV_LOG_ERROR, buf);
+		}
+		return AV_PIX_FMT_DXVA2_VLD;
+	}
+
+	return AV_PIX_FMT_NONE;
+}
+
 //--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader, HardwareDevice & hardware) {
 
@@ -351,8 +383,8 @@ bool VideoDecoder::open(Reader & reader, HardwareDevice & hardware) {
 		if (hw_config) {
 			if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX)
 				codec_context->hw_device_ctx = av_buffer_ref(hardware.getContextRef());
-			//if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
-			//	codec_context->get_format = get_format;
+			/*if (hw_config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX)
+				codec_context->get_format = get_format;*/
 		}
 	}
 
@@ -399,7 +431,7 @@ int VideoDecoder::getNumPlanes() const {
 }
 
 //--------------------------------------------------------------
-int VideoDecoder::getLineBytes(AVFrame * frame, int plane) const {
+int VideoDecoder::getLineSize(AVFrame * frame, int plane) const {
 	return frame->linesize[plane];
 }
 
@@ -416,6 +448,28 @@ bool VideoDecoder::isHardwareFrame(AVFrame * frame) {
 //--------------------------------------------------------------
 double VideoDecoder::getFrameRate() {
 	return av_q2d(stream->avg_frame_rate);
+}
+
+//--------------------------------------------------------------
+std::string PixelFormat::getName() {
+	return av_get_pix_fmt_name((AVPixelFormat)format);
+}
+
+//--------------------------------------------------------------
+int PixelFormat::getBitsPerPixel() {
+	if (!desc) desc = av_pix_fmt_desc_get((AVPixelFormat)format);
+	return av_get_bits_per_pixel(desc);
+}
+
+//--------------------------------------------------------------
+int PixelFormat::getNumPlanes() {
+	return av_pix_fmt_count_planes((AVPixelFormat)format);
+}
+
+//--------------------------------------------------------------
+bool PixelFormat::hasAlpha() {
+	if (!desc) desc = av_pix_fmt_desc_get((AVPixelFormat)format);
+	return desc->flags & AV_PIX_FMT_FLAG_ALPHA;
 }
 
 //--------------------------------------------------------------
