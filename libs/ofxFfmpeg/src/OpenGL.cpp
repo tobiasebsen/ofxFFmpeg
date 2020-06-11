@@ -290,8 +290,10 @@ void OpenGLRenderer::render(AVFrame * frame) {
 		if (frame->format == AV_PIX_FMT_DXVA2_VLD) {
 			IDirect3DSurface9 * surface = (IDirect3DSurface9*)frame->data[3];
 			HRESULT hr;
+			RECT srcRect = { 0, 0, width, height };
+			RECT dstRect = { 0, 0, width, height };
 			hr = device->pDevice->BeginScene();
-			hr = device->pDevice->StretchRect(surface, NULL, renderer->renderTarget, NULL, D3DTEXF_NONE);
+			hr = device->pDevice->StretchRect(surface, &srcRect, renderer->renderTarget, &dstRect, D3DTEXF_NONE);
 			hr = device->pDevice->EndScene();
 		}
 	}

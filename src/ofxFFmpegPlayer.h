@@ -59,6 +59,8 @@ public:
 
 	void audioOut(ofSoundBuffer & buffer);
 
+	static bool openHardware(int device_type);
+
 protected:
 
 	virtual bool receive(AVPacket * packet);
@@ -71,6 +73,7 @@ protected:
 	virtual void resumeFrameReceiver();
 
 	void updateFrame(AVFrame * frame);
+	void updateTextures(AVFrame * frame);
 	void updateFormat(int av_format, int width, int height);
 
 	string filePath;
@@ -79,7 +82,7 @@ protected:
 	ofxFFmpeg::Clock clock;
     
 	static ofxFFmpeg::HardwareDevice videoHardware;
-	ofxFFmpeg::OpenGLDevice openglDevice;
+	static ofxFFmpeg::OpenGLDevice openglDevice;
 	mutable ofxFFmpeg::OpenGLRenderer openglRenderer;
 
 	ofxFFmpeg::VideoDecoder video;
@@ -88,6 +91,7 @@ protected:
 	mutable ofxFFmpeg::FrameQueue videoCache;
 	ofxFFmpeg::VideoScaler scaler;
 	ofxFFmpeg::Metrics transferMetrics;
+	ofxFFmpeg::Metrics uploadMetrics;
 
     ofxFFmpeg::AudioDecoder audio;
 	ofxFFmpeg::PacketQueue audioPackets;
@@ -99,9 +103,11 @@ protected:
 	bool _isPlaying = false;
 	bool isBuffering = false;
 	bool isLooping = false;
+	bool isFlushing = false;
 	bool isResyncingVideo = false;
 	bool frameNew = false;
 	bool isMovieDone = false;
+	int frameNum = 0;
 
 	double videoTimeSeconds;
 	double audioTimeSeconds;

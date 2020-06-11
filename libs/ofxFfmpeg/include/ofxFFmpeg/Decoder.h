@@ -83,6 +83,7 @@ namespace ofxFFmpeg {
 		std::thread * thread_obj = NULL;
 		std::mutex mutex;
 		bool running = false;
+		bool flushing = false;
 		PacketSupplier * supplier = NULL;
 		FrameReceiver * receiver = NULL;
 

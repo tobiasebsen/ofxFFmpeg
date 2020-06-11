@@ -3,6 +3,7 @@
 using namespace ofxFFmpeg;
 
 ofxFFmpeg::HardwareDevice ofxFFmpegPlayer::videoHardware;
+ofxFFmpeg::OpenGLDevice ofxFFmpegPlayer::openglDevice;
 
 //--------------------------------------------------------------
 ofxFFmpegPlayer::ofxFFmpegPlayer() {
@@ -22,6 +23,11 @@ bool ofxFFmpegPlayer::load(string filename) {
 		return false;
 	}
 
+	if (!videoHardware.isOpen()) {
+		openHardware(HardwareDevice::getDefaultType());
+	}
+
+	frameNum = 0;
 	videoTimeSeconds = 0;
 	audioTimeSeconds = 0;
 	last_frame_pts = 0;
@@ -31,16 +37,6 @@ bool ofxFFmpegPlayer::load(string filename) {
 	ofLogVerbose() << reader.getDuration() << " seconds";
     ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
     ofLogVerbose() << reader.getNumStreams() << " stream(s)";
-
-	ofLogVerbose() << "== HARDWARE ACCELERATION ==";
-
-	if (videoHardware.isOpen() || videoHardware.open()) {
-		ofLogVerbose() << videoHardware.getName();
-		vector<int> formats = videoHardware.getFormats();
-		if (openglDevice.isOpen() || openglDevice.open(videoHardware)) {
-			ofLogVerbose() << "OpenGL compatible";
-		}
-	}
 
 	if (video.open(reader, videoHardware)) {
 		ofLogVerbose() << "== VIDEO STREAM ==";
@@ -136,7 +132,9 @@ void ofxFFmpegPlayer::close() {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::play() {
+
 	if (reader.isOpen()) {
+
 		isBuffering = true;
 		isMovieDone = false;
 
@@ -149,6 +147,9 @@ void ofxFFmpegPlayer::play() {
 		}
 		audio.start(&audioPackets, this);
 		reader.start(this);
+		frameNum = 0;
+		videoTimeSeconds = 0;
+		audioTimeSeconds = 0;
 
 		_isPlaying = true;
 	}
@@ -162,7 +163,6 @@ void ofxFFmpegPlayer::stop() {
 	video.stop();
 	videoPackets.flush();
 	video.flush();
-
 
 	videoPackets.resize(4);
 	videoFrames.flush();
@@ -189,7 +189,9 @@ bool ofxFFmpegPlayer::receive(AVPacket * packet) {
 
 			// Increment video packet queue
 			if (videoPackets.size() == videoPackets.capacity() && audio.isRunning() && audioPackets.size() == 0 && audioBuffer.getAvailableRead() == 0) {
-				videoPackets.resize(videoPackets.capacity() + 1);
+				if (videoPackets.size() < 32) {
+					videoPackets.resize(videoPackets.capacity() + 1);
+				}
 			}
 
 			return videoPackets.receive(packet);
@@ -227,17 +229,7 @@ void ofxFFmpegPlayer::notifyEndPacket() {
 	else { // loopState == OF_LOOP_NONE
 
 		reader.stop();
-		video.stop();
-		videoPackets.flush(this);
-		video.flush(this);
-
-		videoPackets.resize(4);
-
-		scaler.stop();
-
-		audio.stop();
-		audioPackets.flush(this);
-		audio.flush();
+		isFlushing = true;
 	}
 }
 
@@ -314,11 +306,11 @@ bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 		}
 	}
 
-	if (isBuffering) {
+	/*if (isBuffering) {
 		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize())) {
 			isBuffering = false;
 		}
-	}
+	}*/
 
 	return ret;
 }
@@ -330,46 +322,33 @@ void ofxFFmpegPlayer::update() {
 	int64_t frame_pts = video.rescaleTimeInv(pts);
 	
 	if (isBuffering) {
-		if ((!video.isOpen() || videoCache.size() > 0) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize())) {
+		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize() * 2)) {
 			isBuffering = false;
+		}
+	}
+
+	if (isFlushing) {
+		if (!reader.isRunning() && videoCache.size() == 0) {
+			video.flush();
+			isFlushing = false;
 		}
 	}
 
 	if (video.isOpen() && isPlaying() && !isBuffering) {
 
 		AVFrame * frame = videoCache.supply(frame_pts);
+		updateFrame(frame);
 
-		if (frame) {
-
-			if (isResyncingVideo)
-				isResyncingVideo = false;
-
-			if (openglRenderer.isOpen() && video.isHardwareFrame(frame)) {
-				openglRenderer.render(frame);
-			}
-			else {
-				if (video.isHardwareFrame(frame)) {
-					transferMetrics.begin();
-					AVFrame * sw_frame = HardwareDevice::transfer(frame);
-					transferMetrics.end();
-					updateFrame(sw_frame);
-					HardwareDevice::free(sw_frame);
-				}
-				else {
-					updateFrame(frame);
-				}
-			}
-
-			frameNew = true;
+		if (isLooping) {
+			videoCache.flush(last_frame_pts, frame_pts);
 		}
 		else {
-			frameNew = false;
+			videoCache.flush(0, frame_pts);
 		}
 
-		size_t n_flush = videoCache.flush(last_frame_pts, frame_pts);
-		if (n_flush > 0) {
+		/*if (n_flush > 0) {
 			ofLog() << "Flushed: " << n_flush;
-		}
+		}*/
 
 		if (frame) {
 			last_frame_pts = frame_pts;
@@ -382,21 +361,22 @@ void ofxFFmpegPlayer::update() {
 	if (isPlaying() && !isPaused() && !isBuffering) {
 		double dt = ofGetLastFrameTime();
 
-		if (!reader.isRunning() && videoCache.size() == 0 && audioBuffer.getAvailableRead() == 0)
-			_isPlaying = false;
-		else
-			videoTimeSeconds += dt;
+		videoTimeSeconds += dt;
 
 		// TIME END
-		if (videoTimeSeconds >= reader.getDuration()) {
+		if (videoTimeSeconds >= reader.getDuration() && _isPlaying) {
+
 			if (loopState == OF_LOOP_NORMAL) {
 				videoTimeSeconds -= reader.getDuration();
+				audioTimeSeconds -= reader.getDuration();
 				isLooping = false;
 			}
 			if (loopState == OF_LOOP_NONE) {
 				stop();
 				_isPlaying = false;
 				isMovieDone = true;
+				videoTimeSeconds = reader.getDuration();
+				audioTimeSeconds = reader.getDuration();
 			}
 		}
 	}
@@ -404,6 +384,40 @@ void ofxFFmpegPlayer::update() {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
+
+	frameNew = frame != NULL;
+
+	if (!frame)
+		return;
+
+	if (openglRenderer.isOpen() && video.isHardwareFrame(frame)) {
+		openglRenderer.render(frame);
+	}
+	else {
+		if (video.isHardwareFrame(frame)) {
+
+			transferMetrics.begin();
+			AVFrame * sw_frame = HardwareDevice::transfer(frame);
+			transferMetrics.end();
+
+			uploadMetrics.begin();
+			updateTextures(sw_frame);
+			uploadMetrics.end();
+
+			HardwareDevice::free(sw_frame);
+		}
+		else {
+			uploadMetrics.begin();
+			updateTextures(frame);
+			uploadMetrics.end();
+		}
+	}
+
+	frameNum = video.getFrameNum(frame);
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::updateTextures(AVFrame * frame) {
 
 	int av_format = video.getPixelFormat(frame);
 	ofPixelFormat of_format = getPixelFormat(av_format);
@@ -482,15 +496,19 @@ void ofxFFmpegPlayer::drawDebug(float x, float y) const {
 	ofDrawBitmapStringHighlight("Video:     " + ofToString(video.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 20);
 	ofDrawBitmapStringHighlight("Scaler:    " + ofToString(scaler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 40);
 	ofDrawBitmapStringHighlight("Transfer:  " + ofToString(transferMetrics.getPeriodFiltered(), 1) + " us", x, y + 60);
-	ofDrawBitmapStringHighlight("Audio:     " + ofToString(audio.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 80);
-	ofDrawBitmapStringHighlight("Resampler: " + ofToString(resampler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 100);
+	ofDrawBitmapStringHighlight("Upload:    " + ofToString(uploadMetrics.getPeriodFiltered(), 1) + " us", x, y + 80);
+
+	//ofDrawBitmapStringHighlight("Audio:     " + ofToString(audio.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 80);
+	//ofDrawBitmapStringHighlight("Resampler: " + ofToString(resampler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 100);
 
 	ofDrawBitmapStringHighlight(ofToString(reader.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y);
 	ofDrawBitmapStringHighlight(ofToString(video.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 20);
 	ofDrawBitmapStringHighlight(ofToString(scaler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 40);
 	ofDrawBitmapStringHighlight(ofToString(transferMetrics.getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 60);
-	ofDrawBitmapStringHighlight(ofToString(audio.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
-	ofDrawBitmapStringHighlight(ofToString(resampler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 100);
+	ofDrawBitmapStringHighlight(ofToString(uploadMetrics.getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
+	
+	//ofDrawBitmapStringHighlight(ofToString(audio.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
+	//ofDrawBitmapStringHighlight(ofToString(resampler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 100);
 
 	y -= 15;
 
@@ -510,6 +528,7 @@ void ofxFFmpegPlayer::drawDebug(float x, float y) const {
 
 	ofDrawRectangle(x + 240, y + 120, videoPackets.size()*100.f/videoPackets.capacity(), 15);
 	ofDrawRectangle(x + 240, y + 180, audioPackets.size()*100.f / audioPackets.capacity(), 15);
+	ofDrawRectangle(x + 240, y + 200, audioBuffer.getAvailableRead()*100.f / audioBuffer.size(), 15);
 
 	ofSetColor(reader.isRunning() ? ofColor::green : reader.isOpen() ? ofColor::yellow : ofColor::red);
 	ofDrawCircle(x + 360, y + 5, 5);
@@ -603,7 +622,7 @@ float ofxFFmpegPlayer::getPosition() const {
 
 //--------------------------------------------------------------
 int ofxFFmpegPlayer::getCurrentFrame() const {
-	return 0;// video.getFrameNum(lastUpdatePts);
+	return frameNum;
 }
 
 //--------------------------------------------------------------
@@ -623,6 +642,15 @@ int ofxFFmpegPlayer::getTotalNumFrames() const {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::nextFrame() {
+	AVFrame * frame = videoCache.peek();
+	if (frame) {
+		videoTimeSeconds = video.rescaleTime(frame) * reader.getTimeBase();
+		audioTimeSeconds = videoTimeSeconds;
+		audioPackets.flush();
+	}
+	else {
+		while (0);
+	}
 }
 
 //--------------------------------------------------------------
@@ -752,4 +780,20 @@ void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 	uint64_t duration = buffer.getDurationMicros();
 	audioTimeSeconds += duration / 1000000.;
 	//clock.tick(duration);
+}
+
+//--------------------------------------------------------------
+bool ofxFFmpegPlayer::openHardware(int device_type) {
+	ofLogVerbose() << "== HARDWARE ACCELERATION ==";
+
+	if (videoHardware.open(device_type)) {
+		ofLogVerbose() << videoHardware.getName();
+
+		if (openglDevice.open(videoHardware)) {
+			ofLogVerbose() << "OpenGL compatible";
+		}
+
+		return true;
+	}
+	return false;
 }

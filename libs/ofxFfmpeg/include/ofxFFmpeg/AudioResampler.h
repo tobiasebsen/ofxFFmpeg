@@ -24,7 +24,7 @@ namespace ofxFFmpeg {
 		const Metrics & getMetrics() const;
 
     protected:
-        SwrContext * swr_context;
+        SwrContext * swr_context = NULL;
         int delay;
         int in_sample_rate;
         int out_sample_rate;

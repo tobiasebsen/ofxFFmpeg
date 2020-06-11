@@ -8,6 +8,8 @@ void ofApp::setup(){
     ofSetVerticalSync(false);
 	ofSetFrameRate(0);
 
+	ofxFFmpegPlayer::openHardware(ofxFFmpeg::HardwareDevice::getType("dxva2"));
+
 	showDebug = false;
 }
 

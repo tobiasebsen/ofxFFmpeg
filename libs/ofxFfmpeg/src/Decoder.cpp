@@ -175,20 +175,30 @@ bool Decoder::flush(FrameReceiver * receiver) {
 //--------------------------------------------------------------
 void Decoder::flush() {
 	if (isOpen()) {
-		avcodec_flush_buffers(codec_context);
+		if (running) {
+			flushing = true;
+			running = false;
+			supplier->terminatePacketSupplier();
+		}
+		else {
+			avcodec_flush_buffers(codec_context);
+		}
 	}
 }
 
 //--------------------------------------------------------------
 bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
-    if (!isOpen() || running)
+    if (!isOpen())
         return false;
+
+	stop();
     
 	this->supplier = supplier;
 	this->supplier->resumePacketSupplier();
 	this->receiver = receiver;
 	this->receiver->resumeFrameReceiver();
 
+	flushing = false;
     running = true;
     thread_obj = new std::thread(&Decoder::decodeThread, this);
 
@@ -198,6 +208,7 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 //--------------------------------------------------------------
 void Decoder::stop() {
 	if (running) {
+		flushing = false;
 		running = false;
 	}
 	if (thread_obj) {
@@ -221,6 +232,10 @@ void Decoder::decodeThread() {
 
             supplier->free(packet);
         }
+		else if (flushing) {
+			flush(receiver);
+			flushing = false;
+		}
     }
 }
 
