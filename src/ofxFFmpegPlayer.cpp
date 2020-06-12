@@ -447,27 +447,30 @@ void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 	pixelPlanes.clear();
 	texturePlanes.clear();
 
+	pixelFormat = getPixelFormat(av_format);
+
 	if (av_format == FFMPEG_FORMAT_GRAY8 || av_format == FFMPEG_FORMAT_RGB24 || av_format == FFMPEG_FORMAT_RGBA) {
 		pixelPlanes.resize(1);
 		texturePlanes.resize(1);
-		pixelPlanes[0].allocate(width, height, getPixelFormat(av_format));
+		pixelPlanes[0].allocate(width, height, pixelFormat);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
 	else if (av_format == FFMPEG_FORMAT_NV12) {
 		pixelPlanes.resize(2);
 		texturePlanes.resize(2);
-		pixelPlanes[0].allocate(width, height, OF_PIXELS_NV12);
+		pixelPlanes[0].allocate(width, height, OF_PIXELS_GRAY);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 		pixelPlanes[1].allocate(width / 2, height / 2, OF_PIXELS_RG);
 		texturePlanes[1].allocate(pixelPlanes[1]);
-		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_R, GL_RED);
-		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_G, GL_GREEN);
-		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_B, GL_ZERO);
-		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_A, GL_ONE);
+		if (!ofIsGLProgrammableRenderer()) {
+			// With OpenGL < 3 OF_PIXELS_RG are loaded as GL_LUMINANCE_ALPHA
+			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_G, GL_ALPHA);
+		}
 	}
 	else {
 		ofxFFmpeg::PixelFormat format(av_format);
 		int dst_fmt = format.hasAlpha() ? FFMPEG_FORMAT_RGBA : FFMPEG_FORMAT_RGB24;
+		pixelFormat = getPixelFormat(dst_fmt);
 
 		if (!scaler.allocate(width, height, av_format, dst_fmt)) {
 			ofLogError() << "Scaler cannot convert specified format";
@@ -475,7 +478,7 @@ void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 		}
 		pixelPlanes.resize(1);
 		texturePlanes.resize(1);
-		pixelPlanes[0].allocate(width, height, getPixelFormat(dst_fmt));
+		pixelPlanes[0].allocate(width, height, pixelFormat);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
 }
@@ -498,7 +501,14 @@ void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
         openglRenderer.unlock();
     }
     else {
-        ofGetCurrentRenderer()->draw(*this, x, y, w, h);
+		if (pixelFormat == OF_PIXELS_NV12 && texturePlanes.size() == 2) {
+			bindShaderNV12(texturePlanes[0], texturePlanes[1]);
+			texturePlanes[0].draw(x, y, w, h);
+			unbindShaderNV12();
+		}
+		else {
+			ofGetCurrentRenderer()->draw(*this, x, y, w, h);
+		}
     }
 }
 

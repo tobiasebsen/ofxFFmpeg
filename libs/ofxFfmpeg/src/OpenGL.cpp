@@ -190,7 +190,7 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 		renderer->device = device;
 		HANDLE shareHandle = NULL;
 		hr = device->pDevice->CreateRenderTarget(
-			width, height,
+			width[0], height[0],
 			D3DFMT_X8R8G8B8,
 			D3DMULTISAMPLE_NONE,
 			0, FALSE,
@@ -209,7 +209,7 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 		glGenTextures(planes, textures);
         formats[0] = GL_RGB;
 
-		renderer->gl_texture = wglDXRegisterObjectNV(device->gl_device, renderer->renderTarget, texture, target, WGL_ACCESS_READ_WRITE_NV);
+		renderer->gl_texture = wglDXRegisterObjectNV(device->gl_device, renderer->renderTarget, textures[0], target, WGL_ACCESS_READ_WRITE_NV);
 		if (renderer->gl_texture == NULL) {
 			DWORD error = GetLastError();
 			close();
@@ -225,8 +225,8 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 		HRESULT hr;
 
 		D3D11_TEXTURE2D_DESC desc;
-		desc.Width = width;
-		desc.Height = height;
+		desc.Width = width[0];
+		desc.Height = height[0];
 		desc.MipLevels = desc.ArraySize = 1;
 		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.SampleDesc.Count = 1;
@@ -330,10 +330,9 @@ void OpenGLRenderer::render(AVFrame * frame) {
 		if (frame->format == AV_PIX_FMT_DXVA2_VLD) {
 			IDirect3DSurface9 * surface = (IDirect3DSurface9*)frame->data[3];
 			HRESULT hr;
-			RECT srcRect = { 0, 0, width, height };
-			RECT dstRect = { 0, 0, width, height };
+			RECT rect = { 0, 0, width[0], height[0] };
 			hr = device->pDevice->BeginScene();
-			hr = device->pDevice->StretchRect(surface, &srcRect, renderer->renderTarget, &dstRect, D3DTEXF_NONE);
+			hr = device->pDevice->StretchRect(surface, &rect, renderer->renderTarget, &rect, D3DTEXF_NONE);
 			hr = device->pDevice->EndScene();
 		}
 	}
