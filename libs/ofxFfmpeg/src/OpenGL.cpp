@@ -6,12 +6,13 @@ extern "C" {
 #include "libavutil/hwcontext.h"
 }
 
+#include "GL/glew.h"
+
 #if defined _WIN32
 #include "libavcodec/dxva2.h"
 #include "libavcodec/d3d11va.h"
 #include "libavutil/hwcontext_dxva2.h"
 #include "libavutil/hwcontext_d3d11va.h"
-#include "GL/glew.h"
 #include "GL/wglew.h"
 
 typedef struct {
@@ -33,6 +34,10 @@ typedef struct {
 #elif defined __APPLE__
 #include "libavcodec/videotoolbox.h"
 #include "libavutil/hwcontext_videotoolbox.h"
+
+typedef struct {
+} VT_OPENGL_RENDERER;
+
 #elif defined __linux__
 #include "libavcodec/vaapi.h"
 #endif
@@ -87,7 +92,8 @@ bool OpenGLDevice::open(HardwareDevice & hardware) {
 		return true;*/
 	}
 #elif defined __APPLE__
-    if (device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+    if (hwdevice_context->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+        return true;
     }
 #endif
 
@@ -129,6 +135,7 @@ void OpenGLDevice::close() {
 			delete device;
 			hwdevice_context->user_opaque = NULL;
 		}
+#elif defined __APPLE__
 #endif
 		av_buffer_unref(&hwdevice_context_ref);
 		hwdevice_context = NULL;
@@ -146,14 +153,20 @@ AVBufferRef * OpenGLDevice::getContextRef() {
 }
 
 //--------------------------------------------------------------
-bool OpenGLRenderer::open(OpenGLDevice & opengl, int width, int height) {
+bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 
 	close();
 
 	if (!opengl.isOpen())
 		return false;
 
-	hwdevice_context_ref = av_buffer_ref(opengl.getContextRef());
+    for (int i=0; i<4; i++) {
+        this->width[i] = w;
+        this->height[i] = h;
+    }
+    this->target = target;
+
+    hwdevice_context_ref = av_buffer_ref(opengl.getContextRef());
 	hwdevice_context = (AVHWDeviceContext*)hwdevice_context_ref->data;
 
 #if defined _WIN32
@@ -190,11 +203,9 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int width, int height) {
 
 		BOOL ret = wglDXSetResourceShareHandleNV(renderer->renderTarget, shareHandle);
 
-		this->target = GL_TEXTURE_RECTANGLE;
-		this->width = width;
-		this->height = height;
-
-		glGenTextures(1, &texture);
+        planes = 1;
+		glGenTextures(planes, textures);
+        formats[0] = GL_RGB;
 
 		renderer->gl_texture = wglDXRegisterObjectNV(device->gl_device, renderer->renderTarget, texture, target, WGL_ACCESS_READ_WRITE_NV);
 		if (renderer->gl_texture == NULL) {
@@ -237,14 +248,29 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int width, int height) {
 		ID3D11RenderTargetView* renderTargetViewMap;
 		d3d11_ctx->device->CreateRenderTargetView(renderTargetTextureMap, &renderTargetViewDesc, &renderTargetViewMap);
 	}
+#elif defined __APPLE__
+    if (opengl.getHardwareType() == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+
+        planes = 2;
+        glGenTextures(planes, textures);
+        formats[0] = GL_LUMINANCE;
+        formats[1] = GL_RG;
+        width[1] = w / 2;
+        height[1] = h / 2;
+
+        return true;
+    }
 #endif
 
-	return false;
+    av_buffer_unref(&hwdevice_context_ref);
+    hwdevice_context = NULL;
+
+    return false;
 }
 
 //--------------------------------------------------------------
 bool OpenGLRenderer::isOpen() const {
-	return hwdevice_context_ref != NULL && opaque != NULL;
+	return hwdevice_context_ref != NULL;
 }
 
 //--------------------------------------------------------------
@@ -262,11 +288,12 @@ void OpenGLRenderer::close() {
 			delete renderer;
 		}
 
-        if (texture) {
-            glDeleteTextures(1, &texture);
-            texture = 0;
-        }
 #endif
+
+        if (planes) {
+            glDeleteTextures(planes, textures);
+            planes = 0;
+        }
 
 		av_buffer_unref(&hwdevice_context_ref);
 		hwdevice_context = NULL;
@@ -309,12 +336,23 @@ void OpenGLRenderer::render(AVFrame * frame) {
 #elif defined __APPLE__
     if (frames_ctx->device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
         CVPixelBufferRef pixbuf = (CVPixelBufferRef)frame->data[3];
-        size_t w = CVPixelBufferGetWidth(pixbuf);
-        size_t h = CVPixelBufferGetWidth(pixbuf);
-        size_t planes = CVPixelBufferGetPlaneCount(pixbuf);
-        OSType pixel_format = CVPixelBufferGetPixelFormatType(pixbuf);
-        //enum AVPixelFormat format = av_map_videotoolbox_format_to_pixfmt(pixel_format);
-        //CVOpenGLTextureCacheCreate(<#CFAllocatorRef  _Nullable allocator#>, <#CFDictionaryRef  _Nullable cacheAttributes#>, <#CGLContextObj  _Nonnull cglContext#>, <#CGLPixelFormatObj  _Nonnull cglPixelFormat#>, <#CFDictionaryRef  _Nullable textureAttributes#>, <#CVOpenGLTextureCacheRef  _Nullable * _Nonnull cacheOut#>)
+        IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixbuf);
+        if (surface) {
+            CGLContextObj cgl_ctx = CGLGetCurrentContext();
+            OSType pixel_format = CVPixelBufferGetPixelFormatType(pixbuf);
+            //enum AVPixelFormat format = av_map_videotoolbox_format_to_pixfmt(pixel_format);
+            size_t p = CVPixelBufferGetPlaneCount(pixbuf);
+            p = std::min(std::min(p, planes), (size_t)4);
+
+            for (size_t i=0; i<p; i++) {
+                size_t w = CVPixelBufferGetWidthOfPlane(pixbuf, i);
+                size_t h = CVPixelBufferGetHeightOfPlane(pixbuf, i);
+                glBindTexture(target, textures[i]);
+                CGLError error = CGLTexImageIOSurface2D(cgl_ctx, target, formats[i], w, h, formats[i], GL_UNSIGNED_BYTE, surface, i);
+                while(0);
+            }
+            glBindTexture(target, 0);
+        }
     }
 #endif
 }

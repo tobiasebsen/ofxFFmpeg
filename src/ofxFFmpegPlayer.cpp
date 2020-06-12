@@ -55,24 +55,28 @@ bool ofxFFmpegPlayer::load(string filename) {
 
 		if (video.hasHardwareDecoder() && openglDevice.isOpen()) {
 
-			openglRenderer.open(openglDevice, video.getWidth(), video.getHeight());
-			texturePlanes.resize(1);
-			texturePlanes[0].setUseExternalTextureID(openglRenderer.getTexture());
+			openglRenderer.open(openglDevice, video.getWidth(), video.getHeight(), GL_TEXTURE_RECTANGLE);
+            int planes = openglRenderer.getNumPlanes();
+			texturePlanes.resize(planes);
+            
+            for (int i=0; i<planes; i++) {
+                texturePlanes[i].setUseExternalTextureID(openglRenderer.getTexture(i));
 
-			ofTextureData & texData = texturePlanes[0].texData;
-			texData.textureTarget = openglRenderer.getTarget();
-			texData.width = openglRenderer.getWidth();
-			texData.height = openglRenderer.getHeight();
-			texData.tex_w = texData.width;
-			texData.tex_h = texData.height;
-			if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
-				texData.tex_t = texData.width;
-				texData.tex_u = texData.height;
-			}
-			else {
-				texData.tex_t = texData.tex_w / texData.width;
-				texData.tex_u = texData.tex_h / texData.height;
-			}
+                ofTextureData & texData = texturePlanes[i].texData;
+                texData.textureTarget = openglRenderer.getTarget();
+                texData.width = openglRenderer.getWidth(i);
+                texData.height = openglRenderer.getHeight(i);
+                texData.tex_w = texData.width;
+                texData.tex_h = texData.height;
+                if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
+                    texData.tex_t = texData.width;
+                    texData.tex_u = texData.height;
+                }
+                else {
+                    texData.tex_t = texData.tex_w / texData.width;
+                    texData.tex_u = texData.tex_h / texData.height;
+                }
+            }
 		}
 		else {
 
@@ -408,7 +412,7 @@ void ofxFFmpegPlayer::update() {
 void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
 
 	int num_planes = video.getNumPlanes();
-	if (num_planes == 0) return;
+	if (num_planes == 0) num_planes = 1;
 
 	if (pixelPlanes.size() != num_planes || texturePlanes.size() != num_planes) {
 		pixelPlanes.resize(num_planes);
@@ -430,15 +434,16 @@ void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, int planes) {
 
-	pixelPlanes.resize(planes);
-	texturePlanes.resize(planes);
-
 	if (format == OF_PIXELS_UNKNOWN) {
+        pixelPlanes.resize(1);
+        texturePlanes.resize(1);
 		scaler.allocate(width, height, video.getPixelFormat(), FFMPEG_FORMAT_RGB24);
 		pixelPlanes[0].allocate(width, height, OF_PIXELS_RGB);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
 	else if (format == OF_PIXELS_NV12) {
+        pixelPlanes.resize(2);
+        texturePlanes.resize(2);
 		pixelPlanes[0].allocate(width, height, OF_PIXELS_NV12);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 		pixelPlanes[1].allocate(width / 2, height / 2, OF_PIXELS_RG);
@@ -449,6 +454,8 @@ void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, 
 		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_A, GL_ONE);
 	}
 	else {
+        pixelPlanes.resize(planes);
+        texturePlanes.resize(planes);
 		pixelPlanes[0].allocate(width, height, format);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
@@ -458,7 +465,7 @@ void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, 
 void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
 	if (texturePlanes.size() > 0 && texturePlanes[0].isAllocated()) {
 		openglRenderer.lock();
-		texturePlanes[0].draw(x, y, w, h);
+		texturePlanes[1].draw(x, y, w, h);
 		openglRenderer.unlock();
 	}
 

@@ -25,14 +25,15 @@ namespace ofxFFmpeg {
 	public:
 		~OpenGLRenderer() { close(); }
 
-		bool open(OpenGLDevice & device, int width, int height);
+		bool open(OpenGLDevice & device, int width, int height, int target);
 		bool isOpen() const;
 		void close();
 
-		unsigned int getTexture() { return texture; }
+        size_t getNumPlanes() { return planes; }
+		unsigned int getTexture(int plane = 0) { return textures[plane]; }
 		int getTarget() { return target; }
-		int getWidth() { return width; }
-		int getHeight() { return height; }
+		int getWidth(int plane = 0) { return width[plane]; }
+		int getHeight(int plane = 0) { return height[plane]; }
 
 		void render(AVFrame * frame);
 		void lock();
@@ -41,10 +42,12 @@ namespace ofxFFmpeg {
 	protected:
 		AVBufferRef * hwdevice_context_ref = NULL;
 		AVHWDeviceContext * hwdevice_context = NULL;
-		unsigned int texture = 0;
+        size_t planes = 0;
+		unsigned int textures[4];
+        unsigned int formats[4];
 		int target;
-		int width;
-		int height;
+		int width[4];
+		int height[4];
 		void * opaque = NULL;
 	};
 }

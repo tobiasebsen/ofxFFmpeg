@@ -108,7 +108,7 @@ namespace ofxFFmpeg {
 	public:
 
 		bool receive(T * t, int stream_index) {
-			if (push(t)) {
+            if (Queue<T>::push(t)) {
 				head_pts = get_head(t);
 				return true;
 			}

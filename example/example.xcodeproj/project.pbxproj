@@ -250,7 +250,6 @@
 		F6CF1B69247CF2A300D76AF7 /* OpenGL.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OpenGL.cpp; path = ../libs/ofxFfmpeg/src/OpenGL.cpp; sourceTree = "<group>"; };
 		F6E1773224119DA1003DDE53 /* AudioResampler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AudioResampler.h; path = ../libs/ofxFfmpeg/include/ofxFFmpeg/AudioResampler.h; sourceTree = "<group>"; };
 		F6E177332411A0EE003DDE53 /* AudioResampler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AudioResampler.cpp; path = ../libs/ofxFfmpeg/src/AudioResampler.cpp; sourceTree = "<group>"; };
-		FBE814923D781A82BD66A9C6 /* Cache.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 4; name = Cache.h; path = ../../../addons/ofxFFmpeg/libs/ofxFfmpeg/include/ofxFFmpeg/Cache.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -298,7 +297,6 @@
 				F6CF1B66247CF29400D76AF7 /* OpenGL.h */,
 				37EDC4C23923B06154688112 /* AudioBuffer.h */,
 				F6E1773224119DA1003DDE53 /* AudioResampler.h */,
-				FBE814923D781A82BD66A9C6 /* Cache.h */,
 				814D7DE60271AE0F6075BE73 /* Clock.h */,
 				A6AC10C5A5505BB418B08E37 /* Decoder.h */,
 				D8FA7432FD1561BF2B3DA730 /* Encoder.h */,
