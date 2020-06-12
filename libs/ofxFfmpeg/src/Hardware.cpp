@@ -178,11 +178,17 @@ int HardwareDevice::getNumHardwareConfig(const AVCodec * codec) {
 }
 
 //--------------------------------------------------------------
+int HardwareDevice::getType(std::string name) {
+	return av_hwdevice_find_type_by_name(name.c_str());
+}
+
+//--------------------------------------------------------------
 int HardwareDevice::getDefaultType() {
 #if defined _WIN32
 	return AV_HWDEVICE_TYPE_DXVA2;
 	//return AV_HWDEVICE_TYPE_D3D11VA;
 	//return AV_HWDEVICE_TYPE_CUDA;
+	//return AV_HWDEVICE_TYPE_QSV;
 #elif defined __APPLE__
 	return AV_HWDEVICE_TYPE_VIDEOTOOLBOX;
 #elif defined __linux__

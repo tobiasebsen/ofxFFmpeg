@@ -83,6 +83,7 @@ namespace ofxFFmpeg {
 		std::thread * thread_obj = NULL;
 		std::mutex mutex;
 		bool running = false;
+		bool flushing = false;
 		PacketSupplier * supplier = NULL;
 		FrameReceiver * receiver = NULL;
 
@@ -107,7 +108,7 @@ namespace ofxFFmpeg {
         int getPixelFormat() const;
 		int getPixelFormat(AVFrame * frame) const;
 		int getNumPlanes() const;
-		int getLineBytes(AVFrame * frame, int plane) const;
+		int getLineSize(AVFrame * frame, int plane) const;
 		double getFrameRate();
 
 		bool isKeyFrame(AVPacket * packet);
@@ -116,7 +117,20 @@ namespace ofxFFmpeg {
 	protected:
 		const AVCodecHWConfig * hw_config = NULL;
     };
-    
+
+	/////////////////////////////////////////////////////
+	class PixelFormat {
+	public:
+		PixelFormat(int pix_fmt) : format(pix_fmt) {}
+		std::string getName();
+		int getBitsPerPixel();
+		int getNumPlanes();
+		bool hasAlpha();
+	private:
+		int format = -1;
+		const AVPixFmtDescriptor * desc = NULL;
+	};
+
 	/////////////////////////////////////////////////////
 	
 	class AudioDecoder : public Decoder {

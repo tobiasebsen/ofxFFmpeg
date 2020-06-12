@@ -8,6 +8,8 @@ void ofApp::setup(){
     ofSetVerticalSync(false);
 	ofSetFrameRate(0);
 
+	ofxFFmpegPlayer::openHardware(ofxFFmpeg::HardwareDevice::getType("dxva2"));
+
 	showDebug = false;
 }
 
@@ -41,6 +43,7 @@ void ofApp::keyPressed(int key) {
 	if (key == ' ') player.stop();
 	if (key == 'c') player.close();
 	if (key == 'd') showDebug = !showDebug;
+    if (key == 'f') ofToggleFullscreen();
 }
 
 //--------------------------------------------------------------

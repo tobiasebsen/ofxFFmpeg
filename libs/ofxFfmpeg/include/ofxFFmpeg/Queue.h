@@ -18,6 +18,7 @@ namespace ofxFFmpeg {
 
         bool push(T * t);
         T * pop();
+		T * peek();
 
         size_t size() const { return queue.size(); }
 		size_t capacity() const { return max_size; }
@@ -75,6 +76,18 @@ namespace ofxFFmpeg {
         }
 		return nullptr;
     }
+
+	template<typename T>
+	T * Queue<T>::peek() {
+		if (!terminated) {
+			std::lock_guard<std::mutex> lock(mutex);
+			if (queue.size() > 0) {
+				T * front = queue.front();
+				return front;
+			}
+		}
+		return nullptr;
+	}
 
 	template<typename T>
 	void Queue<T>::terminate(bool notifyPush, bool notifyPop) {

@@ -36,6 +36,7 @@ typedef struct {
 #include "libavutil/hwcontext_videotoolbox.h"
 
 typedef struct {
+    IOSurfaceRef surface;
 } VT_OPENGL_RENDERER;
 
 #elif defined __linux__
@@ -190,7 +191,7 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 		HANDLE shareHandle = NULL;
 		hr = device->pDevice->CreateRenderTarget(
 			width, height,
-			D3DFMT_A8R8G8B8,
+			D3DFMT_X8R8G8B8,
 			D3DMULTISAMPLE_NONE,
 			0, FALSE,
 			&renderer->renderTarget,
@@ -203,6 +204,7 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 
 		BOOL ret = wglDXSetResourceShareHandleNV(renderer->renderTarget, shareHandle);
 
+        pix_fmt = AV_PIX_FMT_RGB24;
         planes = 1;
 		glGenTextures(planes, textures);
         formats[0] = GL_RGB;
@@ -250,10 +252,15 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
 	}
 #elif defined __APPLE__
     if (opengl.getHardwareType() == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+        
+        VT_OPENGL_RENDERER * renderer = new VT_OPENGL_RENDERER;
+        this->opaque = renderer;
+        renderer->surface = nil;
 
+        pix_fmt = AV_PIX_FMT_NV12;
         planes = 2;
         glGenTextures(planes, textures);
-        formats[0] = GL_LUMINANCE;
+        formats[0] = GL_RED;
         formats[1] = GL_RG;
         width[1] = w / 2;
         height[1] = h / 2;
@@ -262,8 +269,7 @@ bool OpenGLRenderer::open(OpenGLDevice & opengl, int w, int h, int target) {
     }
 #endif
 
-    av_buffer_unref(&hwdevice_context_ref);
-    hwdevice_context = NULL;
+    close();
 
     return false;
 }
@@ -287,8 +293,15 @@ void OpenGLRenderer::close() {
 			renderer->renderTarget->Release();
 			delete renderer;
 		}
-
+#elif defined __APPLE__
+        if (hwdevice_context->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+            VT_OPENGL_RENDERER * renderer = (VT_OPENGL_RENDERER*)opaque;
+            IOSurfaceDecrementUseCount(renderer->surface);
+            delete renderer;
+        }
 #endif
+
+        pix_fmt = AV_PIX_FMT_NONE;
 
         if (planes) {
             glDeleteTextures(planes, textures);
@@ -317,8 +330,10 @@ void OpenGLRenderer::render(AVFrame * frame) {
 		if (frame->format == AV_PIX_FMT_DXVA2_VLD) {
 			IDirect3DSurface9 * surface = (IDirect3DSurface9*)frame->data[3];
 			HRESULT hr;
+			RECT srcRect = { 0, 0, width, height };
+			RECT dstRect = { 0, 0, width, height };
 			hr = device->pDevice->BeginScene();
-			hr = device->pDevice->StretchRect(surface, NULL, renderer->renderTarget, NULL, D3DTEXF_NONE);
+			hr = device->pDevice->StretchRect(surface, &srcRect, renderer->renderTarget, &dstRect, D3DTEXF_NONE);
 			hr = device->pDevice->EndScene();
 		}
 	}
@@ -337,16 +352,20 @@ void OpenGLRenderer::render(AVFrame * frame) {
     if (frames_ctx->device_ctx->type == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
         CVPixelBufferRef pixbuf = (CVPixelBufferRef)frame->data[3];
         IOSurfaceRef surface = CVPixelBufferGetIOSurface(pixbuf);
-        if (surface) {
-            CGLContextObj cgl_ctx = CGLGetCurrentContext();
-            OSType pixel_format = CVPixelBufferGetPixelFormatType(pixbuf);
-            //enum AVPixelFormat format = av_map_videotoolbox_format_to_pixfmt(pixel_format);
-            size_t p = CVPixelBufferGetPlaneCount(pixbuf);
+        VT_OPENGL_RENDERER * renderer = (VT_OPENGL_RENDERER*)opaque;
+        CGLContextObj cgl_ctx = CGLGetCurrentContext();
+
+        if (surface != renderer->surface) {
+            size_t p = IOSurfaceGetPlaneCount(surface);
             p = std::min(std::min(p, planes), (size_t)4);
+            
+            IOSurfaceDecrementUseCount(renderer->surface);
+            renderer->surface = surface;
+            IOSurfaceIncrementUseCount(surface);
 
             for (size_t i=0; i<p; i++) {
-                size_t w = CVPixelBufferGetWidthOfPlane(pixbuf, i);
-                size_t h = CVPixelBufferGetHeightOfPlane(pixbuf, i);
+                size_t w = IOSurfaceGetWidthOfPlane(surface, i);
+                size_t h = IOSurfaceGetHeightOfPlane(surface, i);
                 glBindTexture(target, textures[i]);
                 CGLError error = CGLTexImageIOSurface2D(cgl_ctx, target, formats[i], w, h, formats[i], GL_UNSIGNED_BYTE, surface, i);
                 while(0);

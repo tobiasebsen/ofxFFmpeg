@@ -37,6 +37,7 @@ namespace ofxFFmpeg {
 		static std::vector<int> getTypes();
 		static std::vector<std::string> getTypeNames();
 		static int getType(const AVCodec * codec, int config_index);
+		static int getType(std::string name);
 		static int getDefaultType();
 		static std::string getName(int device_type);
 

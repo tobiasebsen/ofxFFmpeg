@@ -34,6 +34,7 @@ namespace ofxFFmpeg {
 		int getTarget() { return target; }
 		int getWidth(int plane = 0) { return width[plane]; }
 		int getHeight(int plane = 0) { return height[plane]; }
+        int getPixelFormat() { return pix_fmt; }
 
 		void render(AVFrame * frame);
 		void lock();
@@ -43,6 +44,7 @@ namespace ofxFFmpeg {
 		AVBufferRef * hwdevice_context_ref = NULL;
 		AVHWDeviceContext * hwdevice_context = NULL;
         size_t planes = 0;
+        int pix_fmt = -1;
 		unsigned int textures[4];
         unsigned int formats[4];
 		int target;

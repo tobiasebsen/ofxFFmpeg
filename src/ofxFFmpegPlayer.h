@@ -59,6 +59,8 @@ public:
 
 	void audioOut(ofSoundBuffer & buffer);
 
+	static bool openHardware(int device_type);
+
 protected:
 
 	virtual bool receive(AVPacket * packet);
@@ -71,7 +73,12 @@ protected:
 	virtual void resumeFrameReceiver();
 
 	void updateFrame(AVFrame * frame);
-	void updateFormat(ofPixelFormat format, int width, int height, int planes = 1);
+	void updateTextures(AVFrame * frame);
+	void updateFormat(int av_format, int width, int height);
+    
+    void loadShaderNV12() const;
+    void bindShaderNV12(const ofTexture & textureY, const ofTexture & textureUV) const;
+    void unbindShaderNV12() const;
 
 	string filePath;
 
@@ -79,8 +86,9 @@ protected:
 	ofxFFmpeg::Clock clock;
     
 	static ofxFFmpeg::HardwareDevice videoHardware;
-	ofxFFmpeg::OpenGLDevice openglDevice;
+	static ofxFFmpeg::OpenGLDevice openglDevice;
 	mutable ofxFFmpeg::OpenGLRenderer openglRenderer;
+    static ofShader shaderNV12;
 
 	ofxFFmpeg::VideoDecoder video;
 	ofxFFmpeg::PacketQueue videoPackets;
@@ -88,6 +96,7 @@ protected:
 	mutable ofxFFmpeg::FrameQueue videoCache;
 	ofxFFmpeg::VideoScaler scaler;
 	ofxFFmpeg::Metrics transferMetrics;
+	ofxFFmpeg::Metrics uploadMetrics;
 
     ofxFFmpeg::AudioDecoder audio;
 	ofxFFmpeg::PacketQueue audioPackets;
@@ -99,16 +108,19 @@ protected:
 	bool _isPlaying = false;
 	bool isBuffering = false;
 	bool isLooping = false;
+	bool isFlushing = false;
 	bool isResyncingVideo = false;
 	bool frameNew = false;
 	bool isMovieDone = false;
+	int frameNum = 0;
 
 	double videoTimeSeconds;
 	double audioTimeSeconds;
 	uint64_t last_frame_pts;
     bool paused = false;
-	uint64_t audio_samples_loop;
+	//uint64_t audio_samples_loop;
 
+    ofPixelFormat pixelFormat = OF_PIXELS_UNKNOWN;
     ofLoopType loopState = OF_LOOP_NORMAL;
 	bool loopRequest = false;
 

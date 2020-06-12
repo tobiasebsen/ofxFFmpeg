@@ -20,3 +20,4 @@ struct SwsContext;
 struct SwrContext;
 struct AVCodecHWConfig;
 struct AVHWDeviceContext;
+struct AVPixFmtDescriptor;

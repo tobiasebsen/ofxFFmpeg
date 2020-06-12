@@ -97,8 +97,8 @@ void Reader::seek(uint64_t pts) {
 
 //--------------------------------------------------------------
 bool Reader::start(PacketReceiver * receiver) {
-    if (running)
-        return false;
+    
+	stop();
     
     running = true;
 	this->receiver = receiver;
@@ -143,7 +143,7 @@ void Reader::readThread() {
 		if (seek_pts != -1) {
 			error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
 
-			int64_t ts = 0;
+			/*int64_t ts = 0;
 			AVPacket * packet = read();
 			while (packet && ts < seek_pts) {
 				int i = packet->stream_index;
@@ -156,7 +156,7 @@ void Reader::readThread() {
 				av_packet_unref(packet);
 				av_packet_free(&packet);
 				packet = read();
-			}
+			}*/
 			seek_pts = -1;
 		}
     }

@@ -3,6 +3,8 @@
 using namespace ofxFFmpeg;
 
 ofxFFmpeg::HardwareDevice ofxFFmpegPlayer::videoHardware;
+ofxFFmpeg::OpenGLDevice ofxFFmpegPlayer::openglDevice;
+ofShader ofxFFmpegPlayer::shaderNV12;
 
 //--------------------------------------------------------------
 ofxFFmpegPlayer::ofxFFmpegPlayer() {
@@ -22,6 +24,13 @@ bool ofxFFmpegPlayer::load(string filename) {
 		return false;
 	}
 
+	if (!videoHardware.isOpen()) {
+		openHardware(HardwareDevice::getDefaultType());
+	}
+
+    loadShaderNV12();
+
+	frameNum = 0;
 	videoTimeSeconds = 0;
 	audioTimeSeconds = 0;
 	last_frame_pts = 0;
@@ -32,22 +41,15 @@ bool ofxFFmpegPlayer::load(string filename) {
     ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
     ofLogVerbose() << reader.getNumStreams() << " stream(s)";
 
-	ofLogVerbose() << "== HARDWARE ACCELERATION ==";
-
-	if (videoHardware.isOpen() || videoHardware.open()) {
-		ofLogVerbose() << videoHardware.getName();
-		vector<int> formats = videoHardware.getFormats();
-		if (openglDevice.isOpen() || openglDevice.open(videoHardware)) {
-			ofLogVerbose() << "OpenGL compatible";
-		}
-	}
-
 	if (video.open(reader, videoHardware)) {
 		ofLogVerbose() << "== VIDEO STREAM ==";
 		int num_hw = HardwareDevice::getNumHardwareConfig(reader.getVideoCodec());
 		ofLogVerbose() << "  " << num_hw << " hardware decoder(s) found";
 		ofLogVerbose() << "  " << video.getLongName();
 		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
+
+		ofxFFmpeg::PixelFormat format(video.getPixelFormat());
+		ofLogVerbose() << "  " << format.getName();
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
@@ -55,43 +57,41 @@ bool ofxFFmpegPlayer::load(string filename) {
 
 		if (video.hasHardwareDecoder() && openglDevice.isOpen()) {
 
-			openglRenderer.open(openglDevice, video.getWidth(), video.getHeight(), GL_TEXTURE_RECTANGLE);
-            int planes = openglRenderer.getNumPlanes();
-			texturePlanes.resize(planes);
-            
-            for (int i=0; i<planes; i++) {
-                texturePlanes[i].setUseExternalTextureID(openglRenderer.getTexture(i));
+            if (openglRenderer.open(openglDevice, video.getWidth(), video.getHeight(), GL_TEXTURE_RECTANGLE)) {
+                pixelFormat = getPixelFormat(openglRenderer.getPixelFormat());
 
-                ofTextureData & texData = texturePlanes[i].texData;
-                texData.textureTarget = openglRenderer.getTarget();
-                texData.width = openglRenderer.getWidth(i);
-                texData.height = openglRenderer.getHeight(i);
-                texData.tex_w = texData.width;
-                texData.tex_h = texData.height;
-                if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
-                    texData.tex_t = texData.width;
-                    texData.tex_u = texData.height;
-                }
-                else {
-                    texData.tex_t = texData.tex_w / texData.width;
-                    texData.tex_u = texData.tex_h / texData.height;
+                int planes = openglRenderer.getNumPlanes();
+                texturePlanes.resize(planes);
+                
+                for (int i=0; i<planes; i++) {
+                    texturePlanes[i].setUseExternalTextureID(openglRenderer.getTexture(i));
+
+                    ofTextureData & texData = texturePlanes[i].texData;
+                    texData.textureTarget = openglRenderer.getTarget();
+                    texData.width = openglRenderer.getWidth(i);
+                    texData.height = openglRenderer.getHeight(i);
+                    texData.tex_w = texData.width;
+                    texData.tex_h = texData.height;
+                    if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
+                        texData.tex_t = texData.width;
+                        texData.tex_u = texData.height;
+                    }
+                    else {
+                        texData.tex_t = texData.tex_w / texData.width;
+                        texData.tex_u = texData.tex_h / texData.height;
+                    }
                 }
             }
 		}
 		else {
 
-			ofPixelFormat format = getPixelFormat(video.getPixelFormat());
-			int num_planes = video.getNumPlanes();
+			int format = video.getPixelFormat();
 
 			if (video.hasHardwareDecoder()) {
-				format = OF_PIXELS_NV12;
-				num_planes = 2;
+				format = FFMPEG_FORMAT_NV12;
 			}
 
-			pixelPlanes.clear();
-			texturePlanes.clear();
-
-			updateFormat(format, video.getWidth(), video.getHeight(), num_planes);
+			updateFormat(format, video.getWidth(), video.getHeight());
 		}
     }
     if (audio.open(reader)) {
@@ -142,7 +142,9 @@ void ofxFFmpegPlayer::close() {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::play() {
+
 	if (reader.isOpen()) {
+
 		isBuffering = true;
 		isMovieDone = false;
 
@@ -155,6 +157,9 @@ void ofxFFmpegPlayer::play() {
 		}
 		audio.start(&audioPackets, this);
 		reader.start(this);
+		frameNum = 0;
+		videoTimeSeconds = 0;
+		audioTimeSeconds = 0;
 
 		_isPlaying = true;
 	}
@@ -168,7 +173,6 @@ void ofxFFmpegPlayer::stop() {
 	video.stop();
 	videoPackets.flush();
 	video.flush();
-
 
 	videoPackets.resize(4);
 	videoFrames.flush();
@@ -194,8 +198,10 @@ bool ofxFFmpegPlayer::receive(AVPacket * packet) {
 		if (video.isRunning()) {
 
 			// Increment video packet queue
-			if (videoPackets.size() == videoPackets.capacity() && audio.isRunning() && audioPackets.size() == 0) {
-				videoPackets.resize(videoPackets.capacity() + 1);
+			if (videoPackets.size() == videoPackets.capacity() && audio.isRunning() && audioPackets.size() == 0 && audioBuffer.getAvailableRead() == 0) {
+				if (videoPackets.size() < 32) {
+					videoPackets.resize(videoPackets.capacity() + 1);
+				}
 			}
 
 			return videoPackets.receive(packet);
@@ -233,17 +239,7 @@ void ofxFFmpegPlayer::notifyEndPacket() {
 	else { // loopState == OF_LOOP_NONE
 
 		reader.stop();
-		video.stop();
-		videoPackets.flush(this);
-		video.flush(this);
-
-		videoPackets.resize(4);
-
-		scaler.stop();
-
-		audio.stop();
-		audioPackets.flush(this);
-		audio.flush();
+		isFlushing = true;
 	}
 }
 
@@ -316,15 +312,15 @@ bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 			resampler.free(buffer);
 		}
 		if (isLooping) {
-			audio_samples_loop = audioBuffer.getTotalWrite();
+			//audio_samples_loop = audioBuffer.getTotalWrite();
 		}
 	}
 
-	if (isBuffering) {
+	/*if (isBuffering) {
 		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize())) {
 			isBuffering = false;
 		}
-	}
+	}*/
 
 	return ret;
 }
@@ -336,46 +332,33 @@ void ofxFFmpegPlayer::update() {
 	int64_t frame_pts = video.rescaleTimeInv(pts);
 	
 	if (isBuffering) {
-		if ((!video.isOpen() || videoCache.size() > 0) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize())) {
+		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize() * 2)) {
 			isBuffering = false;
+		}
+	}
+
+	if (isFlushing) {
+		if (!reader.isRunning() && videoCache.size() == 0) {
+			video.flush();
+			isFlushing = false;
 		}
 	}
 
 	if (video.isOpen() && isPlaying() && !isBuffering) {
 
 		AVFrame * frame = videoCache.supply(frame_pts);
+		updateFrame(frame);
 
-		if (frame) {
-
-			if (isResyncingVideo)
-				isResyncingVideo = false;
-
-			if (openglRenderer.isOpen() && video.isHardwareFrame(frame)) {
-				openglRenderer.render(frame);
-			}
-			else {
-				if (video.isHardwareFrame(frame)) {
-					transferMetrics.begin();
-					AVFrame * sw_frame = HardwareDevice::transfer(frame);
-					transferMetrics.end();
-					updateFrame(sw_frame);
-					HardwareDevice::free(sw_frame);
-				}
-				else {
-					updateFrame(frame);
-				}
-			}
-
-			frameNew = true;
+		if (isLooping) {
+			videoCache.flush(last_frame_pts, frame_pts);
 		}
 		else {
-			frameNew = false;
+			videoCache.flush(0, frame_pts);
 		}
 
-		size_t n_flush = videoCache.flush(last_frame_pts, frame_pts);
-		if (n_flush > 0) {
+		/*if (n_flush > 0) {
 			ofLog() << "Flushed: " << n_flush;
-		}
+		}*/
 
 		if (frame) {
 			last_frame_pts = frame_pts;
@@ -388,21 +371,22 @@ void ofxFFmpegPlayer::update() {
 	if (isPlaying() && !isPaused() && !isBuffering) {
 		double dt = ofGetLastFrameTime();
 
-		if (!reader.isRunning() && videoCache.size() == 0 && audioBuffer.getAvailableRead() == 0)
-			_isPlaying = false;
-		else
-			videoTimeSeconds += dt;
+		videoTimeSeconds += dt;
 
 		// TIME END
-		if (videoTimeSeconds >= reader.getDuration()) {
+		if (videoTimeSeconds >= reader.getDuration() && _isPlaying) {
+
 			if (loopState == OF_LOOP_NORMAL) {
 				videoTimeSeconds -= reader.getDuration();
+				audioTimeSeconds -= reader.getDuration();
 				isLooping = false;
 			}
 			if (loopState == OF_LOOP_NONE) {
 				stop();
 				_isPlaying = false;
 				isMovieDone = true;
+				videoTimeSeconds = reader.getDuration();
+				audioTimeSeconds = reader.getDuration();
 			}
 		}
 	}
@@ -411,39 +395,67 @@ void ofxFFmpegPlayer::update() {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
 
-	int num_planes = video.getNumPlanes();
-	if (num_planes == 0) num_planes = 1;
+	frameNew = frame != NULL;
 
-	if (pixelPlanes.size() != num_planes || texturePlanes.size() != num_planes) {
-		pixelPlanes.resize(num_planes);
-		texturePlanes.resize(num_planes);
+	if (!frame)
+		return;
+
+	if (openglRenderer.isOpen() && video.isHardwareFrame(frame)) {
+		openglRenderer.render(frame);
+	}
+	else {
+		if (video.isHardwareFrame(frame)) {
+
+			transferMetrics.begin();
+			AVFrame * sw_frame = HardwareDevice::transfer(frame);
+			transferMetrics.end();
+
+			uploadMetrics.begin();
+			updateTextures(sw_frame);
+			uploadMetrics.end();
+
+			HardwareDevice::free(sw_frame);
+		}
+		else {
+			uploadMetrics.begin();
+			updateTextures(frame);
+			uploadMetrics.end();
+		}
 	}
 
-	int pix_fmt = video.getPixelFormat(frame);
-	ofPixelFormat format = getPixelFormat(pix_fmt);
-	if (format != pixelPlanes[0].getPixelFormat() || video.getWidth(frame) != pixelPlanes[0].getWidth() || video.getHeight(frame) != pixelPlanes[0].getHeight()) {
-		updateFormat(format, video.getWidth(frame), video.getHeight(frame), num_planes);
+	frameNum = video.getFrameNum(frame);
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::updateTextures(AVFrame * frame) {
+
+	int av_format = video.getPixelFormat(frame);
+	ofPixelFormat of_format = getPixelFormat(av_format);
+	if (pixelPlanes.size() == 0 || of_format != pixelPlanes[0].getPixelFormat() || video.getWidth(frame) != pixelPlanes[0].getWidth() || video.getHeight(frame) != pixelPlanes[0].getHeight()) {
+		updateFormat(av_format, video.getWidth(frame), video.getHeight(frame));
 	}
 
 	for (size_t i = 0; i < pixelPlanes.size(); i++) {
-		pixelPlanes[i].setFromAlignedPixels(video.getFrameData(frame, i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), video.getLineBytes(frame, i));
+		pixelPlanes[i].setFromAlignedPixels(video.getFrameData(frame, i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), video.getLineSize(frame, i) * pixelPlanes[i].getBytesPerChannel());
 		texturePlanes[i].loadData(pixelPlanes[i]);
 	}
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, int planes) {
+void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 
-	if (format == OF_PIXELS_UNKNOWN) {
-        pixelPlanes.resize(1);
-        texturePlanes.resize(1);
-		scaler.allocate(width, height, video.getPixelFormat(), FFMPEG_FORMAT_RGB24);
-		pixelPlanes[0].allocate(width, height, OF_PIXELS_RGB);
+	pixelPlanes.clear();
+	texturePlanes.clear();
+
+	if (av_format == FFMPEG_FORMAT_GRAY8 || av_format == FFMPEG_FORMAT_RGB24 || av_format == FFMPEG_FORMAT_RGBA) {
+		pixelPlanes.resize(1);
+		texturePlanes.resize(1);
+		pixelPlanes[0].allocate(width, height, getPixelFormat(av_format));
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
-	else if (format == OF_PIXELS_NV12) {
-        pixelPlanes.resize(2);
-        texturePlanes.resize(2);
+	else if (av_format == FFMPEG_FORMAT_NV12) {
+		pixelPlanes.resize(2);
+		texturePlanes.resize(2);
 		pixelPlanes[0].allocate(width, height, OF_PIXELS_NV12);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 		pixelPlanes[1].allocate(width / 2, height / 2, OF_PIXELS_RG);
@@ -454,22 +466,40 @@ void ofxFFmpegPlayer::updateFormat(ofPixelFormat format, int width, int height, 
 		texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_A, GL_ONE);
 	}
 	else {
-        pixelPlanes.resize(planes);
-        texturePlanes.resize(planes);
-		pixelPlanes[0].allocate(width, height, format);
+		ofxFFmpeg::PixelFormat format(av_format);
+		int dst_fmt = format.hasAlpha() ? FFMPEG_FORMAT_RGBA : FFMPEG_FORMAT_RGB24;
+
+		if (!scaler.allocate(width, height, av_format, dst_fmt)) {
+			ofLogError() << "Scaler cannot convert specified format";
+			return;
+		}
+		pixelPlanes.resize(1);
+		texturePlanes.resize(1);
+		pixelPlanes[0].allocate(width, height, getPixelFormat(dst_fmt));
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::draw(float x, float y, float w, float h) const {
-	if (texturePlanes.size() > 0 && texturePlanes[0].isAllocated()) {
-		openglRenderer.lock();
-		texturePlanes[1].draw(x, y, w, h);
-		openglRenderer.unlock();
-	}
-
-	//ofGetCurrentRenderer()->draw(*this, x, y, w, h);
+    
+    if (isBuffering) return;
+    
+    if (openglRenderer.isOpen()) {
+        openglRenderer.lock();
+        if (openglRenderer.getPixelFormat() == FFMPEG_FORMAT_NV12 && texturePlanes.size() == 2) {
+            bindShaderNV12(texturePlanes[0], texturePlanes[1]);
+            texturePlanes[0].draw(x, y, w, h);
+            unbindShaderNV12();
+        }
+        else if (texturePlanes.size() == 1) {
+            texturePlanes[0].draw(x, y, w, h);
+        }
+        openglRenderer.unlock();
+    }
+    else {
+        ofGetCurrentRenderer()->draw(*this, x, y, w, h);
+    }
 }
 
 //--------------------------------------------------------------
@@ -484,15 +514,19 @@ void ofxFFmpegPlayer::drawDebug(float x, float y) const {
 	ofDrawBitmapStringHighlight("Video:     " + ofToString(video.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 20);
 	ofDrawBitmapStringHighlight("Scaler:    " + ofToString(scaler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 40);
 	ofDrawBitmapStringHighlight("Transfer:  " + ofToString(transferMetrics.getPeriodFiltered(), 1) + " us", x, y + 60);
-	ofDrawBitmapStringHighlight("Audio:     " + ofToString(audio.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 80);
-	ofDrawBitmapStringHighlight("Resampler: " + ofToString(resampler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 100);
+	ofDrawBitmapStringHighlight("Upload:    " + ofToString(uploadMetrics.getPeriodFiltered(), 1) + " us", x, y + 80);
+
+	//ofDrawBitmapStringHighlight("Audio:     " + ofToString(audio.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 80);
+	//ofDrawBitmapStringHighlight("Resampler: " + ofToString(resampler.getMetrics().getPeriodFiltered(), 1) + " us", x, y + 100);
 
 	ofDrawBitmapStringHighlight(ofToString(reader.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y);
 	ofDrawBitmapStringHighlight(ofToString(video.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 20);
 	ofDrawBitmapStringHighlight(ofToString(scaler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 40);
 	ofDrawBitmapStringHighlight(ofToString(transferMetrics.getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 60);
-	ofDrawBitmapStringHighlight(ofToString(audio.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
-	ofDrawBitmapStringHighlight(ofToString(resampler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 100);
+	ofDrawBitmapStringHighlight(ofToString(uploadMetrics.getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
+	
+	//ofDrawBitmapStringHighlight(ofToString(audio.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 80);
+	//ofDrawBitmapStringHighlight(ofToString(resampler.getMetrics().getDutyCycleFiltered()*100.f, 1) + " %", x + 160, y + 100);
 
 	y -= 15;
 
@@ -512,6 +546,7 @@ void ofxFFmpegPlayer::drawDebug(float x, float y) const {
 
 	ofDrawRectangle(x + 240, y + 120, videoPackets.size()*100.f/videoPackets.capacity(), 15);
 	ofDrawRectangle(x + 240, y + 180, audioPackets.size()*100.f / audioPackets.capacity(), 15);
+	ofDrawRectangle(x + 240, y + 200, audioBuffer.getAvailableRead()*100.f / audioBuffer.size(), 15);
 
 	ofSetColor(reader.isRunning() ? ofColor::green : reader.isOpen() ? ofColor::yellow : ofColor::red);
 	ofDrawCircle(x + 360, y + 5, 5);
@@ -578,12 +613,12 @@ bool ofxFFmpegPlayer::setPixelFormat(ofPixelFormat pixelFormat) {
 
 //--------------------------------------------------------------
 ofPixelFormat ofxFFmpegPlayer::getPixelFormat() const {
-	return pixelPlanes.size() > 0 ? pixelPlanes[0].getPixelFormat() : OF_PIXELS_UNKNOWN;
+	return pixelFormat;
 }
 
 //--------------------------------------------------------------
-ofPixelFormat ofxFFmpegPlayer::getPixelFormat(int pix_fmt) const {
-	switch (pix_fmt) {
+ofPixelFormat ofxFFmpegPlayer::getPixelFormat(int av_format) const {
+	switch (av_format) {
 	case FFMPEG_FORMAT_GRAY8:
 		return OF_PIXELS_GRAY;
 	case FFMPEG_FORMAT_RGB24:
@@ -605,7 +640,7 @@ float ofxFFmpegPlayer::getPosition() const {
 
 //--------------------------------------------------------------
 int ofxFFmpegPlayer::getCurrentFrame() const {
-	return 0;// video.getFrameNum(lastUpdatePts);
+	return frameNum;
 }
 
 //--------------------------------------------------------------
@@ -625,6 +660,15 @@ int ofxFFmpegPlayer::getTotalNumFrames() const {
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::nextFrame() {
+	AVFrame * frame = videoCache.peek();
+	if (frame) {
+		videoTimeSeconds = video.rescaleTime(frame) * reader.getTimeBase();
+		audioTimeSeconds = videoTimeSeconds;
+		audioPackets.flush();
+	}
+	else {
+		while (0);
+	}
 }
 
 //--------------------------------------------------------------
@@ -754,4 +798,68 @@ void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 	uint64_t duration = buffer.getDurationMicros();
 	audioTimeSeconds += duration / 1000000.;
 	//clock.tick(duration);
+}
+
+//--------------------------------------------------------------
+bool ofxFFmpegPlayer::openHardware(int device_type) {
+	ofLogVerbose() << "== HARDWARE ACCELERATION ==";
+
+	if (videoHardware.open(device_type)) {
+		ofLogVerbose() << videoHardware.getName();
+
+		if (openglDevice.open(videoHardware)) {
+			ofLogVerbose() << "OpenGL compatible";
+		}
+
+		return true;
+	}
+	return false;
+}
+
+//--------------------------------------------------------------
+#define STRINGIFY(x) #x
+static string source_nv12_fragment = "#version 120\n" STRINGIFY(
+uniform sampler2DRect texY;\n
+uniform sampler2DRect texUV;\n
+uniform vec2 scaleUV;\n
+const vec3 offset = vec3(-0.0625, -0.5, -0.5);\n
+const vec3 rcoeff = vec3(1.164, 0.000, 1.596);\n
+const vec3 gcoeff = vec3(1.164,-0.391,-0.813);\n
+const vec3 bcoeff = vec3(1.164, 2.018, 0.000);\n
+void main() {\n
+    vec3 yuv;\n
+    yuv.x = texture2DRect(texY, gl_TexCoord[0].st).r;\n
+    yuv.yz = texture2DRect(texUV, gl_TexCoord[0].st * scaleUV).rg;\n
+    yuv += offset;\n
+    float r = dot(yuv, rcoeff);\n
+    float g = dot(yuv, gcoeff);\n
+    float b = dot(yuv, bcoeff);\n
+    gl_FragColor = vec4(r, g, b, 1.0);\n
+}\n
+);
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::loadShaderNV12() const {
+    if (!shaderNV12.isLoaded()) {
+        ofLogLevel level = ofGetLogLevel();
+        ofSetLogLevel(OF_LOG_WARNING);
+        shaderNV12.setupShaderFromSource(GL_FRAGMENT_SHADER, source_nv12_fragment);
+        shaderNV12.bindDefaults();
+        shaderNV12.linkProgram();
+        ofSetLogLevel(level);
+    }
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::bindShaderNV12(const ofTexture & textureY, const ofTexture & textureUV) const {
+    loadShaderNV12();
+    shaderNV12.begin();
+    shaderNV12.setUniformTexture("texY", textureY, 0);
+    shaderNV12.setUniformTexture("texUV", textureUV, 1);
+    shaderNV12.setUniform2f("scaleUV", textureUV.getWidth() / textureY.getWidth(), textureUV.getHeight() / textureY.getHeight());
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::unbindShaderNV12() const {
+    shaderNV12.end();
 }
