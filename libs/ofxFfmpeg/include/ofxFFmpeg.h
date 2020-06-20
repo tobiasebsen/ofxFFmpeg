@@ -2,6 +2,7 @@
 
 #include "AvTypes.h"
 
+#include "ofxFFmpeg/Frame.h"
 #include "ofxFFmpeg/Flow.h"
 #include "ofxFFmpeg/Decoder.h"
 #include "ofxFFmpeg/Encoder.h"

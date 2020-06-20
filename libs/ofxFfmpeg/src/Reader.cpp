@@ -219,7 +219,7 @@ std::string Reader::getName() {
 }
 
 //--------------------------------------------------------------
-std::string ofxFFmpeg::Reader::getLongName() {
+std::string Reader::getLongName() {
 	return format_context->iformat->long_name;
 }
 

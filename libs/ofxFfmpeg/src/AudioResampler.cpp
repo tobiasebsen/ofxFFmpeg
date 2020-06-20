@@ -12,6 +12,8 @@ bool AudioResampler::allocate(int in_sample_rate, uint64_t in_ch_layout, int in_
 	free();
     
     this->in_sample_rate = in_sample_rate;
+	this->in_channels = av_get_channel_layout_nb_channels(in_ch_layout);
+	this->in_format = in_sample_fmt;
     this->out_sample_rate = out_sample_rate;
     this->out_channels = av_get_channel_layout_nb_channels(out_ch_layout);
     this->out_format = out_sample_fmt;
@@ -21,7 +23,7 @@ bool AudioResampler::allocate(int in_sample_rate, uint64_t in_ch_layout, int in_
         return false;
     }
     
-    int error = swr_init(swr_context);
+    error = swr_init(swr_context);
     if (error < 0) {
         return false;
     }
@@ -38,6 +40,12 @@ bool AudioResampler::allocate(AudioDecoder & decoder, int out_sample_rate, int o
 }
 
 //--------------------------------------------------------------
+bool AudioResampler::allocate(int in_sample_rate, int in_channels, int in_sample_fmt, AudioEncoder & encoder) {
+	uint64_t in_ch_layout = av_get_default_channel_layout(in_channels);
+	return allocate(in_sample_rate, in_ch_layout, in_sample_fmt, encoder.getSampleRate(), encoder.getChannelLayout(), encoder.getSampleFormat());
+}
+
+//--------------------------------------------------------------
 bool AudioResampler::isAllocated() const {
 	return swr_context != NULL;
 }
@@ -47,6 +55,14 @@ void AudioResampler::free() {
 	if (swr_context) {
 		swr_free(&swr_context);
 	}
+}
+
+//--------------------------------------------------------------
+int AudioResampler::resample(void * in_buffer, int in_samples, AVFrame * frame) {
+	metrics.begin();
+	int samples = swr_convert(swr_context, (uint8_t**)frame->extended_data, frame->nb_samples, (const uint8_t**)&in_buffer, in_samples);
+	metrics.end();
+	return samples;
 }
 
 //--------------------------------------------------------------
@@ -60,10 +76,8 @@ int AudioResampler::resample(AVFrame *frame, void *out_buffer, int out_samples) 
 //--------------------------------------------------------------
 void * AudioResampler::resample(AVFrame *frame, int * out_samples_ptr) {
     
-    int out_samples = av_rescale_rnd(delay + frame->nb_samples, out_sample_rate, in_sample_rate, AV_ROUND_UP);
-
-    uint8_t *out_buffer;
-    av_samples_alloc(&out_buffer, NULL, out_channels, out_samples, (AVSampleFormat)out_format, 0);
+	int out_samples = getOutSamples(frame->nb_samples);
+    void *out_buffer = allocateSamplesOutput(out_samples);
     
     int samples = resample(frame, out_buffer, out_samples);
 	if (out_samples_ptr) {
@@ -71,11 +85,6 @@ void * AudioResampler::resample(AVFrame *frame, int * out_samples_ptr) {
 	}
 
     return out_buffer;
-}
-
-//--------------------------------------------------------------
-void AudioResampler::free(void *buffer) {
-    av_freep(&buffer);
 }
 
 //--------------------------------------------------------------
@@ -94,6 +103,39 @@ int AudioResampler::getSampleFormat(const std::type_info & tinfo) {
 }
 
 //--------------------------------------------------------------
-const Metrics & ofxFFmpeg::AudioResampler::getMetrics() const {
+int AudioResampler::getInSamples(int out_samples) {
+	return av_rescale_rnd(out_samples, in_sample_rate, out_sample_rate, AV_ROUND_UP);
+}
+
+//--------------------------------------------------------------
+int AudioResampler::getOutSamples(int in_samples) {
+	//return swr_get_out_samples(swr_context, in_samples);
+	return av_rescale_rnd(in_samples, out_sample_rate, in_sample_rate, AV_ROUND_UP);
+}
+
+//--------------------------------------------------------------
+void * AudioResampler::allocateSamplesInput(int nb_samples) {
+	return allocateSamples(nb_samples, in_channels, in_format);
+}
+
+//--------------------------------------------------------------
+void * AudioResampler::allocateSamplesOutput(int nb_samples) {
+	return allocateSamples(nb_samples, out_channels, out_format);
+}
+
+//--------------------------------------------------------------
+void * AudioResampler::allocateSamples(int nb_samples, int nb_channels, int format) {
+	uint8_t * buffer = NULL;
+	int error = av_samples_alloc(&buffer, NULL, nb_channels, nb_samples, (AVSampleFormat)format, 0);
+	return buffer;
+}
+
+//--------------------------------------------------------------
+void AudioResampler::free(void *buffer) {
+	av_freep(&buffer);
+}
+
+//--------------------------------------------------------------
+const Metrics & AudioResampler::getMetrics() const {
 	return metrics;
 }

@@ -20,6 +20,12 @@ namespace ofxFFmpeg {
 
 		void write(AVPacket * packet);
 
+		/////////////////////////////////////////////////
+		// ACCESSORS
+
+		std::string getName();
+		std::string getLongName();
+
 	protected:
 		int error = 0;
 

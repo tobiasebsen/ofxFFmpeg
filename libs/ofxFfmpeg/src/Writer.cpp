@@ -10,6 +10,7 @@ extern "C" {
 
 using namespace ofxFFmpeg;
 
+//--------------------------------------------------------------
 bool Writer::open(const std::string filename) {
 
 	close();
@@ -39,6 +40,7 @@ bool Writer::open(const std::string filename) {
 	return true;
 }
 
+//--------------------------------------------------------------
 void Writer::close() {
 	if (format_context) {
 		avformat_free_context(format_context);
@@ -50,6 +52,7 @@ void Writer::close() {
 	}
 }
 
+//--------------------------------------------------------------
 AVStream * Writer::addStream() {
 	AVStream * stream = avformat_new_stream(format_context, NULL);
 	if (stream) {
@@ -58,6 +61,7 @@ AVStream * Writer::addStream() {
 	return stream;
 }
 
+//--------------------------------------------------------------
 bool Writer::begin() {
 	if ((error = avformat_write_header(format_context, NULL)) < 0) {
 		av_log(NULL, AV_LOG_ERROR, "Error occurred when opening output file");
@@ -66,12 +70,23 @@ bool Writer::begin() {
 	return true;
 }
 
+//--------------------------------------------------------------
 void Writer::end() {
 	if (format_context) {
 		av_write_trailer(format_context);
 	}
 }
 
+//--------------------------------------------------------------
 void Writer::write(AVPacket * packet) {
-	error = av_write_frame(format_context, packet);
+	error = av_interleaved_write_frame(format_context, packet);
+}
+
+//--------------------------------------------------------------
+std::string Writer::getName() {
+	return format_context->oformat->name;
+}
+//--------------------------------------------------------------
+std::string Writer::getLongName() {
+	return format_context->oformat->long_name;
 }

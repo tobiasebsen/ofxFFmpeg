@@ -5,6 +5,9 @@
 
 class ofxFFmpegRecorder : public ofxFFmpeg::PacketReceiver {
 public:
+	ofxFFmpegRecorder();
+	~ofxFFmpegRecorder();
+
 	bool open(const string filename);
 	void close();
 
@@ -14,6 +17,8 @@ public:
 	bool setAudioCodec(int codecId);
 	bool setAudioCodec(string codecName);
 
+	void setAudioInputSettings(const ofSoundStreamSettings & settings);
+
 	ofxFFmpeg::VideoEncoder & getVideoEncoder();
 	ofxFFmpeg::AudioEncoder & getAudioEncoder();
 
@@ -22,6 +27,10 @@ public:
 
     void write(const ofPixels & pixels, int frameNumber = -1);
 	void write(const ofPixels & pixels, float timeSeconds);
+
+	void writeAudio();
+	void writeAudio(int nb_samples);
+	void writeAudioFinal();
 
 	void audioIn(ofSoundBuffer & buffer);
 
@@ -38,9 +47,13 @@ protected:
 	ofxFFmpeg::VideoEncoder video;
 	ofxFFmpeg::VideoScaler scaler;
 	ofxFFmpeg::AudioEncoder audio;
+	ofxFFmpeg::AudioResampler resampler;
+	ofxFFmpeg::AudioBuffer<float> audioBuffer;
 
-	AVFrame *frame = NULL;
+	AVFrame * vframe = NULL;
     uint64_t frame_count = 0;
+	AVFrame * aframe = NULL;
 
+	ofSoundStreamSettings audioSettings;
 	ofSoundStream audioStream;
 };

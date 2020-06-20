@@ -1,5 +1,10 @@
 #include "ofxFFmpegPlayer.h"
 
+#ifdef OF_SOUNDSTREAM_RTAUDIO
+#include "ofRtAudioSoundStream.h"
+#define OF_SOUND_STREAM_TYPE ofRtAudioSoundStream
+#endif
+
 using namespace ofxFFmpeg;
 
 ofxFFmpeg::HardwareDevice ofxFFmpegPlayer::videoHardware;
@@ -8,6 +13,9 @@ ofShader ofxFFmpegPlayer::shaderNV12;
 
 //--------------------------------------------------------------
 ofxFFmpegPlayer::ofxFFmpegPlayer() {
+	audioSettings.numOutputChannels = 2;
+	audioSettings.bufferSize = 512;
+	audioSettings.setOutListener(this);
 }
 
 //--------------------------------------------------------------
@@ -104,16 +112,10 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
         ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
 
-		ofSoundStreamSettings settings;
-		settings.sampleRate = 44100;
-		settings.numOutputChannels = 2;
-		settings.numInputChannels = 0;
-		settings.bufferSize = 512;
-		settings.setOutListener(this);
-		audioStream.setup(settings);
+		audioStream.setup(audioSettings);
 
-        resampler.allocate(audio, settings.sampleRate, settings.numOutputChannels, AudioResampler::getSampleFormat<float>());
-        audioBuffer.allocate(audioStream.getSampleRate() * audioStream.getNumOutputChannels());
+        resampler.allocate(audio, audioSettings.sampleRate, audioSettings.numOutputChannels, AudioResampler::getSampleFormat<float>());
+        audioBuffer.allocate(audioSettings.sampleRate * audioSettings.numOutputChannels * 1.f); // 1 second buffer
     }
 
 	return true;
@@ -147,6 +149,7 @@ void ofxFFmpegPlayer::play() {
 
 		isBuffering = true;
 		isMovieDone = false;
+		audioBuffer.reset();
 
 		if (scaler.isAllocated()) {
 			scaler.start(&videoFrames, this, video.getStreamIndex());
@@ -160,6 +163,8 @@ void ofxFFmpegPlayer::play() {
 		frameNum = 0;
 		videoTimeSeconds = 0;
 		audioTimeSeconds = 0;
+
+		//audioStream.start();
 
 		_isPlaying = true;
 	}
@@ -184,7 +189,7 @@ void ofxFFmpegPlayer::stop() {
 	audioPackets.flush();
 	audio.flush();
 
-	audioStream.stop();
+	//audioStream.stop();
 
 	_isPlaying = false;
 }
@@ -296,10 +301,13 @@ bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 	}
 	if (stream_index == audio.getStreamIndex()) {
 
-        int samples = 0;
-        float * buffer = (float*)resampler.resample(frame, &samples);
+		bool audioIsOpen = audioStream.getSoundStream() != NULL;
+		
+		int samples = 0;
+		float * buffer = (float*)resampler.resample(frame, &samples);
 		if (buffer && samples > 0) {
-			samples *= audioStream.getNumOutputChannels();
+
+			samples *= audioSettings.numOutputChannels;
 
 			if (samples > audioBuffer.getAvailableWrite()) {
 				if (video.isRunning() && videoCache.size() == 0)
@@ -310,6 +318,8 @@ bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 
 			ret = audioBuffer.write(buffer, samples) > 0 ? true : false;
 			resampler.free(buffer);
+
+			//ofLog() << "Audio samples read:  " << audioBuffer.getTotalWrite() / audioSettings.numOutputChannels;
 		}
 		if (isLooping) {
 			//audio_samples_loop = audioBuffer.getTotalWrite();
@@ -429,14 +439,15 @@ void ofxFFmpegPlayer::updateFrame(AVFrame * frame) {
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::updateTextures(AVFrame * frame) {
 
-	int av_format = video.getPixelFormat(frame);
+	VideoFrame f(frame);
+	int av_format = f.getPixelFormat();
 	ofPixelFormat of_format = getPixelFormat(av_format);
-	if (pixelPlanes.size() == 0 || of_format != pixelPlanes[0].getPixelFormat() || video.getWidth(frame) != pixelPlanes[0].getWidth() || video.getHeight(frame) != pixelPlanes[0].getHeight()) {
-		updateFormat(av_format, video.getWidth(frame), video.getHeight(frame));
+	if (pixelPlanes.size() == 0 || of_format != pixelPlanes[0].getPixelFormat() || f.getWidth() != pixelPlanes[0].getWidth() || f.getHeight() != pixelPlanes[0].getHeight()) {
+		updateFormat(av_format, f.getWidth(), f.getHeight());
 	}
 
 	for (size_t i = 0; i < pixelPlanes.size(); i++) {
-		pixelPlanes[i].setFromAlignedPixels(video.getFrameData(frame, i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), video.getLineSize(frame, i) * pixelPlanes[i].getBytesPerChannel());
+		pixelPlanes[i].setFromAlignedPixels(f.getData(i), pixelPlanes[i].getWidth(), pixelPlanes[i].getHeight(), pixelPlanes[i].getPixelFormat(), f.getLineSize(i) * pixelPlanes[i].getBytesPerChannel());
 		texturePlanes[i].loadData(pixelPlanes[i]);
 	}
 }
@@ -674,7 +685,7 @@ void ofxFFmpegPlayer::nextFrame() {
 	if (frame) {
 		videoTimeSeconds = video.rescaleTime(frame) * reader.getTimeBase();
 		audioTimeSeconds = videoTimeSeconds;
-		audioPackets.flush();
+		//audioPackets.flush();
 	}
 	else {
 		while (0);
@@ -795,9 +806,26 @@ const std::vector<ofTexture>& ofxFFmpegPlayer::getTexturePlanes() const {
 }
 
 //--------------------------------------------------------------
+void ofxFFmpegPlayer::setAudioOutputSettings(const ofSoundStreamSettings & settings) {
+	audioSettings = settings;
+}
+
+//--------------------------------------------------------------
+ofSoundStreamSettings & ofxFFmpegPlayer::getAudioOuputSettings() {
+	return audioSettings;
+}
+
+//--------------------------------------------------------------
+const ofSoundStreamSettings & ofxFFmpegPlayer::getAudioOuputSettings() const {
+	return audioSettings;
+}
+
+//--------------------------------------------------------------
 void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 
-	if (!isPlaying() || isPaused() || isBuffering)
+	bool audioIsOpen = audioStream.getSoundStream() != NULL;
+
+	if (audioIsOpen && (!isPlaying() || isPaused() || isBuffering))
 		return;
 
 	int samples = audioBuffer.read(buffer.getBuffer().data(), buffer.size());
@@ -808,6 +836,24 @@ void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 	uint64_t duration = buffer.getDurationMicros();
 	audioTimeSeconds += duration / 1000000.;
 	//clock.tick(duration);
+}
+
+//--------------------------------------------------------------
+size_t ofxFFmpegPlayer::getAudioAvailable() {
+	return audioBuffer.getAvailableRead() / audioSettings.numOutputChannels;
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::openAudio() {
+	audioStream.setSoundStream(make_shared<OF_SOUND_STREAM_TYPE>());
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::closeAudio() {
+	audioStream.close();
+	auto soudStream = audioStream.getSoundStream();
+	soudStream.reset();
+	audioStream.setSoundStream(shared_ptr<ofBaseSoundStream>(nullptr));
 }
 
 //--------------------------------------------------------------

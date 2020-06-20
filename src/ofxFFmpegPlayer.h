@@ -13,6 +13,9 @@ public:
 	bool isLoaded() const;
 	bool isInitialized() const;
 
+	/////////////////////////////////////////////////
+	// VIDEO
+
 	void update();
 	bool isFrameNew() const;
 
@@ -57,7 +60,18 @@ public:
 	std::vector<ofTexture> & getTexturePlanes();
 	const std::vector<ofTexture> & getTexturePlanes() const;
 
+	/////////////////////////////////////////////////
+	// AUDIO
+
+	void setAudioOutputSettings(const ofSoundStreamSettings & settings);
+	ofSoundStreamSettings & getAudioOuputSettings();
+	const ofSoundStreamSettings & getAudioOuputSettings() const;
+
 	void audioOut(ofSoundBuffer & buffer);
+
+	size_t getAudioAvailable();
+	void openAudio();
+	void closeAudio();
 
 	static bool openHardware(int device_type);
 
@@ -104,6 +118,7 @@ protected:
 	ofxFFmpeg::AudioBuffer<float> audioBuffer;
 
 	ofSoundStream audioStream;
+	ofSoundStreamSettings audioSettings;
 
 	bool _isPlaying = false;
 	bool isBuffering = false;

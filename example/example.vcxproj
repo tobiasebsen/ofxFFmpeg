@@ -190,8 +190,10 @@
   <ItemGroup>
     <ClCompile Include="..\libs\ofxFfmpeg\src\AudioBuffer.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\AudioResampler.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Codec.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Decoder.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Encoder.cpp" />
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Frame.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Hardware.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\Metrics.cpp" />
     <ClCompile Include="..\libs\ofxFfmpeg\src\OpenGL.cpp" />
@@ -210,9 +212,11 @@
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\AudioBuffer.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\AudioResampler.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Clock.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Codec.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Decoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Encoder.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Flow.h" />
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Frame.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Hardware.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Metrics.h" />
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\OpenGL.h" />

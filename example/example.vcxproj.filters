@@ -52,6 +52,12 @@
     <ClCompile Include="..\libs\ofxFfmpeg\src\OpenGL.cpp">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
     </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Codec.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\libs\ofxFfmpeg\src\Frame.cpp">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -513,6 +519,12 @@
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include\ofxFFmpeg</Filter>
     </ClInclude>
     <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\OpenGL.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include\ofxFFmpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Codec.h">
+      <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include\ofxFFmpeg</Filter>
+    </ClInclude>
+    <ClInclude Include="..\libs\ofxFfmpeg\include\ofxFFmpeg\Frame.h">
       <Filter>addons\ofxFFmpeg\libs\ofxFfmpeg\include\ofxFFmpeg</Filter>
     </ClInclude>
   </ItemGroup>

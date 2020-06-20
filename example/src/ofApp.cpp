@@ -10,6 +10,10 @@ void ofApp::setup(){
 
 	ofxFFmpegPlayer::openHardware(ofxFFmpeg::HardwareDevice::getType("dxva2"));
 
+	ofSoundStreamSettings settings = player.getAudioOuputSettings();
+	settings.sampleRate = 48000;
+	player.setAudioOutputSettings(settings);
+
 	showDebug = false;
 }
 
