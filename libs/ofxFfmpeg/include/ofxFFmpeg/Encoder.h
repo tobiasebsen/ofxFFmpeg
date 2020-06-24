@@ -5,6 +5,7 @@
 
 #include "AvTypes.h"
 #include "Codec.h"
+#include "Hardware.h"
 #include "Flow.h"
 
 namespace ofxFFmpeg {
@@ -35,6 +36,9 @@ namespace ofxFFmpeg {
 
 	class VideoEncoder : public Encoder, public VideoCodec {
 	public:
+
+		using Encoder::open;
+		bool open(AVStream * stream, HardwareDevice & hardware);
 
 		int64_t rescaleFrameNum(int64_t frame_num);
 	};

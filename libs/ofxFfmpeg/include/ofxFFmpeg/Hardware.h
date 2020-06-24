@@ -32,7 +32,7 @@ namespace ofxFFmpeg {
 		static AVFrame * transfer(AVFrame * hw_frame);
 		static void free(AVFrame * frame);
 
-		static int getNumHardwareConfig(const AVCodec * codec);
+		static int getNumConfig(const AVCodec * codec);
 
 		static std::vector<int> getTypes();
 		static std::vector<std::string> getTypeNames();

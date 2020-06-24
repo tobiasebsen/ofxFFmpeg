@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <queue>
+#include <map>
 
 #include "AvTypes.h"
 #include "Flow.h"
@@ -32,6 +33,7 @@ namespace ofxFFmpeg {
 		void free(AVPacket * packet);
 
         void seek(uint64_t pts);
+		void seek(uint64_t pts, PacketReceiver * receiver);
 
 		/////////////////////////////////////////////////
         // THREADING
@@ -65,6 +67,8 @@ namespace ofxFFmpeg {
 		float getDuration() const;
         uint64_t getBitRate() const;
         double getTimeBase() const;
+
+		std::map<std::string, std::string> getMetadata();
 
 		const Metrics & getMetrics() const;
 

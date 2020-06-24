@@ -75,6 +75,8 @@ namespace ofxFFmpeg {
     
     template<typename T>
     int AudioBuffer<T>::write(T * src, int samples) {
+
+		if (buffer.size() == 0) return 0;
         
         samples = std::min(samples, getAvailableWrite());
         int write_point = write_total % buffer.size();
@@ -90,6 +92,8 @@ namespace ofxFFmpeg {
 
     template<typename T>
     int AudioBuffer<T>::read(T * dst, int samples) {
+
+		if (buffer.size() == 0) return 0;
 
         samples = std::min(samples, getAvailableRead());
         int read_point = read_total % buffer.size();

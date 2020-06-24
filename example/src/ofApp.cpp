@@ -38,7 +38,7 @@ void ofApp::draw(){
 	ofDrawBitmapStringHighlight(ofToString(fps.getFps(),1) + " fps", 20, 40);
 
 	if (showDebug) {
-		player.drawDebug(20, 60);
+		player.drawDebug(20, 80);
 	}
 }
 

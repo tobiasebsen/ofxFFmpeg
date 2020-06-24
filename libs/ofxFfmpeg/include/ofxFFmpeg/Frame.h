@@ -16,8 +16,12 @@ namespace ofxFFmpeg {
 		static void free(AVFrame * f);
 
 		uint8_t * getData(int plane = 0);
+
 		int64_t getTimeStamp() const;
 		void setTimeStamp(int64_t pts);
+
+		int64_t getDecodeTime() const;
+		void setDecodeTime(int64_t dts);
 
 	protected:
 		AVFrame * frame;
@@ -58,6 +62,9 @@ namespace ofxFFmpeg {
 
 		int64_t getTimeStamp() const;
 		void	setTimeStamp(int64_t pts);
+
+		int64_t	getDuration() const;
+		void	setDuration(int64_t duration);
 
 	protected:
 		AVPacket * packet;

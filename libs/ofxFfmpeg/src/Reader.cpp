@@ -89,9 +89,33 @@ void Reader::seek(uint64_t pts) {
 	if (isRunning()) {
 		seek_pts = pts;
 	}
-	else {
-		std::lock_guard<std::mutex> lock(mutex);
-		error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
+}
+
+//--------------------------------------------------------------
+void Reader::seek(uint64_t pts, PacketReceiver * receiver) {
+
+	error = av_seek_frame(format_context, -1, pts, AVSEEK_FLAG_BACKWARD);
+	if (error < 0) {
+		return;
+	}
+
+	AVPacket * packet = read();
+	while (packet) {
+		int i = packet->stream_index;
+		AVStream * stream = format_context->streams[i];
+		int64_t ts = av_rescale_q(packet->pts, stream->time_base, { 1, AV_TIME_BASE });
+		if (ts < pts) {
+			packet->flags |= AV_PKT_FLAG_DISCARD;
+		}
+		receiver->receive(packet);
+		av_packet_unref(packet);
+		av_packet_free(&packet);
+		
+		if (ts >= pts) {
+			break;
+		}
+		
+		packet = read();
 	}
 }
 
@@ -104,7 +128,6 @@ bool Reader::start(PacketReceiver * receiver) {
 	this->receiver = receiver;
 	this->receiver->resumePacketReceiver();
 
-	seek(0);
 	if (thread_obj) delete thread_obj;
     thread_obj = new std::thread(&Reader::readThread, this);
 
@@ -236,6 +259,17 @@ uint64_t Reader::getBitRate() const {
 //--------------------------------------------------------------
 double Reader::getTimeBase() const {
     return av_q2d({ 1, AV_TIME_BASE });
+}
+
+//--------------------------------------------------------------
+std::map<std::string, std::string> Reader::getMetadata() {
+	std::map<std::string, std::string> metadata;
+	AVDictionaryEntry *tag = NULL;
+
+	while ((tag = av_dict_get(format_context->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+		metadata[tag->key] = tag->value;
+	}
+	return metadata;
 }
 
 //--------------------------------------------------------------

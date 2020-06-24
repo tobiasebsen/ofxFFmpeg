@@ -2,6 +2,7 @@
 
 #include "AvTypes.h"
 #include <string>
+#include <vector>
 
 namespace ofxFFmpeg {
 
@@ -16,6 +17,7 @@ namespace ofxFFmpeg {
 		bool open(const AVCodec * codec);
 		bool open(AVStream * stream);
 		bool isOpen() const;
+		void close();
 		bool match(AVPacket * packet);
 
 
@@ -30,7 +32,12 @@ namespace ofxFFmpeg {
 		void	setMaxBitRate(int bitRate);
 		void	setBufferSize(int bufferSize);
 
+		double getTimeBase() const;
+
+		int getError() const;
+		std::string getErrorString() const;
 		AVCodecContext * getContext() const;
+		const AVCodec * getCodec() const;
 
 	protected:
 		int error = 0;
@@ -72,5 +79,21 @@ namespace ofxFFmpeg {
 		int		getSampleFormat() const;
 		int		getChannelLayout() const;
 		int		getFrameSize() const;
+	};
+
+	/////////////////////////////////////////////////////
+
+	class Codecs : public std::vector<const AVCodec*> {
+	public:
+
+		static Codecs getCodecs();
+		static Codecs getID(const Codecs & codecs, int codecID);
+		static Codecs getHardware(const Codecs & codecs);
+		static Codecs getDecode(const Codecs & codecs);
+		static Codecs getEncode(const Codecs & codecs);
+		static Codecs getVideo(const Codecs & codecs);
+		static Codecs getAudio(const Codecs & codecs);
+
+		std::vector<std::string> getNames();
 	};
 }

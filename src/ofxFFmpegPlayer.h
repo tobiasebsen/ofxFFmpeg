@@ -52,6 +52,7 @@ public:
 
 	void setFrame(int frame);
 	void setPosition(float pct);
+	void setTime(int64_t pts);
 
 	ofTexture & getTexture();
 	const ofTexture & getTexture() const;
@@ -89,6 +90,9 @@ protected:
 	void updateFrame(AVFrame * frame);
 	void updateTextures(AVFrame * frame);
 	void updateFormat(int av_format, int width, int height);
+
+	void drawDebug(string name, const ofxFFmpeg::Metrics & metrics, float x, float y) const;
+	void drawDebug(string name, int size, int capacity, float x, float y) const;
     
     void loadShaderNV12() const;
     void bindShaderNV12(const ofTexture & textureY, const ofTexture & textureUV) const;
@@ -129,6 +133,7 @@ protected:
 	bool isMovieDone = false;
 	int frameNum = 0;
 
+	double realTimeSeconds;
 	double videoTimeSeconds;
 	double audioTimeSeconds;
 	uint64_t last_frame_pts;

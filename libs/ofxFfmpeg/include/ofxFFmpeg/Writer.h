@@ -13,7 +13,7 @@ namespace ofxFFmpeg {
 		bool open(const std::string filename);
 		void close();
 
-		AVStream * addStream();
+		AVStream * addStream(const AVCodec * codec = nullptr);
 
 		bool begin();
 		void end();
@@ -29,7 +29,7 @@ namespace ofxFFmpeg {
 	protected:
 		int error = 0;
 
-		AVIOContext *io_context = NULL;
-		AVFormatContext *format_context = NULL;
+		AVIOContext *io_context = nullptr;
+		AVFormatContext *format_context = nullptr;
 	};
 }

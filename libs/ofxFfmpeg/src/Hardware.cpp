@@ -1,4 +1,5 @@
 #include "ofxFFmpeg/Hardware.h"
+#include "ofxFFmpeg/Codec.h"
 
 extern "C" {
 #include "libavformat/avformat.h"
@@ -168,7 +169,7 @@ std::vector<std::string> HardwareDevice::getTypeNames() {
 }
 
 //--------------------------------------------------------------
-int HardwareDevice::getNumHardwareConfig(const AVCodec * codec) {
+int HardwareDevice::getNumConfig(const AVCodec * codec) {
 	const AVCodecHWConfig *config = NULL;
 	for (int i=0; ; i++) {
 		config = avcodec_get_hw_config(codec, i);

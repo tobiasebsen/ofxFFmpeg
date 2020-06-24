@@ -1,5 +1,7 @@
 #include "ofxFFmpeg/Codec.h"
 
+#include <algorithm>
+
 extern "C" {
 #include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
@@ -70,7 +72,13 @@ bool Codec::isOpen() const {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::Codec::match(AVPacket * packet) {
+void Codec::close() {
+	stream = NULL;
+	free();
+}
+
+//--------------------------------------------------------------
+bool Codec::match(AVPacket * packet) {
 	return packet && stream && packet->stream_index == stream->index;
 }
 
@@ -121,8 +129,30 @@ void Codec::setBufferSize(int bufferSize) {
 }
 
 //--------------------------------------------------------------
+double Codec::getTimeBase() const {
+	return stream ? av_q2d(stream->time_base) : 1;
+}
+
+//--------------------------------------------------------------
+int Codec::getError() const {
+	return 0;
+}
+
+//--------------------------------------------------------------
+std::string Codec::getErrorString() const {
+	char errstr[AV_ERROR_MAX_STRING_SIZE];
+	av_strerror(error, errstr, sizeof(errstr));
+	return std::string(errstr);
+}
+
+//--------------------------------------------------------------
 AVCodecContext * Codec::getContext() const {
 	return context;
+}
+
+//--------------------------------------------------------------
+const AVCodec * Codec::getCodec() const {
+	return context ? context->codec : NULL;
 }
 
 //--------------------------------------------------------------
@@ -157,8 +187,12 @@ void VideoCodec::setPixelFormat(int pix_fmt) {
 
 //--------------------------------------------------------------
 double VideoCodec::getFrameRate() const {
-	//return av_q2d(stream->avg_frame_rate);
-	return context ? av_q2d(context->framerate) : 0;
+	if (context && context->framerate.num > 0)
+		return context ? av_q2d(context->framerate) : 0;
+	else if (stream)
+		return av_q2d(stream->r_frame_rate);
+	else
+		return 0;
 }
 
 //--------------------------------------------------------------
@@ -220,4 +254,60 @@ int AudioCodec::getChannelLayout() const {
 //--------------------------------------------------------------
 int ofxFFmpeg::AudioCodec::getFrameSize() const {
 	return context ? context->frame_size : 0;
+}
+
+//--------------------------------------------------------------
+Codecs Codecs::getCodecs() {
+	Codecs codecs;
+	const AVCodec *codec = nullptr;
+	void *i = 0;
+	while ((codec = av_codec_iterate(&i))) {
+		codecs.push_back(codec);
+	}
+	return codecs;
+}
+
+//--------------------------------------------------------------
+Codecs Codecs::getID(const Codecs & codecs, int codec_id) {
+	Codecs hwcodecs;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(hwcodecs), [codec_id](const AVCodec * c) {return c->id == (AVCodecID)codec_id; });
+	return hwcodecs;
+}
+
+//--------------------------------------------------------------
+Codecs Codecs::getHardware(const Codecs & codecs) {
+	Codecs hwcodecs;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(hwcodecs), [](const AVCodec * c) {return c->capabilities & AV_CODEC_CAP_HARDWARE; });
+	return hwcodecs;
+}
+//--------------------------------------------------------------
+Codecs Codecs::getDecode(const Codecs & codecs) {
+	Codecs decoders;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(decoders), [](const AVCodec * c) {return av_codec_is_decoder(c) != 0; });
+	return decoders;
+}
+//--------------------------------------------------------------
+Codecs Codecs::getEncode(const Codecs & codecs) {
+	Codecs encoders;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(encoders), [](const AVCodec * c) {return av_codec_is_encoder(c) != 0; });
+	return encoders;
+}
+//--------------------------------------------------------------
+Codecs Codecs::getVideo(const Codecs & codecs) {
+	Codecs video;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(video), [](const AVCodec * c) {return c->type == AVMEDIA_TYPE_VIDEO; });
+	return video;
+}
+//--------------------------------------------------------------
+Codecs Codecs::getAudio(const Codecs & codecs) {
+	Codecs audio;
+	std::copy_if(codecs.begin(), codecs.end(), std::back_inserter(audio), [](const AVCodec * c) {return c->type == AVMEDIA_TYPE_AUDIO; });
+	return audio;
+}
+
+//--------------------------------------------------------------
+std::vector<std::string> Codecs::getNames() {
+	std::vector<std::string> names;
+	std::transform(begin(), end(), std::back_inserter(names), [](const AVCodec * c) {return c->name; });
+	return names;
 }

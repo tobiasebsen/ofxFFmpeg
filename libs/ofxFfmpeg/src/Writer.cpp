@@ -53,8 +53,8 @@ void Writer::close() {
 }
 
 //--------------------------------------------------------------
-AVStream * Writer::addStream() {
-	AVStream * stream = avformat_new_stream(format_context, NULL);
+AVStream * Writer::addStream(const AVCodec * codec) {
+	AVStream * stream = avformat_new_stream(format_context, codec);
 	if (stream) {
 		stream->id = format_context->nb_streams - 1;
 	}
@@ -74,6 +74,7 @@ bool Writer::begin() {
 void Writer::end() {
 	if (format_context) {
 		av_write_trailer(format_context);
+		avio_flush(io_context);
 	}
 }
 

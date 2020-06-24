@@ -31,6 +31,14 @@ void Frame::setTimeStamp(int64_t pts) {
 	frame->pts = pts;
 }
 //--------------------------------------------------------------
+int64_t Frame::getDecodeTime() const {
+	return frame->pkt_dts;
+}
+//--------------------------------------------------------------
+void Frame::setDecodeTime(int64_t dts) {
+	frame->pkt_dts = dts;
+}
+//--------------------------------------------------------------
 VideoFrame VideoFrame::allocate(int width, int height, int pix_fmt) {
 	AVFrame * frame = av_frame_alloc();
 	frame->width = width;
@@ -89,4 +97,14 @@ int64_t Packet::getTimeStamp() const {
 //--------------------------------------------------------------
 void Packet::setTimeStamp(int64_t pts) {
 	packet->pts = pts;
+}
+
+//--------------------------------------------------------------
+int64_t Packet::getDuration() const {
+	return packet->duration;
+}
+
+//--------------------------------------------------------------
+void Packet::setDuration(int64_t duration) {
+	packet->duration = duration;
 }

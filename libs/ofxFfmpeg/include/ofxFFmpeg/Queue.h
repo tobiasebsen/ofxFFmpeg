@@ -122,7 +122,13 @@ namespace ofxFFmpeg {
 
 		bool receive(T * t, int stream_index) {
             if (Queue<T>::push(t)) {
-				head_pts = get_head(t);
+				std::lock_guard<std::mutex> lock(mutex);
+				if (queue.size() > 0) {
+					head_pts = get_head(queue.back());
+					if (tail_pts == -1) {
+						tail_pts = get_tail(queue.front());
+					}
+				}
 				return true;
 			}
 			return false;
@@ -130,6 +136,16 @@ namespace ofxFFmpeg {
 
 		T * supply() {
 			T * t = Queue<T>::pop();
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+				if (queue.size() > 0) {
+					tail_pts = get_tail(queue.front());
+				}
+				else {
+					head_pts = -1;
+					tail_pts = -1;
+				}
+			}
 			return t;
 		}
 
@@ -140,8 +156,8 @@ namespace ofxFFmpeg {
 		virtual T * clone(T * t) = 0;
 		virtual int64_t get_head(T*) = 0;
 		virtual int64_t get_tail(T*) = 0;
-		int64_t head_pts;
-		int64_t tail_pts;
+		int64_t head_pts = -1;
+		int64_t tail_pts = -1;
 	};
 
     class PacketQueue : public Queue<AVPacket>, public PacketReceiver, public PacketSupplier {

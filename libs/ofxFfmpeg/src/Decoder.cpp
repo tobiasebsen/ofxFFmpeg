@@ -104,7 +104,7 @@ void Decoder::flush() {
 
 //--------------------------------------------------------------
 bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
-    if (!isAllocated())
+    if (!isAllocated() || !isOpen())
         return false;
 
 	stop();

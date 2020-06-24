@@ -25,8 +25,7 @@ public:
     bool start();
     void stop();
 
-    void write(const ofPixels & pixels, int frameNumber = -1);
-	void write(const ofPixels & pixels, float timeSeconds);
+    void write(const ofPixels & pixels);
 
 	void writeAudio();
 	void writeAudio(int nb_samples);

@@ -43,6 +43,8 @@ bool Encoder::open(AVStream * stream) {
 
 	stream->avg_frame_rate = context->framerate;
 	stream->r_frame_rate = context->framerate;
+	stream->time_base = av_inv_q(context->framerate);
+	context->time_base = av_inv_q(context->framerate);
 
 	//if (output_format_context->flags & AVFMT_GLOBALHEADER)
 	context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -78,6 +80,9 @@ bool Encoder::encode(AVFrame * frame, PacketReceiver * receiver) {
 		error = avcodec_receive_packet(context, &packet);
 		if (error >= 0) {
 			packet.stream_index = stream->index;
+
+			av_packet_rescale_ts(&packet, context->time_base, stream->time_base);
+
 			receiver->receive(&packet);
 			av_packet_unref(&packet);
 		}
@@ -91,11 +96,16 @@ void Encoder::flush(PacketReceiver * receiver) {
 }
 
 //--------------------------------------------------------------
+bool VideoEncoder::open(AVStream * stream, HardwareDevice & hardware) {
+	return false;
+}
+
+//--------------------------------------------------------------
 int64_t VideoEncoder::rescaleFrameNum(int64_t frame_num) {
 	return av_rescale_q(frame_num, context->time_base, stream->time_base);
 }
 
 //--------------------------------------------------------------
-int64_t ofxFFmpeg::AudioEncoder::rescaleSampleCount(int64_t nb_samples) {
+int64_t AudioEncoder::rescaleSampleCount(int64_t nb_samples) {
 	return av_rescale_q(nb_samples, context->time_base, stream->time_base);
 }

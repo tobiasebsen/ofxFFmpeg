@@ -17,6 +17,8 @@ ofxFFmpegRecorder::~ofxFFmpegRecorder() {
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::open(const string filename) {
 
+	close();
+
 	string filePath = ofFilePath::getAbsolutePath(filename);
 
 	if (!writer.open(filePath)) {
@@ -70,54 +72,72 @@ bool ofxFFmpegRecorder::start() {
 
 	if (video.isAllocated()) {
 		AVStream * stream = writer.addStream();
+		if (!stream)
+			return false;
 		
-		if (video.open(stream)) {
-			ofLogVerbose() << "== VIDEO STREAM ==";
-			ofLogVerbose() << "  " << video.getLongName();
-			ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
+		if (!video.open(stream))
+			return false;
 
-			ofxFFmpeg::PixelFormat format(video.getPixelFormat());
-			ofLogVerbose() << "  " << format.getName();
-			ofLogVerbose() << "  " << video.getFrameRate() << " fps";
-			ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
+		ofLogVerbose() << "== VIDEO STREAM ==";
+		ofLogVerbose() << "  " << video.getLongName();
+		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
 
-			vframe = VideoFrame::allocate(video.getWidth(), video.getHeight(), video.getPixelFormat());
+		ofxFFmpeg::PixelFormat format(video.getPixelFormat());
+		ofLogVerbose() << "  " << format.getName();
+		ofLogVerbose() << "  " << video.getFrameRate() << " fps";
+		ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
 
-			scaler.allocate(video);
-		}
+		vframe = VideoFrame::allocate(video.getWidth(), video.getHeight(), video.getPixelFormat());
+		if (!vframe)
+			return false;
+
+		frame_count = 0;
+
+		if (!scaler.allocate(video))
+			return false;
 	}
 	if (audio.isAllocated()) {
 		AVStream * stream = writer.addStream();
-		
-		if (audio.open(stream)) {
-			ofLogVerbose() << "== AUDIO STREAM ==";
-			ofLogVerbose() << "  " << audio.getLongName();
-			ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
-			ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
-			ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
-			ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
+		if (!stream)
+			return false;
 
-			aframe = AudioFrame::allocate(audio.getFrameSize(), audio.getNumChannels(), audio.getSampleFormat());
+		if (!audio.open(stream))
+			return false;
 
-			audioBuffer.allocate(audioSettings.sampleRate * audioSettings.numInputChannels * 1.f); // 1 second buffer
-			resampler.allocate(44100, 2, AudioResampler::getSampleFormat<float>(), audio);
-		}
+		ofLogVerbose() << "== AUDIO STREAM ==";
+		ofLogVerbose() << "  " << audio.getLongName();
+		ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
+		ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
+		ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
+		ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
+
+		aframe = AudioFrame::allocate(audio.getFrameSize(), audio.getNumChannels(), audio.getSampleFormat());
+		if (!aframe)
+			return false;
+
+		audioBuffer.allocate(audioSettings.sampleRate * audioSettings.numInputChannels * 1.f); // 1 second buffer
+		if (!resampler.allocate(44100, 2, AudioResampler::getSampleFormat<float>(), audio))
+			return false;
 	}
 
-	writer.begin();
+	if (!writer.begin())
+		return false;
 
-    frame_count = 0;
-    
     return true;
 }
 //--------------------------------------------------------------
 void ofxFFmpegRecorder::stop() {
 
-	writeAudio();
-	writeAudioFinal();
+	if (audio.isOpen()) {
+		writeAudio();
+		writeAudioFinal();
+		audio.flush(this);
+	}
 
-	video.flush(this);
-	audio.flush(this);
+	if (video.isOpen()) {
+		video.flush(this);
+	}
+
 	writer.end();
 
 	close();
@@ -126,43 +146,17 @@ void ofxFFmpegRecorder::stop() {
 //--------------------------------------------------------------
 bool ofxFFmpegRecorder::receive(AVPacket * packet) {
 
-	Packet p(packet);
-
-	if (video.match(packet)) {
-		int64_t frame_num = p.getTimeStamp();
-		int64_t pts = video.rescaleFrameNum(frame_num);
-		p.setTimeStamp(pts);
-	}
-	if (audio.match(packet)) {
-		size_t nb_samples = p.getTimeStamp();
-		int64_t pts = audio.rescaleSampleCount(nb_samples);
-		p.setTimeStamp(pts);
-	}
-
 	writer.write(packet);
 
 	return true;
 }
 
 //--------------------------------------------------------------
-void ofxFFmpegRecorder::write(const ofPixels & pixels, int frameNumber) {
+void ofxFFmpegRecorder::write(const ofPixels & pixels) {
 
 	scaler.scale(pixels.getData(), pixels.getBytesStride(), pixels.getHeight(), vframe);
    
-	VideoFrame(vframe).setTimeStamp((int)(frameNumber == -1 ? frame_count : frameNumber));
-
-	video.encode(vframe, this);
-	frame_count++;
-
-	writeAudio();
-}
-
-//--------------------------------------------------------------
-void ofxFFmpegRecorder::write(const ofPixels & pixels, float timeSeconds) {
-
-	scaler.scale(pixels.getData(), pixels.getBytesStride(), pixels.getHeight(), vframe);
-
-	VideoFrame(vframe).setTimeStamp(timeSeconds);
+	VideoFrame(vframe).setTimeStamp(frame_count);
 
 	video.encode(vframe, this);
 	frame_count++;
@@ -172,6 +166,9 @@ void ofxFFmpegRecorder::write(const ofPixels & pixels, float timeSeconds) {
 
 //--------------------------------------------------------------
 void ofxFFmpegRecorder::writeAudio() {
+
+	if (!audio.isOpen() || !aframe || !resampler.isAllocated())
+		return;
 
 	AudioFrame f(aframe);
 	int nb_samples = resampler.getInSamples(f.getNumSamples());
@@ -184,6 +181,9 @@ void ofxFFmpegRecorder::writeAudio() {
 
 //--------------------------------------------------------------
 void ofxFFmpegRecorder::writeAudio(int nb_samples) {
+
+	if (!audio.isOpen() || !aframe || !resampler.isAllocated())
+		return;
 
 	float * buffer = (float*)resampler.allocateSamplesInput(nb_samples);
 
@@ -239,7 +239,7 @@ void ofxFFmpegRecorder::close() {
 	Frame::free(aframe);
 	vframe = NULL;
 	aframe = NULL;
-	video.free();
-	audio.free();
 	writer.close();
+	video.close();
+	audio.close();
 }
