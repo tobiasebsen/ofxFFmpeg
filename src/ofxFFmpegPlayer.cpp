@@ -39,22 +39,28 @@ bool ofxFFmpegPlayer::load(string filename) {
     loadShaderNV12();
 
 	frameNum = 0;
-	videoTimeSeconds = 0;
-	audioTimeSeconds = 0;
-	last_frame_pts = 0;
-    
+	realTime = 0;
+	audioTime = 0;
+	video_ts_last = 0;
+
     ofLogVerbose() << "== FORMAT ==";
 	ofLogVerbose() << reader.getLongName();
-	ofLogVerbose() << reader.getDuration() << " seconds";
+	ofLogVerbose() << reader.getDurationSeconds() << " seconds";
     ofLogVerbose() << (reader.getBitRate() / 1024.f) << " kb/s";
     ofLogVerbose() << reader.getNumStreams() << " stream(s)";
+
+	ofLogVerbose() << "== META DATA ==";
 	auto metadata = reader.getMetadata();
+	for (auto & m : metadata) {
+		ofLogVerbose() << "  " << m.first << " : " << m.second;
+	}
 
 	if (video.open(reader, videoHardware)) {
 		ofLogVerbose() << "== VIDEO STREAM ==";
 		int num_hw = HardwareDevice::getNumConfig(reader.getVideoCodec());
 		ofLogVerbose() << "  " << num_hw << " hardware decoder(s) found";
 		ofLogVerbose() << "  " << video.getLongName();
+		ofLogVerbose() << "  " << video.getTagString();
 		ofLogVerbose() << "  " << video.getWidth() << "x" << video.getHeight();
 
 		ofxFFmpeg::PixelFormat format(video.getPixelFormat());
@@ -62,44 +68,23 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << video.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << video.getTotalNumFrames() << " frames";
         ofLogVerbose() << "  " << video.getFrameRate() << " fps";
+		ofLogVerbose() << "  " << video.getDurationSeconds() << " seconds";
         ofLogVerbose() << "  " << (video.getBitRate() / 1000.f) << " kb/s";
+
 
 		if (video.hasHardwareDecoder() && openglDevice.isOpen()) {
 
-            if (openglRenderer.open(openglDevice, video.getWidth(), video.getHeight(), GL_TEXTURE_RECTANGLE)) {
-                pixelFormat = getPixelFormat(openglRenderer.getPixelFormat());
-
+			// OpenGL rendering
+			if (openglRenderer.open(openglDevice, video.getWidth(), video.getHeight(), GL_TEXTURE_RECTANGLE)) {
+				int format = openglRenderer.getPixelFormat();
                 int planes = openglRenderer.getNumPlanes();
-                texturePlanes.resize(planes);
-                
-                for (int i=0; i<planes; i++) {
-                    texturePlanes[i].setUseExternalTextureID(openglRenderer.getTexture(i));
-
-                    ofTextureData & texData = texturePlanes[i].texData;
-                    texData.textureTarget = openglRenderer.getTarget();
-                    texData.width = openglRenderer.getWidth(i);
-                    texData.height = openglRenderer.getHeight(i);
-                    texData.tex_w = texData.width;
-                    texData.tex_h = texData.height;
-                    if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
-                        texData.tex_t = texData.width;
-                        texData.tex_u = texData.height;
-                    }
-                    else {
-                        texData.tex_t = texData.tex_w / texData.width;
-                        texData.tex_u = texData.tex_h / texData.height;
-                    }
-                }
+				updateFormatGL(format, video.getWidth(), video.getHeight(), planes);
             }
 		}
 		else {
 
-			int format = video.getPixelFormat();
-
-			if (video.hasHardwareDecoder()) {
-				format = FFMPEG_FORMAT_NV12;
-			}
-
+			// Pixel-upload rendering
+			int format = video.hasHardwareDecoder() ? FFMPEG_FORMAT_NV12 : video.getPixelFormat();
 			updateFormat(format, video.getWidth(), video.getHeight());
 		}
     }
@@ -110,7 +95,8 @@ bool ofxFFmpegPlayer::load(string filename) {
         ofLogVerbose() << "  " << audio.getBitsPerSample() << " bits";
         ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
         ofLogVerbose() << "  " << audio.getTotalNumFrames() << " frames";
-        ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
+        ofLogVerbose() << "  " << audio.getNumSamples() << " samples/frame";
+		ofLogVerbose() << "  " << audio.getDurationSeconds() << " seconds";
         ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
 
 		audioStream.setup(audioSettings);
@@ -118,10 +104,6 @@ bool ofxFFmpegPlayer::load(string filename) {
         resampler.allocate(audio, audioSettings.sampleRate, audioSettings.numOutputChannels, AudioResampler::getSampleFormat<float>());
         audioBuffer.allocate(audioSettings.sampleRate * audioSettings.numOutputChannels * 1.f); // 1 second buffer
     }
-
-	frameNum = 0;
-	videoTimeSeconds = 0;
-	audioTimeSeconds = 0;
 
 	return true;
 }
@@ -137,14 +119,17 @@ void ofxFFmpegPlayer::close() {
 	audio.close();
 	reader.close();
 
+	videoPackets.clear();
+	videoCache.clear();
+	audioPackets.clear();
+	audioBuffer.free();
+
 	scaler.free();
 	resampler.free();
 
 	openglRenderer.close();
 	pixelPlanes.clear();
 	texturePlanes.clear();
-
-	audioBuffer.free();
 }
 
 //--------------------------------------------------------------
@@ -154,6 +139,7 @@ void ofxFFmpegPlayer::play() {
 
 		isBuffering = true;
 		isMovieDone = false;
+
 		audioBuffer.reset();
 
 		if (scaler.isAllocated()) {
@@ -166,10 +152,6 @@ void ofxFFmpegPlayer::play() {
 		audio.start(&audioPackets, this);
 		//reader.seek(0, this);
 		reader.start(this);
-
-		//audioStream.start();
-
-		_isPlaying = true;
 	}
 }
 
@@ -179,29 +161,28 @@ void ofxFFmpegPlayer::stop() {
 	reader.stop();
 
 	video.stop();
-	videoPackets.flush();
 	video.flush();
+	videoPackets.clear();
 
 	videoPackets.resize(4);
-	videoFrames.flush();
-	videoCache.flush();
+	videoFrames.clear();
+	videoCache.clear();
 
 	scaler.stop();
 
 	audio.stop();
-	audioPackets.flush();
 	audio.flush();
+	audioPackets.clear();
 
 	//audioStream.stop();
 
-	videoTimeSeconds = 0;
-	audioTimeSeconds = 0;
+	realTime = 0;
+	audioTime = 0;
 	frameNum = 0;
-	_isPlaying = false;
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpegPlayer::receive(AVPacket * packet) {
+void ofxFFmpegPlayer::receive(AVPacket * packet) {
 
 	// VIDEO PACKETS
 	if (video.match(packet)) {
@@ -215,10 +196,10 @@ bool ofxFFmpegPlayer::receive(AVPacket * packet) {
 				}
 			}
 
-			return videoPackets.receive(packet);
+			videoPackets.receive(packet);
 		}
 		else {
-			return video.decode(packet, this);
+			video.decode(packet, this);
 		}
 	}
 
@@ -231,36 +212,29 @@ bool ofxFFmpegPlayer::receive(AVPacket * packet) {
 		}
 
 		if (audio.isRunning()) {
-			return audioPackets.receive(packet);
+			audioPackets.receive(packet);
 		}
 		else {
-			return audio.decode(packet, this);
+			audio.decode(packet, this);
 		}
 	}
-
-	return false;
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::notifyEndPacket() {
-	if (loopState == OF_LOOP_NORMAL) {
-		isLooping = true;
-		reader.seek(0);
+	if (reader.getLoop()) {
 	}
 	else { // loopState == OF_LOOP_NONE
 
-		reader.stop();
-		isFlushing = true;
+		videoPackets.terminate();
+		audioPackets.terminate();
+
 	}
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::terminatePacketReceiver() {
-	//if (video.isRunning())
-		videoPackets.terminatePacketReceiver();
-	/*else
-		videoCache.terminateFrameReceiver();*/
-
+	videoPackets.terminatePacketReceiver();
 	audioPackets.terminatePacketReceiver();
 }
 
@@ -285,18 +259,21 @@ void ofxFFmpegPlayer::resumeFrameReceiver() {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
-
-	bool ret = false;
+void ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 
 	if (stream_index == video.getStreamIndex()) {
 
-		ret = videoCache.receive(frame, stream_index);
+		videoCache.receive(frame, stream_index);
 	}
 	if (stream_index == audio.getStreamIndex()) {
 
 		bool audioIsOpen = audioStream.getSoundStream() != NULL;
-		
+
+		/*ofLog() << AudioFrame(frame).getNumSamples() << " " << AudioFrame(frame).getTimeStamp();
+		if (AudioFrame(frame).getNumSamples() < 1024) {
+			ofLog();
+		}*/
+
 		int samples = 0;
 		float * buffer = (float*)resampler.resample(frame, &samples);
 		if (buffer && samples > 0) {
@@ -310,80 +287,71 @@ bool ofxFFmpegPlayer::receive(AVFrame * frame, int stream_index) {
 					audioBuffer.wait(samples);
 			}
 
-			ret = audioBuffer.write(buffer, samples) > 0 ? true : false;
+			audioBuffer.write(buffer, samples);
 			resampler.free(buffer);
 		}
-		if (isLooping) {
-			//audio_samples_loop = audioBuffer.getTotalWrite();
-		}
 	}
+}
 
-	return ret;
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::notifyEndFrame(int stream_index) {
+
+	if (stream_index == video.getStreamIndex()) {
+	}
+	if (stream_index == audio.getStreamIndex()) {
+	}
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::update() {
 
-	int64_t pts = videoTimeSeconds / reader.getTimeBase();
-	int64_t frame_pts = video.rescaleTimeInv(pts);
-	
 	if (isBuffering) {
-		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioStream.getBufferSize() * 2)) {
+		if ((!video.isOpen() || videoCache.size() == videoCache.capacity()) && (!audio.isOpen() || audioBuffer.getAvailableRead() > audioSettings.bufferSize * audioSettings.numOutputChannels)) {
 			isBuffering = false;
-		}
-	}
-
-	if (isFlushing) {
-		if (!reader.isRunning() && videoCache.size() == 0) {
-			video.flush();
-			isFlushing = false;
 		}
 	}
 
 	if (video.isOpen() && isPlaying() && !isBuffering) {
 
-		AVFrame * frame = videoCache.supply(frame_pts);
+		int64_t video_ts_now = video.rescaleTimeInv(realTime);
+		AVFrame * frame = videoCache.supply(video_ts_now);
+
 		updateFrame(frame);
 
-		if (isLooping) {
-			videoCache.flush(last_frame_pts, frame_pts);
-		}
-		else {
-			videoCache.flush(0, frame_pts);
-		}
+		videoCache.clear(video_ts_last, video_ts_now);
 
 		if (frame) {
-			last_frame_pts = frame_pts;
+			video_ts_last = video_ts_now;
+			videoTime = video.rescaleTime(frame) + video.rescaleDuration(frame);
 			videoCache.free(frame);
 		}
 	}
 
 	// UPDATE CLOCK
 	if (isPlaying() && !isPaused() && !isBuffering) {
-		double dt = ofGetLastFrameTime();
+		int64_t delta = ofGetLastFrameTime() / reader.getTimeBase();
 
-		videoTimeSeconds += dt;
+		// Only update real-time if it's not ahead of audio-time
+		if (!(video.isOpen() && audio.isOpen() && realTime > audioTime))
+			realTime += delta;
 
 		// TIME END
-		if (videoTimeSeconds >= reader.getDuration() && _isPlaying) {
+		if (realTime >= reader.getDuration() && isPlaying()) {
 
-			if (loopState == OF_LOOP_NORMAL) {
-				videoTimeSeconds -= reader.getDuration();
-				audioTimeSeconds -= reader.getDuration();
+			if (reader.getLoop()) {
+				realTime -= reader.getDuration();
+				audioTime -= reader.getDuration();
 				isLooping = false;
 			}
-			if (loopState == OF_LOOP_NONE) {
-				stop();
-				_isPlaying = false;
+			else {
 				isMovieDone = true;
-				videoTimeSeconds = reader.getDuration();
-				audioTimeSeconds = reader.getDuration();
+				realTime = reader.getDuration();
 			}
 		}
 
 		// RE-SYNC VIDEO TO AUDIO
-		if (video.isOpen() && audio.isOpen() && videoTimeSeconds > audioTimeSeconds - 0.1) {
-			videoTimeSeconds = audioTimeSeconds;
+		if (video.isOpen() && audio.isOpen() && realTime > audioTime - 0.1) {
+			realTime = audioTime;
 		}
 	}
 }
@@ -443,15 +411,18 @@ void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 
 	pixelPlanes.clear();
 	texturePlanes.clear();
+	scaler.free();
 
 	pixelFormat = getPixelFormat(av_format);
 
+	// oF native formats
 	if (av_format == FFMPEG_FORMAT_GRAY8 || av_format == FFMPEG_FORMAT_RGB24 || av_format == FFMPEG_FORMAT_RGBA) {
 		pixelPlanes.resize(1);
 		texturePlanes.resize(1);
 		pixelPlanes[0].allocate(width, height, pixelFormat);
 		texturePlanes[0].allocate(pixelPlanes[0]);
 	}
+	// NV12 is a 2-plane 12-bit format
 	else if (av_format == FFMPEG_FORMAT_NV12) {
 		pixelPlanes.resize(2);
 		texturePlanes.resize(2);
@@ -459,11 +430,13 @@ void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 		texturePlanes[0].allocate(pixelPlanes[0]);
 		pixelPlanes[1].allocate(width / 2, height / 2, OF_PIXELS_RG);
 		texturePlanes[1].allocate(pixelPlanes[1]);
+
+		// NOTE: With OpenGL < 3.0 - OF_PIXELS_RG are loaded as GL_LUMINANCE_ALPHA
 		if (!ofIsGLProgrammableRenderer()) {
-			// With OpenGL < 3 OF_PIXELS_RG are loaded as GL_LUMINANCE_ALPHA
 			texturePlanes[1].setSwizzle(GL_TEXTURE_SWIZZLE_G, GL_ALPHA);
 		}
 	}
+	// Other formats need scaling
 	else {
 		ofxFFmpeg::PixelFormat format(av_format);
 		int dst_fmt = format.hasAlpha() ? FFMPEG_FORMAT_RGBA : FFMPEG_FORMAT_RGB24;
@@ -477,6 +450,33 @@ void ofxFFmpegPlayer::updateFormat(int av_format, int width, int height) {
 		texturePlanes.resize(1);
 		pixelPlanes[0].allocate(width, height, pixelFormat);
 		texturePlanes[0].allocate(pixelPlanes[0]);
+	}
+}
+
+//--------------------------------------------------------------
+void ofxFFmpegPlayer::updateFormatGL(int av_format, int width, int height, int planes) {
+
+	pixelFormat = getPixelFormat(av_format);
+
+	texturePlanes.resize(planes);
+
+	for (int i = 0; i < planes; i++) {
+		texturePlanes[i].setUseExternalTextureID(openglRenderer.getTexture(i));
+
+		ofTextureData & texData = texturePlanes[i].texData;
+		texData.textureTarget = openglRenderer.getTarget();
+		texData.width = openglRenderer.getWidth(i);
+		texData.height = openglRenderer.getHeight(i);
+		texData.tex_w = texData.width;
+		texData.tex_h = texData.height;
+		if (texData.textureTarget == GL_TEXTURE_RECTANGLE) {
+			texData.tex_t = texData.width;
+			texData.tex_u = texData.height;
+		}
+		else {
+			texData.tex_t = texData.tex_w / texData.width;
+			texData.tex_u = texData.tex_h / texData.height;
+		}
 	}
 }
 
@@ -543,31 +543,35 @@ void ofxFFmpegPlayer::drawDebug(float x, float y) const {
 
 	ofDrawBitmapStringHighlight(isBuffering ? "Buffering" : "Not bufferting", x, y + 280);
 
+	int64_t duration = reader.getDuration();
+	float scaleX = duration != 0 ? ofGetWidth() / reader.getDuration() : 0;
 
-	float scaleX = ofGetWidth() / reader.getDuration();
+	float pos_x = (realTime / (double)reader.getDuration()) * ofGetWidth();
+	ofDrawLine(pos_x, 0, pos_x, ofGetHeight());
+	ofDrawBitmapString("Real: " + ofToString(realTime / 1000000., 2), pos_x, y + 300);
 
 	if (audio.isOpen()) {
-		float aud_pos_x = (audioTimeSeconds / reader.getDuration()) * ofGetWidth();
+		float aud_pos_x = (audioTime / (double)reader.getDuration()) * ofGetWidth();
 		ofDrawLine(aud_pos_x, 0, aud_pos_x, ofGetHeight());
-		ofDrawBitmapString("Audio: " + ofToString(audioTimeSeconds, 2), aud_pos_x, y + 330);
+		ofDrawBitmapString("Audio: " + ofToString(audioTime/1000000., 2), aud_pos_x, y + 340);
 
 		float write_x = scaleX * (float)((audioBuffer.getTotalWrite() / audioStream.getNumOutputChannels())) / (float)(audioStream.getSampleRate());
 		float read_x = scaleX * (float)((audioBuffer.getTotalRead() / audioStream.getNumOutputChannels())) / (float)(audioStream.getSampleRate());
-		ofDrawRectangle(read_x, y + 340, write_x - read_x, 10);
+		ofDrawRectangle(read_x, y + 350, write_x - read_x, 10);
 	}
 
 	if (video.isOpen()) {
 
 		float vid_pos_x = getPosition() * ofGetWidth();
 		ofDrawLine(vid_pos_x, 0, vid_pos_x, ofGetHeight());
-		ofDrawBitmapString("Video: " + ofToString(videoTimeSeconds,2), vid_pos_x, y + 370);
+		ofDrawBitmapString("Video: " + ofToString(realTime/1000000.,2), vid_pos_x, y + 380);
 
 		videoCache.lock();
 		for (size_t i = 0; i < videoCache.size(); i++) {
-			AVFrame * frame = videoCache.get(i);
+			/*AVFrame * frame = videoCache.get(i);
 			double t = video.rescaleTime(frame) * reader.getTimeBase();
 			double d = video.rescaleDuration(frame) * reader.getTimeBase();
-			ofDrawRectangle(t * scaleX, y + 380, d * scaleX, 10);
+			ofDrawRectangle(t * scaleX, y + 390, d * scaleX, 10);*/
 		}
 		videoCache.unlock();
 	}
@@ -633,8 +637,8 @@ ofPixelFormat ofxFFmpegPlayer::getPixelFormat(int av_format) const {
 
 //--------------------------------------------------------------
 float ofxFFmpegPlayer::getPosition() const {
-	float duration = getDuration();
-	return duration > 0 ? videoTimeSeconds / duration : 0;
+	double duration = video.getDurationSeconds();
+	return duration > 0 ? videoTime / duration : 0;
 }
 
 //--------------------------------------------------------------
@@ -644,7 +648,7 @@ int ofxFFmpegPlayer::getCurrentFrame() const {
 
 //--------------------------------------------------------------
 float ofxFFmpegPlayer::getDuration() const {
-	return reader.getDuration();
+	return reader.getDurationSeconds();
 }
 
 //--------------------------------------------------------------
@@ -661,8 +665,8 @@ int ofxFFmpegPlayer::getTotalNumFrames() const {
 void ofxFFmpegPlayer::nextFrame() {
 	AVFrame * frame = videoCache.peek();
 	if (frame) {
-		videoTimeSeconds = video.rescaleTime(frame) * reader.getTimeBase();
-		audioTimeSeconds = videoTimeSeconds;
+		realTime = video.rescaleTime(frame);
+		audioTime = realTime;
 		//audioPackets.flush();
 	}
 	else {
@@ -687,9 +691,9 @@ void ofxFFmpegPlayer::setTime(int64_t pts) {
 
 	if (video.isOpen()) {
 
-		last_frame_pts = 0;// video.rescaleTimeInv(pts);
-		videoTimeSeconds = pts * reader.getTimeBase();
-		audioTimeSeconds = videoTimeSeconds;
+		video_ts_last = 0;// video.rescaleTimeInv(pts);
+		realTime = pts * reader.getTimeBase();
+		audioTime = realTime;
 
 		reader.stop();
 		video.stop();
@@ -698,11 +702,11 @@ void ofxFFmpegPlayer::setTime(int64_t pts) {
 		video.flush();
 		audio.flush();
 
-		videoPackets.flush();
-		videoFrames.flush();
-		videoCache.flush();
+		videoPackets.clear();
+		videoFrames.clear();
+		videoCache.clear();
 
-		audioPackets.flush();
+		audioPackets.clear();
 		audioBuffer.reset();
 
 		reader.seek(pts, this);
@@ -741,12 +745,12 @@ bool ofxFFmpegPlayer::isPaused() const {
 
 //--------------------------------------------------------------
 bool ofxFFmpegPlayer::isPlaying() const {
-	return _isPlaying;
+	return reader.isRunning() || !isMovieDone;
 }
 
 //--------------------------------------------------------------
 void ofxFFmpegPlayer::setLoopState(ofLoopType state) {
-    loopState = state;
+	reader.setLoop(state == OF_LOOP_NORMAL);
 }
 
 //--------------------------------------------------------------
@@ -816,11 +820,11 @@ void ofxFFmpegPlayer::audioOut(ofSoundBuffer & buffer) {
 	int samples = audioBuffer.read(buffer.getBuffer().data(), buffer.size());
 	if (samples < buffer.size()) {
 		//isBuffering = true;
-		ofLogWarning() << "Audio buffer under-run!";
+		//ofLogWarning() << "Audio buffer under-run!";
 	}
 
 	uint64_t duration = buffer.getDurationMicros();
-	audioTimeSeconds += duration / 1000000.;
+	audioTime += duration;
 	//clock.tick(duration);
 }
 

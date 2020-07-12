@@ -46,12 +46,15 @@ namespace ofxFFmpeg {
             return buffer.size() - (write_total - read_total);
         }
         
-        void wait(size_t write_samples = 0) {
+        bool wait(size_t write_samples = 0) {
             while (write_samples > getAvailableWrite() && !terminated) {
                 std::unique_lock<std::mutex> lock(mutex);
                 condition.wait(lock);
             }
+			return !terminated;
         }
+
+		void wait_and_write(T * src, int samples);
 
 		void terminate() {
 			terminated = true;
@@ -107,4 +110,11 @@ namespace ofxFFmpeg {
 
         return samples;
     }
+
+	template<typename T>
+	void AudioBuffer<T>::wait_and_write(T * src, int samples) {
+		if (wait(samples)) {
+			write(src, samples);
+		}
+	}
 }

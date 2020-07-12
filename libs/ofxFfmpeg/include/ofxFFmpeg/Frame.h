@@ -7,7 +7,9 @@ namespace ofxFFmpeg {
 
 	class Frame {
 	public:
-		Frame(AVFrame * f) : frame(f) {}
+		Frame();
+		Frame(AVFrame * f);
+		~Frame();
 
 		operator AVFrame * () { return frame;  }
 
@@ -16,12 +18,16 @@ namespace ofxFFmpeg {
 		static void free(AVFrame * f);
 
 		uint8_t * getData(int plane = 0);
+		int       getSize(int plane = 0) const;
 
 		int64_t getTimeStamp() const;
 		void setTimeStamp(int64_t pts);
 
 		int64_t getDecodeTime() const;
 		void setDecodeTime(int64_t dts);
+
+		int64_t getDuration() const;
+		void setDuration(int64_t duration);
 
 	protected:
 		AVFrame * frame;
@@ -31,9 +37,11 @@ namespace ofxFFmpeg {
 
 	class VideoFrame : public Frame {
 	public:
-		VideoFrame(AVFrame * frame) : Frame(frame) {}
+		using Frame::Frame;
 
 		static VideoFrame allocate(int width, int height, int pix_fmt);
+		
+		void allocate(size_t size, int plane = 0);
 
 		int getWidth() const;
 		int getHeight() const;
@@ -59,6 +67,9 @@ namespace ofxFFmpeg {
 	class Packet {
 	public:
 		Packet(AVPacket * p) : packet(p) {}
+
+		uint8_t * getData() const;
+		int	      getSize() const;
 
 		int64_t getTimeStamp() const;
 		void	setTimeStamp(int64_t pts);

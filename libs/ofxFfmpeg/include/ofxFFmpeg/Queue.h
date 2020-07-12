@@ -14,7 +14,7 @@ namespace ofxFFmpeg {
     class Queue {
     public:
         Queue(size_t size = 4) : max_size(size), terminated(false){}
-		~Queue() { flush(); }
+		~Queue() { clear(); }
 
         bool push(T * t);
         T * pop();
@@ -26,8 +26,9 @@ namespace ofxFFmpeg {
 
 		void terminate(bool notifyPush = true, bool notifyPop = true);
 		void resume();
+		bool is_terminated() { return terminated; }
 
-		size_t flush();
+		size_t clear();
 
 		void lock() { mutex.lock(); }
 		void unlock() { mutex.unlock(); }
@@ -41,7 +42,7 @@ namespace ofxFFmpeg {
         std::mutex mutex;
         std::condition_variable cond_push;
         std::condition_variable cond_pop;
-		std::atomic<bool> terminated;
+		bool terminated;
     };
     
     template<typename T>
@@ -61,11 +62,12 @@ namespace ofxFFmpeg {
     
     template<typename T>
     T * Queue<T>::pop() {
-        while (queue.size() == 0 && !terminated) {
+        while (queue.size() == 0) {
             std::unique_lock<std::mutex> lock(mutex);
+			if (terminated) return nullptr;
             cond_push.wait(lock);
         }
-        if (!terminated) {
+        {
             std::lock_guard<std::mutex> lock(mutex);
 			if (queue.size() > 0) {
 				T * front = queue.front();
@@ -79,12 +81,10 @@ namespace ofxFFmpeg {
 
 	template<typename T>
 	T * Queue<T>::peek() {
-		if (!terminated) {
-			std::lock_guard<std::mutex> lock(mutex);
-			if (queue.size() > 0) {
-				T * front = queue.front();
-				return front;
-			}
+		std::lock_guard<std::mutex> lock(mutex);
+		if (queue.size() > 0) {
+			T * front = queue.front();
+			return front;
 		}
 		return nullptr;
 	}
@@ -104,7 +104,7 @@ namespace ofxFFmpeg {
 	}
 
 	template<typename T>
-	size_t Queue<T>::flush() {
+	size_t Queue<T>::clear() {
 		std::lock_guard<std::mutex> lock(mutex);
 		size_t i = 0;
 		while (queue.size() > 0) {
@@ -120,7 +120,7 @@ namespace ofxFFmpeg {
 	class TimeQueue : public Queue<T> {
 	public:
 
-		bool receive(T * t, int stream_index) {
+		bool receive(T * t) {
             if (Queue<T>::push(t)) {
 				std::lock_guard<std::mutex> lock(mutex);
 				if (queue.size() > 0) {
@@ -162,9 +162,10 @@ namespace ofxFFmpeg {
 
     class PacketQueue : public Queue<AVPacket>, public PacketReceiver, public PacketSupplier {
     public:
-		bool receive(AVPacket * packet) { return push(packet); }
+		void receive(AVPacket * packet) { push(packet); }
 		void terminatePacketReceiver() { terminate(false, true); }
 		void resumePacketReceiver() { resume(); }
+		bool isPacketsTerminated() { return is_terminated(); }
 
 		AVPacket * supply() { return pop(); }
 		void terminatePacketSupplier() { terminate(true, false); }
@@ -173,9 +174,9 @@ namespace ofxFFmpeg {
         virtual AVPacket * clone(AVPacket * p);
         virtual void free(AVPacket * p);
 
-		using Queue::flush;
+		using Queue::clear;
 
-		void flush(PacketReceiver * receiver) {
+		/*void flush(PacketReceiver * receiver) {
 			std::lock_guard<std::mutex> lock(mutex);
 			while (queue.size() > 0) {
 				AVPacket * front = queue.front();
@@ -184,13 +185,13 @@ namespace ofxFFmpeg {
 				free(front);
 				cond_pop.notify_one();
 			}
-		}
+		}*/
     };
 
 
     class FrameQueue : public TimeQueue<AVFrame>, public FrameReceiver, public FrameSupplier {
     public:
-		bool receive(AVFrame * frame, int stream_index) { return TimeQueue::receive(frame, stream_index); }
+		void receive(AVFrame * frame, int stream_index) { TimeQueue::receive(frame); }
 		void terminateFrameReceiver() { terminate(false, true); }
 		void resumeFrameReceiver() { resume(); }
 
@@ -199,18 +200,18 @@ namespace ofxFFmpeg {
 		void terminateFrameSupplier() { terminate(true, false); }
 		void resumeFrameSupplier() { resume(); }
 
-		AVFrame * get(int index) {
+		/*AVFrame * get(int index) {
 			auto it = queue.begin();
 			std::advance(it, index);
 			return *it;
-		}
+		}*/
 
 		bool pop(int64_t min_pts, int64_t max_pts);
-		size_t flush(int64_t min_pts, int64_t max_pts);
+		size_t clear(int64_t min_pts, int64_t max_pts);
 
 		virtual void free(AVFrame * f);
 
-		using Queue::flush;
+		using Queue::clear;
 		using TimeQueue::get_head;
 		using TimeQueue::get_tail;
 	

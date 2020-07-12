@@ -7,6 +7,22 @@ extern "C" {
 using namespace ofxFFmpeg;
 
 //--------------------------------------------------------------
+Frame::Frame() {
+	frame = av_frame_alloc();
+}
+
+//--------------------------------------------------------------
+Frame::Frame(AVFrame * f) {
+	frame = av_frame_alloc();
+	av_frame_ref(frame, f);
+}
+
+//--------------------------------------------------------------
+Frame::~Frame() {
+	av_frame_unref(frame);
+}
+
+//--------------------------------------------------------------
 Frame Frame::allocate() {
 	return Frame(av_frame_alloc());
 }
@@ -21,6 +37,11 @@ void Frame::free(AVFrame * f) {
 //--------------------------------------------------------------
 uint8_t * Frame::getData(int plane) {
 	return frame->data[plane];
+}
+
+//--------------------------------------------------------------
+int Frame::getSize(int plane) const {
+	return frame->buf[plane]->size;
 }
 //--------------------------------------------------------------
 int64_t Frame::getTimeStamp() const {
@@ -39,6 +60,15 @@ void Frame::setDecodeTime(int64_t dts) {
 	frame->pkt_dts = dts;
 }
 //--------------------------------------------------------------
+int64_t Frame::getDuration() const {
+	return frame->pkt_duration;
+}
+//--------------------------------------------------------------
+void Frame::setDuration(int64_t duration) {
+	frame->pkt_duration = duration;
+}
+
+//--------------------------------------------------------------
 VideoFrame VideoFrame::allocate(int width, int height, int pix_fmt) {
 	AVFrame * frame = av_frame_alloc();
 	frame->width = width;
@@ -50,6 +80,14 @@ VideoFrame VideoFrame::allocate(int width, int height, int pix_fmt) {
 
 	return VideoFrame(frame);
 }
+
+//--------------------------------------------------------------
+void VideoFrame::allocate(size_t size, int plane) {
+
+	frame->buf[plane] = av_buffer_alloc(size);
+	frame->data[plane] = frame->buf[plane]->data;
+}
+
 //--------------------------------------------------------------
 int VideoFrame::getWidth() const {
 	return frame->width;
@@ -87,6 +125,16 @@ int AudioFrame::getNumSamples() const {
 //--------------------------------------------------------------
 void AudioFrame::setNumSamples(int nb_samples) {
 	frame->nb_samples = nb_samples;
+}
+
+//--------------------------------------------------------------
+uint8_t * Packet::getData() const {
+	return packet->data;
+}
+
+//--------------------------------------------------------------
+int Packet::getSize() const {
+	return packet->size;
 }
 
 //--------------------------------------------------------------

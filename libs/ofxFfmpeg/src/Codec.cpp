@@ -14,6 +14,8 @@ bool Codec::allocate(AVCodec * codec) {
 
 	free();
 
+	this->codec = codec;
+
 	if (!codec)
 		return false;
 
@@ -40,6 +42,7 @@ bool Codec::isAllocated() const {
 
 //--------------------------------------------------------------
 void Codec::free() {
+	codec = NULL;
 	if (context) {
 		avcodec_free_context(&context);
 		context = NULL;
@@ -83,13 +86,29 @@ bool Codec::match(AVPacket * packet) {
 }
 
 //--------------------------------------------------------------
+int Codec::getId() const {
+	return codec ? (int)codec->id : (int)AV_CODEC_ID_NONE;
+}
+
+//--------------------------------------------------------------
+unsigned int Codec::getTag() const {
+	return context ? context->codec_tag : 0;
+}
+
+//--------------------------------------------------------------
+std::string Codec::getTagString() {
+	char buf[AV_FOURCC_MAX_STRING_SIZE];
+	return av_fourcc_make_string(buf, context->codec_tag);
+}
+
+//--------------------------------------------------------------
 std::string Codec::getName() const {
-	return context && context->codec ? std::string(context->codec->name) : std::string();
+	return codec ? std::string(codec->name) : std::string();
 }
 
 //--------------------------------------------------------------
 std::string Codec::getLongName() const {
-	return context && context->codec ? std::string(context->codec->long_name) : std::string();
+	return codec ? std::string(codec->long_name) : std::string();
 }
 
 //--------------------------------------------------------------
@@ -131,6 +150,16 @@ void Codec::setBufferSize(int bufferSize) {
 //--------------------------------------------------------------
 double Codec::getTimeBase() const {
 	return stream ? av_q2d(stream->time_base) : 1;
+}
+
+//--------------------------------------------------------------
+double Codec::getDurationSeconds() const {
+	return stream ? av_rescale_q(stream->duration, stream->time_base, { 1, AV_TIME_BASE }) : 0;
+}
+
+//--------------------------------------------------------------
+int64_t Codec::getDuration() const {
+	return stream->duration;
 }
 
 //--------------------------------------------------------------
@@ -252,7 +281,7 @@ int AudioCodec::getChannelLayout() const {
 }
 
 //--------------------------------------------------------------
-int ofxFFmpeg::AudioCodec::getFrameSize() const {
+int AudioCodec::getNumSamples() const {
 	return context ? context->frame_size : 0;
 }
 

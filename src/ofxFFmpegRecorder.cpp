@@ -68,6 +68,11 @@ ofxFFmpeg::AudioEncoder & ofxFFmpegRecorder::getAudioEncoder() {
 }
 
 //--------------------------------------------------------------
+ofxFFmpeg::Writer & ofxFFmpegRecorder::getWriter() {
+	return writer;
+}
+
+//--------------------------------------------------------------
 bool ofxFFmpegRecorder::start() {
 
 	if (video.isAllocated()) {
@@ -108,10 +113,10 @@ bool ofxFFmpegRecorder::start() {
 		ofLogVerbose() << "  " << audio.getLongName();
 		ofLogVerbose() << "  " << audio.getNumChannels() << " channels";
 		ofLogVerbose() << "  " << audio.getSampleRate() << " Hz";
-		ofLogVerbose() << "  " << audio.getFrameSize() << " bytes/frame";
+		ofLogVerbose() << "  " << audio.getNumSamples() << " samples/frame";
 		ofLogVerbose() << "  " << (audio.getBitRate() / 1000.f) << " kb/s";
 
-		aframe = AudioFrame::allocate(audio.getFrameSize(), audio.getNumChannels(), audio.getSampleFormat());
+		aframe = AudioFrame::allocate(audio.getNumSamples(), audio.getNumChannels(), audio.getSampleFormat());
 		if (!aframe)
 			return false;
 
@@ -144,11 +149,9 @@ void ofxFFmpegRecorder::stop() {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpegRecorder::receive(AVPacket * packet) {
+void ofxFFmpegRecorder::receive(AVPacket * packet) {
 
 	writer.write(packet);
-
-	return true;
 }
 
 //--------------------------------------------------------------
@@ -187,10 +190,10 @@ void ofxFFmpegRecorder::writeAudio(int nb_samples) {
 
 	float * buffer = (float*)resampler.allocateSamplesInput(nb_samples);
 
-	nb_samples = audioBuffer.read(buffer, nb_samples * audioSettings.numInputChannels) / audioSettings.numInputChannels;
-
 	size_t nb_total = audioBuffer.getTotalRead() / audioSettings.numInputChannels;
 	AudioFrame(aframe).setTimeStamp(nb_total);
+
+	nb_samples = audioBuffer.read(buffer, nb_samples * audioSettings.numInputChannels) / audioSettings.numInputChannels;
 
 	int samples = resampler.resample(buffer, nb_samples, aframe);
 	AudioFrame(aframe).setNumSamples(samples);
@@ -206,8 +209,17 @@ void ofxFFmpegRecorder::writeAudio(int nb_samples) {
 void ofxFFmpegRecorder::writeAudioFinal() {
 
 	if (audio.isOpen()) {
-		int nb_samples = audioBuffer.getAvailableRead() / audioSettings.numInputChannels;
-		writeAudio(nb_samples);
+		AudioFrame f(aframe);
+		int nb_samples = resampler.getInSamples(f.getNumSamples());
+		int nb_final = audioBuffer.getAvailableRead() / audioSettings.numInputChannels;
+
+		while (nb_final >= nb_samples) {
+			writeAudio(nb_samples);
+			nb_final -= nb_samples;
+		}
+		if (nb_final > 0) {
+			writeAudio(nb_final);
+		}
 	}
 }
 

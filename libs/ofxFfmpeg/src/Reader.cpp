@@ -15,6 +15,8 @@ using namespace ofxFFmpeg;
 bool Reader::open(std::string filename) {
 	std::lock_guard<std::mutex> lock(mutex);
 
+	close();
+
     if ((error = avformat_open_input(&format_context, filename.c_str(), NULL, NULL)) < 0) {
         av_log(NULL, AV_LOG_ERROR, "Cannot open input file\n");
         return false;
@@ -52,6 +54,9 @@ bool Reader::read(AVPacket * packet) {
     error = av_read_frame(format_context, packet);
 	metrics.end();
 
+	if (error == AVERROR_EOF && loop)
+		seek(0);
+
 	return error == 0;
 }
 
@@ -70,6 +75,16 @@ AVPacket * Reader::read() {
 void Reader::free(AVPacket * packet) {
 	av_packet_unref(packet);
 	av_packet_free(&packet);
+}
+
+//--------------------------------------------------------------
+void Reader::setLoop(bool loop) {
+	this->loop = loop;
+}
+
+//--------------------------------------------------------------
+bool Reader::getLoop() const {
+	return loop;
 }
 
 //--------------------------------------------------------------
@@ -149,7 +164,7 @@ void Reader::stop() {
 
 //--------------------------------------------------------------
 void Reader::readThread() {
-    
+
 	while (running) {
         
         AVPacket * packet = read();
@@ -159,27 +174,14 @@ void Reader::readThread() {
 			av_packet_unref(packet);
 			av_packet_free(&packet);
         }
-		else if (error == AVERROR_EOF) {
+		else if (error == AVERROR_EOF && !loop) {
 			receiver->notifyEndPacket();
+			running = false;
 		}
 
 		if (seek_pts != -1) {
 			error = av_seek_frame(format_context, -1, seek_pts, AVSEEK_FLAG_BACKWARD);
-
-			/*int64_t ts = 0;
-			AVPacket * packet = read();
-			while (packet && ts < seek_pts) {
-				int i = packet->stream_index;
-				AVStream * stream = format_context->streams[i];
-				ts = av_rescale_q(packet->pts, stream->time_base, { 1, AV_TIME_BASE });
-				if (ts >= seek_pts) {
-					packet->flags |= AV_PKT_FLAG_DISCARD;
-				}
-				receiver->receive(packet);
-				av_packet_unref(packet);
-				av_packet_free(&packet);
-				packet = read();
-			}*/
+			//seek(seek_pts, receiver);
 			seek_pts = -1;
 		}
     }
@@ -247,8 +249,13 @@ std::string Reader::getLongName() {
 }
 
 //--------------------------------------------------------------
-float Reader::getDuration() const {
-	return format_context ? (format_context->duration * getTimeBase()) : 0;
+int64_t Reader::getDuration() const {
+	return format_context ? format_context->duration : 0;
+}
+
+//--------------------------------------------------------------
+double Reader::getDurationSeconds() const {
+	return format_context ? format_context->duration * av_q2d({1, AV_TIME_BASE}) : 0;
 }
 
 //--------------------------------------------------------------
@@ -273,6 +280,6 @@ std::map<std::string, std::string> Reader::getMetadata() {
 }
 
 //--------------------------------------------------------------
-const Metrics & ofxFFmpeg::Reader::getMetrics() const {
+const Metrics & Reader::getMetrics() const {
 	return metrics;
 }

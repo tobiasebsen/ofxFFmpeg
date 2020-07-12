@@ -36,19 +36,22 @@ void Decoder::close() {
 
 //--------------------------------------------------------------
 bool Decoder::send(AVPacket *packet) {
-    error = avcodec_send_packet(context, packet);
+	std::lock_guard<std::mutex> lock(mutex);
+	error = avcodec_send_packet(context, packet);
     return error >= 0;
 }
 
 //--------------------------------------------------------------
 bool Decoder::receive(AVFrame *frame) {
-    error = avcodec_receive_frame(context, frame);
+	std::lock_guard<std::mutex> lock(mutex);
+	error = avcodec_receive_frame(context, frame);
     return error >= 0;
 }
 
 //--------------------------------------------------------------
 AVFrame * Decoder::receive() {
-    AVFrame * frame = av_frame_alloc();
+	std::lock_guard<std::mutex> lock(mutex);
+	AVFrame * frame = av_frame_alloc();
     error = avcodec_receive_frame(context, frame);
     if (error < 0) {
         av_frame_free(&frame);
@@ -58,7 +61,6 @@ AVFrame * Decoder::receive() {
 
 //--------------------------------------------------------------
 bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
-	std::lock_guard<std::mutex> lock(mutex);
 
 	if (!isAllocated())
 		return false;
@@ -72,9 +74,14 @@ bool Decoder::decode(AVPacket *packet, FrameReceiver * receiver) {
     while ((frame = receive()) != NULL) {
 
 		metrics.end();
+
 		receiver->receive(frame, stream->index);
         av_frame_free(&frame);
     }
+	if (error == AVERROR_EOF) {
+		receiver->notifyEndFrame(stream->index);
+	}
+
     return true;
 }
 
@@ -83,22 +90,24 @@ bool Decoder::flush(FrameReceiver * receiver) {
 	if (!decode(NULL, receiver))
 		return false;
 
+	mutex.lock();
 	avcodec_flush_buffers(context);
+	mutex.unlock();
 
 	return true;
 }
 
 //--------------------------------------------------------------
 void Decoder::flush() {
-	if (isAllocated()) {
-		if (running) {
-			flushing = true;
-			running = false;
-			supplier->terminatePacketSupplier();
-		}
-		else {
-			avcodec_flush_buffers(context);
-		}
+	if (!isAllocated())
+		return;
+
+	if (running) {
+		//flushing = true;
+		supplier->terminatePacketSupplier();
+	}
+	else {
+		avcodec_flush_buffers(context);
 	}
 }
 
@@ -114,7 +123,7 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 	this->receiver = receiver;
 	this->receiver->resumeFrameReceiver();
 
-	flushing = false;
+	//flushing = false;
     running = true;
     thread_obj = new std::thread(&Decoder::decodeThread, this);
 
@@ -124,7 +133,7 @@ bool Decoder::start(PacketSupplier * supplier, FrameReceiver * receiver) {
 //--------------------------------------------------------------
 void Decoder::stop() {
 	if (running) {
-		flushing = false;
+		//flushing = false;
 		running = false;
 	}
 	if (thread_obj) {
@@ -148,9 +157,10 @@ void Decoder::decodeThread() {
 
             supplier->free(packet);
         }
-		else if (flushing) {
+		else if (supplier->isPacketsTerminated()) {
 			flush(receiver);
-			flushing = false;
+			//flushing = false;
+			running = false;
 		}
     }
 }
@@ -215,6 +225,7 @@ const Metrics & Decoder::getMetrics() const {
 
 //--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader) {
+	std::lock_guard<std::mutex> lock(mutex);
 	
 	AVCodec * codec = reader.getVideoCodec();
 	AVStream * stream = reader.getVideoStream();
@@ -259,6 +270,7 @@ static enum AVPixelFormat get_format(struct AVCodecContext *s, const enum AVPixe
 
 //--------------------------------------------------------------
 bool VideoDecoder::open(Reader & reader, HardwareDevice & hardware) {
+	std::lock_guard<std::mutex> lock(mutex);
 
 	AVCodec * codec = reader.getVideoCodec();
 	AVStream * stream = reader.getVideoStream();
@@ -316,6 +328,8 @@ bool PixelFormat::hasAlpha() {
 
 //--------------------------------------------------------------
 bool AudioDecoder::open(Reader & reader) {
+	std::lock_guard<std::mutex> lock(mutex);
+
 	AVCodec * codec = reader.getAudioCodec();
 	AVStream * stream = reader.getAudioStream();
 	return Decoder::open(codec, stream);

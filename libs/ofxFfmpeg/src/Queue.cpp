@@ -19,13 +19,9 @@ void PacketQueue::free(AVPacket *p) {
 }
 
 //--------------------------------------------------------------
-AVFrame * ofxFFmpeg::FrameQueue::supply(int64_t pts) {
+AVFrame * FrameQueue::supply(int64_t pts) {
 	std::lock_guard<std::mutex> lock(mutex);
-	/*for (AVFrame * frame : queue) {
-		if (pts >= frame->pts && pts < frame->pts + frame->pkt_duration) {
-			return frame;
-		}
-	}*/
+
 	if (queue.size() > 0) {
 		AVFrame * frame = queue.front();
 		if (pts >= frame->pts && pts < frame->pts + frame->pkt_duration) {
@@ -38,34 +34,34 @@ AVFrame * ofxFFmpeg::FrameQueue::supply(int64_t pts) {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::FrameQueue::pop(int64_t min_pts, int64_t max_pts) {
+bool FrameQueue::pop(int64_t min_pts, int64_t max_pts) {
 	std::lock_guard<std::mutex> lock(mutex);
-	if (queue.size() > 0) {
-		AVFrame * frame = queue.front();
-		if (frame->pts >= min_pts && frame->pts <= max_pts) {
-			free(frame);
-			queue.pop_front();
-			cond_pop.notify_one();
-			return true;
-		}
+
+	if (queue.size() == 0)
+		return false;
+
+	AVFrame * frame = queue.front();
+	bool in_range = false;
+	if (min_pts > max_pts) {
+		if (frame->pts >= min_pts || frame->pts <= max_pts)
+			in_range = true;
+	}
+	else {
+		if (frame->pts >= min_pts && frame->pts <= max_pts)
+			in_range = true;
+	}
+	if (in_range) {
+		free(frame);
+		queue.pop_front();
+		cond_pop.notify_one();
+		return true;
 	}
 	return false;
 }
 
 //--------------------------------------------------------------
-size_t ofxFFmpeg::FrameQueue::flush(int64_t min_pts, int64_t max_pts) {
-	/*std::lock_guard<std::mutex> lock(mutex);
-	for (auto it = queue.begin(); it != queue.end(); ) {
-		AVFrame * frame = *it;
-		if (frame->pts >= min_pts && frame->pts <= max_pts) {
-			free(frame);
-			it = queue.erase(it);
-			cond_pop.notify_one();
-		}
-		else {
-			return;
-		}
-	}*/
+size_t FrameQueue::clear(int64_t min_pts, int64_t max_pts) {
+
 	size_t n = 0;
 	while (pop(min_pts, max_pts)) {
 		n++;
@@ -74,22 +70,22 @@ size_t ofxFFmpeg::FrameQueue::flush(int64_t min_pts, int64_t max_pts) {
 }
 
 //--------------------------------------------------------------
-AVFrame * ofxFFmpeg::FrameQueue::clone(AVFrame * f) {
+AVFrame * FrameQueue::clone(AVFrame * f) {
 	return av_frame_clone(f);
 }
 
 //--------------------------------------------------------------
-void ofxFFmpeg::FrameQueue::free(AVFrame * f) {
+void FrameQueue::free(AVFrame * f) {
 	av_frame_unref(f);
 	av_frame_free(&f);
 }
 
 //--------------------------------------------------------------
-int64_t ofxFFmpeg::FrameQueue::get_head(AVFrame * frame) {
+int64_t FrameQueue::get_head(AVFrame * frame) {
 	return frame->pts + frame->pkt_duration;
 }
 
 //--------------------------------------------------------------
-int64_t ofxFFmpeg::FrameQueue::get_tail(AVFrame * frame) {
+int64_t FrameQueue::get_tail(AVFrame * frame) {
 	return frame->pts;
 }

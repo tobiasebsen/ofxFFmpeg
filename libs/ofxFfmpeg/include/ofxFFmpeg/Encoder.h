@@ -30,6 +30,14 @@ namespace ofxFFmpeg {
 
 		bool encode(AVFrame * frame, PacketReceiver * receiver);
 		void flush(PacketReceiver * receiver);
+
+		/////////////////////////////////////////////////
+		// ACCESSORS
+
+		const Metrics & getMetrics() const;
+
+	protected:
+		Metrics metrics;
 	};
 
 	/////////////////////////////////////////////////

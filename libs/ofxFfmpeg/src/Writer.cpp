@@ -73,14 +73,17 @@ bool Writer::begin() {
 //--------------------------------------------------------------
 void Writer::end() {
 	if (format_context) {
-		av_write_trailer(format_context);
+		error = av_write_trailer(format_context);
 		avio_flush(io_context);
 	}
 }
 
 //--------------------------------------------------------------
-void Writer::write(AVPacket * packet) {
+bool Writer::write(AVPacket * packet) {
+	metrics.begin();
 	error = av_interleaved_write_frame(format_context, packet);
+	metrics.end();
+	return error >= 0;
 }
 
 //--------------------------------------------------------------
@@ -90,4 +93,9 @@ std::string Writer::getName() {
 //--------------------------------------------------------------
 std::string Writer::getLongName() {
 	return format_context->oformat->long_name;
+}
+
+//--------------------------------------------------------------
+const Metrics Writer::getMetrics() const {
+	return metrics;
 }

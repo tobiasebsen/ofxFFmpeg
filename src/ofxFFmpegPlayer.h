@@ -8,10 +8,12 @@ public:
 	ofxFFmpegPlayer();
 	~ofxFFmpegPlayer();
 
-    bool load(string filename);
+	bool load(string filename);
     void close();
 	bool isLoaded() const;
 	bool isInitialized() const;
+
+	static bool openHardware(int device_type);
 
 	/////////////////////////////////////////////////
 	// VIDEO
@@ -21,38 +23,47 @@ public:
 
 	void play();
 	void stop();
-	void setPaused(bool paused);
-
-	bool isPaused() const;
 	bool isPlaying() const;
 
-    ofPixels & getPixels();
-    const ofPixels & getPixels() const;
+	void setPaused(bool paused);
+	bool isPaused() const;
 
-    void draw(float x, float y, float w, float h) const;
+	void setLoopState(ofLoopType state);
+
+	// Position //
+
+	float getPosition() const;
+	int getCurrentFrame() const;
+	float getDuration() const;
+	bool getIsMovieDone() const;
+	int getTotalNumFrames() const;
+
+	// Seeking //
+
+	void nextFrame();
+	void setFrame(int frame);
+	void setPosition(float pct);
+	void setTime(int64_t pts);
+
+	// Draw //
+	
+	void draw(float x, float y, float w, float h) const;
     void draw(float x, float y) const;
 	void drawDebug(float x, float y) const;
 
     float getWidth() const;
     float getHeight() const;
 
+	// Pixels //
+
+	ofPixels & getPixels();
+	const ofPixels & getPixels() const;
+
 	bool setPixelFormat(ofPixelFormat pixelFormat);
 	ofPixelFormat getPixelFormat() const;
 	ofPixelFormat getPixelFormat(int pix_fmt) const;
 
-	float getPosition() const;
-	int getCurrentFrame() const;
-    float getDuration() const;
-	bool getIsMovieDone() const;
-    int getTotalNumFrames() const;
-
-	void nextFrame();
-        
-    void setLoopState(ofLoopType state);
-
-	void setFrame(int frame);
-	void setPosition(float pct);
-	void setTime(int64_t pts);
+	// Textures //
 
 	ofTexture & getTexture();
 	const ofTexture & getTexture() const;
@@ -74,26 +85,32 @@ public:
 	void openAudio();
 	void closeAudio();
 
-	static bool openHardware(int device_type);
-
 protected:
 
-	virtual bool receive(AVPacket * packet);
+	// PacketReceiver
+
+	virtual void receive(AVPacket * packet);
 	virtual void notifyEndPacket();
 	virtual void terminatePacketReceiver();
 	virtual void resumePacketReceiver();
 
-	virtual bool receive(AVFrame * frame, int stream_index);
+	// FrameReceiver
+
+	virtual void receive(AVFrame * frame, int stream_index);
+	virtual void notifyEndFrame(int stream_index);
 	virtual void terminateFrameReceiver();
 	virtual void resumeFrameReceiver();
 
 	void updateFrame(AVFrame * frame);
 	void updateTextures(AVFrame * frame);
 	void updateFormat(int av_format, int width, int height);
+	void updateFormatGL(int av_format, int width, int height, int planes);
 
 	void drawDebug(string name, const ofxFFmpeg::Metrics & metrics, float x, float y) const;
 	void drawDebug(string name, int size, int capacity, float x, float y) const;
-    
+
+	// NV12 shader
+
     void loadShaderNV12() const;
     void bindShaderNV12(const ofTexture & textureY, const ofTexture & textureUV) const;
     void unbindShaderNV12() const;
@@ -124,25 +141,19 @@ protected:
 	ofSoundStream audioStream;
 	ofSoundStreamSettings audioSettings;
 
-	bool _isPlaying = false;
 	bool isBuffering = false;
 	bool isLooping = false;
-	bool isFlushing = false;
-	bool isResyncingVideo = false;
 	bool frameNew = false;
 	bool isMovieDone = false;
 	int frameNum = 0;
 
-	double realTimeSeconds;
-	double videoTimeSeconds;
-	double audioTimeSeconds;
-	uint64_t last_frame_pts;
-    bool paused = false;
-	//uint64_t audio_samples_loop;
+	int64_t realTime;
+	int64_t videoTime;
+	int64_t audioTime;
+	int64_t video_ts_last;
+	bool paused = false;
 
     ofPixelFormat pixelFormat = OF_PIXELS_UNKNOWN;
-    ofLoopType loopState = OF_LOOP_NORMAL;
-	bool loopRequest = false;
 
     std::vector<ofPixels> pixelPlanes;
 	std::vector<ofTexture> texturePlanes;

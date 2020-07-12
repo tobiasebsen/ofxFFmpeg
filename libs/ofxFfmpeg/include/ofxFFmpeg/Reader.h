@@ -32,6 +32,9 @@ namespace ofxFFmpeg {
 		AVPacket * read();
 		void free(AVPacket * packet);
 
+		void setLoop(bool loop);
+		bool getLoop() const;
+
         void seek(uint64_t pts);
 		void seek(uint64_t pts, PacketReceiver * receiver);
 
@@ -64,8 +67,9 @@ namespace ofxFFmpeg {
 
 		std::string getName();
 		std::string getLongName();
-		float getDuration() const;
-        uint64_t getBitRate() const;
+		int64_t getDuration() const;
+		double getDurationSeconds() const;
+		uint64_t getBitRate() const;
         double getTimeBase() const;
 
 		std::map<std::string, std::string> getMetadata();
@@ -80,6 +84,7 @@ namespace ofxFFmpeg {
         std::thread * thread_obj = NULL;
 		std::mutex mutex;
         bool running = false;
+		bool loop = true;
 		PacketReceiver * receiver;
 		int64_t seek_pts = FFMPEG_NOPTS_VALUE;
 

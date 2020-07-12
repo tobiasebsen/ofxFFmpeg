@@ -13,13 +13,14 @@ namespace ofxFFmpeg {
 		bool isAllocated() const;
 		void free();
 
-		bool open();
-		bool open(const AVCodec * codec);
 		bool open(AVStream * stream);
 		bool isOpen() const;
 		void close();
 		bool match(AVPacket * packet);
 
+		int getId() const;
+		unsigned int getTag() const;
+		std::string getTagString();
 
 		std::string getName() const;
 		std::string getLongName() const;
@@ -32,7 +33,9 @@ namespace ofxFFmpeg {
 		void	setMaxBitRate(int bitRate);
 		void	setBufferSize(int bufferSize);
 
-		double getTimeBase() const;
+		double	getTimeBase() const;
+		double	getDurationSeconds() const;
+		int64_t	getDuration() const;
 
 		int getError() const;
 		std::string getErrorString() const;
@@ -41,6 +44,7 @@ namespace ofxFFmpeg {
 
 	protected:
 		int error = 0;
+		AVCodec * codec;
 		AVCodecContext * context = nullptr;
 		AVStream * stream = nullptr;
 
@@ -78,7 +82,7 @@ namespace ofxFFmpeg {
 		void	setNumChannels(int nb_channels);
 		int		getSampleFormat() const;
 		int		getChannelLayout() const;
-		int		getFrameSize() const;
+		int		getNumSamples() const;
 	};
 
 	/////////////////////////////////////////////////////

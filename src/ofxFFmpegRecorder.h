@@ -21,6 +21,7 @@ public:
 
 	ofxFFmpeg::VideoEncoder & getVideoEncoder();
 	ofxFFmpeg::AudioEncoder & getAudioEncoder();
+	ofxFFmpeg::Writer & getWriter();
 
     bool start();
     void stop();
@@ -38,7 +39,7 @@ public:
 
 protected:
 
-	bool receive(AVPacket * packet);
+	void receive(AVPacket * packet);
 
 	int error = 0;
 

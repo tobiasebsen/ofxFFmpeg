@@ -10,12 +10,13 @@ namespace ofxFFmpeg {
 		virtual void free(AVPacket * packet) = 0;
 		virtual void terminatePacketSupplier() {}
 		virtual void resumePacketSupplier() {}
-		virtual void flush(class PacketReceiver * receiver) = 0;
+		virtual bool isPacketsTerminated() { return false; }
+		//virtual void flush(class PacketReceiver * receiver) = 0;
 	};
 
 	class PacketReceiver {
 	public:
-		virtual bool receive(AVPacket * packet) = 0;
+		virtual void receive(AVPacket * packet) = 0;
 		virtual void notifyEndPacket() {}
 		virtual void terminatePacketReceiver() {}
 		virtual void resumePacketReceiver() {}
@@ -31,8 +32,8 @@ namespace ofxFFmpeg {
 
 	class FrameReceiver {
 	public:
-		virtual bool receive(AVFrame * frame, int stream_index) = 0;
-		virtual void notifyEndFrame() {}
+		virtual void receive(AVFrame * frame, int stream_index) = 0;
+		virtual void notifyEndFrame(int stream_index) {}
 		virtual void terminateFrameReceiver() {}
 		virtual void resumeFrameReceiver() {}
 	};

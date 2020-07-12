@@ -44,6 +44,7 @@ bool VideoScaler::isAllocated() const {
 
 //--------------------------------------------------------------
 void VideoScaler::free() {
+	stop();
 	if (sws_context) {
 		sws_freeContext(sws_context);
 		sws_context = NULL;
@@ -51,7 +52,7 @@ void VideoScaler::free() {
 }
 
 //--------------------------------------------------------------
-bool ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame, AVFrame * dst_frame) {
+bool VideoScaler::scale(AVFrame * src_frame, AVFrame * dst_frame) {
 	metrics.begin();
 	int out_height = sws_scale(sws_context, src_frame->data, src_frame->linesize, 0, (int)src_frame->height, dst_frame->data, dst_frame->linesize);
 	metrics.end();
@@ -59,7 +60,7 @@ bool ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame, AVFrame * dst_frame) {
 }
 
 //--------------------------------------------------------------
-AVFrame * ofxFFmpeg::VideoScaler::scale(AVFrame * src_frame) {
+AVFrame * VideoScaler::scale(AVFrame * src_frame) {
 	AVFrame * dst_frame = av_frame_alloc();
 	av_frame_copy_props(dst_frame, src_frame);
 	dst_frame->width = dst_width;
@@ -118,7 +119,7 @@ void VideoScaler::copyPlane(AVFrame * src_frame, int plane, uint8_t * dst_data, 
 }
 
 //--------------------------------------------------------------
-uint8_t * ofxFFmpeg::VideoScaler::getData(AVFrame * frame) {
+uint8_t * VideoScaler::getData(AVFrame * frame) {
 	return frame->data[0];
 }
 

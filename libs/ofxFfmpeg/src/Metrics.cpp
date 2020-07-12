@@ -35,17 +35,17 @@ int32_t Metrics::getPeriod() const {
 }
 
 //--------------------------------------------------------------
-int32_t ofxFFmpeg::Metrics::getPeriodFiltered() const {
+int32_t Metrics::getPeriodFiltered() const {
 	return duration_period_filtered;
 }
 
 //--------------------------------------------------------------
-float ofxFFmpeg::Metrics::getDutyCycle() const {
+float Metrics::getDutyCycle() const {
 	return duration_frame ? (float)duration_period / (float)duration_frame : 0;
 }
 
 //--------------------------------------------------------------
-float ofxFFmpeg::Metrics::getDutyCycleFiltered() const {
+float Metrics::getDutyCycleFiltered() const {
 	return duration_frame_filtered ? (float)duration_period_filtered / (float)duration_frame_filtered : 0;
 }
 

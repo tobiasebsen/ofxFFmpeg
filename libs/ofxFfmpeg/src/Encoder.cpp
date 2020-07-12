@@ -67,6 +67,8 @@ bool Encoder::encode(AVFrame * frame, PacketReceiver * receiver) {
 	if (!isOpen())
 		return false;
 
+	metrics.begin();
+
 	error = avcodec_send_frame(context, frame);
 	if (error < 0) {
 		av_log(NULL, AV_LOG_ERROR, "Cound not send frame\n");
@@ -84,15 +86,23 @@ bool Encoder::encode(AVFrame * frame, PacketReceiver * receiver) {
 			av_packet_rescale_ts(&packet, context->time_base, stream->time_base);
 
 			receiver->receive(&packet);
+
 			av_packet_unref(&packet);
 		}
 	}
+
+	metrics.end();
+
 	return true;
 }
 
 //--------------------------------------------------------------
 void Encoder::flush(PacketReceiver * receiver) {
 	encode(NULL, receiver);
+}
+
+const Metrics & Encoder::getMetrics() const {
+	return metrics;
 }
 
 //--------------------------------------------------------------
