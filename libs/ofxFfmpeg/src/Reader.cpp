@@ -136,6 +136,9 @@ void Reader::seek(uint64_t pts, PacketReceiver * receiver) {
 
 //--------------------------------------------------------------
 bool Reader::start(PacketReceiver * receiver) {
+
+	if (!isOpen())
+		return false;
     
 	stop();
     

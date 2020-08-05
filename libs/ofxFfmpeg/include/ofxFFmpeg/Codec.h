@@ -64,6 +64,9 @@ namespace ofxFFmpeg {
 		int		getPixelFormat() const;
 		void	setPixelFormat(int pix_fmt);
 
+		int		getCodedWidth() const;
+		int		getCodedHeight() const;
+
 		double	getFrameRate() const;
 		void	setFrameRate(double frameRate);
 		void	setProfile(int profile);

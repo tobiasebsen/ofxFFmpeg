@@ -215,6 +215,16 @@ void VideoCodec::setPixelFormat(int pix_fmt) {
 }
 
 //--------------------------------------------------------------
+int VideoCodec::getCodedWidth() const {
+	return context ? context->coded_width : 0;
+}
+
+//--------------------------------------------------------------
+int VideoCodec::getCodedHeight() const {
+	return context ? context->coded_height : 0;
+}
+
+//--------------------------------------------------------------
 double VideoCodec::getFrameRate() const {
 	if (context && context->framerate.num > 0)
 		return context ? av_q2d(context->framerate) : 0;

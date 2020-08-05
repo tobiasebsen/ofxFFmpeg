@@ -9,7 +9,7 @@ namespace ofxFFmpeg {
 	public:
 		Frame();
 		Frame(AVFrame * f);
-		~Frame();
+		virtual ~Frame();
 
 		operator AVFrame * () { return frame;  }
 
